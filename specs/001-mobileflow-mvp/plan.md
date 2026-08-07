@@ -36,7 +36,7 @@ Le fichier workflow généré et poussé dans les repos **utilisateurs** (cf. sp
 
 | Composant | Choix | Justification |
 |---|---|---|
-| ORM | TypeORM ou Prisma — **à trancher en Phase 0** | Impact sur les migrations et le typage ; décision légère, pas d'ADR nécessaire sauf désaccord |
+| Datastore | Firebase Firestore (SDK `firebase-admin`) — décidé en Phase 1 (remplace Prisma/Postgres, cf. tasks.md T0.1/T1.7) | Pas d'infra Postgres à provisionner en local/dev ; le projet Firebase de l'utilisateur sert de source de vérité pour credentials |
 | Auth | Passport.js (stratégies `local`, `google-oauth20`) + JWT | Standard NestJS |
 | GitHub App | Octokit (`@octokit/app`, `@octokit/webhooks`) | Gestion installation, webhooks, API Artifacts |
 | Chiffrement secrets | KMS applicatif (ex. clé maître + libsodium/AES-256-GCM par tenant) | Cf. spec.md §5 |
@@ -48,9 +48,9 @@ Le fichier workflow généré et poussé dans les repos **utilisateurs** (cf. sp
 
 **Phase 0 — Fondations (infra + squelette)**
 - Restructuration monorepo (§1)
-- Scaffold NestJS (`apps/api`) : modules vides, connexion Postgres, migrations initiales (schéma §1 de spec.md)
+- Scaffold NestJS (`apps/api`) : modules vides
 - CI du repo MobileFlow (lint, test, build des deux apps)
-- Décisions ORM/email/hébergement tranchées
+- Décisions email/hébergement tranchées (le datastore a été revu en Phase 1, cf. tasks.md T1.7)
 
 **Phase 1 — Authentification**
 - FR-1 : email/password + Google OAuth + GitHub OAuth (login utilisateur — distinct de l'installation GitHub App)
@@ -89,8 +89,7 @@ Le fichier workflow généré et poussé dans les repos **utilisateurs** (cf. sp
 
 ## 5. Décisions restantes (non bloquantes pour démarrer, à trancher en Phase 0)
 
-- ORM (TypeORM vs Prisma)
 - Provider email transactionnel
-- Provider d'hébergement précis (région UE actée, pas le provider)
+- Provider d'hébergement précis (région UE actée, pas le provider) — la résidence des données Firestore dépend de la région choisie sur le projet Firebase existant, à vérifier avant la mise en prod (cf. PRD §3.2 RGPD)
 
 Ces décisions sont volontairement légères et n'affectent pas le schéma de données ni les contrats API définis en spec.md — elles peuvent être tranchées au démarrage de la Phase 0 sans revalider le PRD.

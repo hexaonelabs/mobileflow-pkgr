@@ -7,68 +7,70 @@
 
 ## 1. Modèle de données
 
-### User
+**Datastore** : Firebase Firestore (SDK `firebase-admin`), collections top-niveau. Décision actée en Phase 1 (remplace le choix initial Prisma/Postgres — cf. tasks.md T0.1). Les identifiants sont des IDs de document Firestore auto-générés (string), pas des uuid ; les relations (`userId`, `projectId`, etc.) sont des champs contenant l'ID du document référencé, résolues côté application (pas de contrainte FK native).
+
+### Collection `users`
 | Champ | Type | Notes |
 |---|---|---|
-| id | uuid | |
-| email | string, unique | |
+| id (doc id) | string | |
+| email | string, unique (contrainte applicative — vérifiée avant écriture) | |
 | authProvider | enum(`email`, `google`, `github`) | |
 | passwordHash | string, nullable | null si OAuth |
 | githubInstallationId | string, nullable | id de l'installation GitHub App |
 | plan | enum(`free`, `starter`, `pro`, `enterprise`) | |
-| createdAt / updatedAt | timestamp | |
+| createdAt / updatedAt | Firestore Timestamp | |
 
-### Project
+### Collection `projects`
 | Champ | Type | Notes |
 |---|---|---|
-| id | uuid | |
-| userId | uuid (FK) | propriétaire, pas de multi-user en MVP |
+| id (doc id) | string | |
+| userId | string (réf. `users`) | propriétaire, pas de multi-user en MVP |
 | name | string | |
 | githubRepoFullName | string | ex. `org/repo` |
 | framework | enum(`capacitor`) | figé en MVP — voir non-goals PRD |
 | defaultBranch | string | |
-| platforms | set(`android`, `ios`) | |
-| createdAt / updatedAt | timestamp | |
+| platforms | array(`android`, `ios`) | |
+| createdAt / updatedAt | Firestore Timestamp | |
 
-### BuildConfig
+### Collection `buildConfigs`
 | Champ | Type | Notes |
 |---|---|---|
-| id | uuid | |
-| projectId | uuid (FK) | |
+| id (doc id) | string | |
+| projectId | string (réf. `projects`) | |
 | environment | enum(`staging`, `production`) | |
-| envVars | jsonb (clé/valeur, chiffré au repos) | |
-| platforms | set(`android`, `ios`) | |
+| envVars | map (clé/valeur, chiffré au repos) | |
+| platforms | array(`android`, `ios`) | |
 | autoTriggerBranch | string, nullable | branche déclenchant un build auto sur push |
 
-### Secret
+### Collection `secrets`
 | Champ | Type | Notes |
 |---|---|---|
-| id | uuid | |
-| projectId | uuid (FK) | |
+| id (doc id) | string | |
+| projectId | string (réf. `projects`) | |
 | type | enum(`apple_certificate`, `apple_provisioning_profile`, `apple_asc_api_key`, `android_keystore`) | |
-| encryptedPayload | bytea | chiffré (voir §5 Sécurité) |
-| metadata | jsonb | ex. alias/password ref pour Android, expiresAt pour certs Apple |
-| uploadedAt | timestamp | |
+| encryptedPayload | bytes | chiffré (voir §5 Sécurité) |
+| metadata | map | ex. alias/password ref pour Android, expiresAt pour certs Apple |
+| uploadedAt | Firestore Timestamp | |
 
-### Build
+### Collection `builds`
 | Champ | Type | Notes |
 |---|---|---|
-| id | uuid | |
-| projectId | uuid (FK) | |
-| buildConfigId | uuid (FK) | |
+| id (doc id) | string | |
+| projectId | string (réf. `projects`) | |
+| buildConfigId | string (réf. `buildConfigs`) | |
 | triggeredBy | enum(`manual`, `push`) | |
 | commitSha | string | |
 | branch | string | |
 | platform | enum(`android`, `ios`) | un build = une plateforme (un run "Android + iOS" = 2 Build) |
 | status | enum(`queued`, `running`, `success`, `failed`, `cancelled`) | |
 | githubRunId | string, nullable | id du run GitHub Actions correspondant |
-| startedAt / finishedAt | timestamp, nullable | |
+| startedAt / finishedAt | Firestore Timestamp, nullable | |
 | durationSeconds | int, nullable | |
 | artifactUrl | string, nullable | lien de téléchargement (proxy MobileFlow, pas lien GitHub direct) |
 | logsUrl | string, nullable | |
-| userId | uuid (FK) | qui a déclenché (manuel) ou null si push |
+| userId | string, nullable (réf. `users`) | qui a déclenché (manuel) ou null si push |
 
-**Note** : pas d'entité `Team`/`Membership` en MVP (cf. PRD non-goals) — `Project.userId` est la seule relation de possession.
+**Note** : pas d'entité `Team`/`Membership` en MVP (cf. PRD non-goals) — `Project.userId` est la seule relation de possession. Seule la collection `users` est implémentée à ce stade (Phase 1) ; `projects`/`buildConfigs`/`secrets`/`builds` seront créées aux phases correspondantes (cf. plan.md).
 
 ---
 
@@ -81,6 +83,7 @@ POST   /auth/register                 email + password
 POST   /auth/login
 GET    /auth/oauth/google/callback
 GET    /auth/oauth/github/callback    (login utilisateur, distinct de l'installation GitHub App)
+GET    /auth/me                       profil de l'utilisateur authentifié (hydratation session après redirect OAuth)
 
 GET    /github/install-url            génère l'URL d'installation de la GitHub App
 POST   /github/callback               réception de l'installation_id après consentement

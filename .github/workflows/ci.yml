@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prettier --check "apps/web/src/**/*.{ts,html,css}"
-      - run: npm run web:test -- --run
+      - run: npm run web:test
       - run: npm run web:build
 
   api:
