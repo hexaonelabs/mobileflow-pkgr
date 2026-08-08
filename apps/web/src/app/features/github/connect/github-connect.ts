@@ -1,10 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
 import type { GithubRepo, GithubRequestedPermission } from '../../../core/github/github.models';
+import { ProjectsService } from '../../../core/projects/projects.service';
+import type { Project } from '../../../core/projects/project.models';
 
 @Component({
   selector: 'app-github-connect',
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-4 py-8">
@@ -23,8 +27,22 @@ import type { GithubRepo, GithubRequestedPermission } from '../../../core/github
               @for (repo of list; track repo.fullName) {
                 <li class="flex items-center justify-between gap-2">
                   <span>{{ repo.fullName }}</span>
-                  @if (repo.private) {
-                    <span class="text-xs text-gray-500">Privé</span>
+                  @if (projectIdByRepo().has(repo.fullName)) {
+                    <a
+                      class="rounded border border-gray-400 px-3 py-1 text-sm"
+                      [routerLink]="['/projects', projectIdByRepo().get(repo.fullName)]"
+                    >
+                      Actif
+                    </a>
+                  } @else {
+                    <button
+                      type="button"
+                      class="rounded bg-gray-900 px-3 py-1 text-sm text-white disabled:opacity-50"
+                      [disabled]="activating() === repo.fullName"
+                      (click)="activate(repo)"
+                    >
+                      {{ activating() === repo.fullName ? 'Activation…' : 'Activer' }}
+                    </button>
                   }
                 </li>
               }
@@ -77,6 +95,7 @@ import type { GithubRepo, GithubRequestedPermission } from '../../../core/github
 export class GithubConnect implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly githubService = inject(GithubService);
+  private readonly projectsService = inject(ProjectsService);
 
   protected readonly isConnected = computed(
     () => this.authService.currentUser()?.githubInstallationId != null,
@@ -87,6 +106,12 @@ export class GithubConnect implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly repos = signal<GithubRepo[] | null>(null);
   protected readonly reposError = signal<string | null>(null);
+  protected readonly projects = signal<Project[]>([]);
+  protected readonly activating = signal<string | null>(null);
+
+  protected readonly projectIdByRepo = computed(
+    () => new Map(this.projects().map((project) => [project.githubRepoFullName, project.id])),
+  );
 
   async ngOnInit(): Promise<void> {
     try {
@@ -99,7 +124,12 @@ export class GithubConnect implements OnInit {
 
     if (this.isConnected()) {
       try {
-        this.repos.set(await this.githubService.listRepos());
+        const [repos, projects] = await Promise.all([
+          this.githubService.listRepos(),
+          this.projectsService.list(),
+        ]);
+        this.repos.set(repos);
+        this.projects.set(projects);
       } catch {
         this.reposError.set('Impossible de charger la liste des dépôts.');
       }
@@ -110,6 +140,18 @@ export class GithubConnect implements OnInit {
     const url = this.installUrl();
     if (url) {
       window.location.href = url;
+    }
+  }
+
+  protected async activate(repo: GithubRepo): Promise<void> {
+    this.activating.set(repo.fullName);
+    try {
+      const project = await this.projectsService.create({ githubRepoFullName: repo.fullName });
+      this.projects.update((list) => [...list, project]);
+    } catch {
+      this.reposError.set(`Impossible d'activer ${repo.fullName}.`);
+    } finally {
+      this.activating.set(null);
     }
   }
 }

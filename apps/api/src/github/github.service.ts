@@ -61,6 +61,17 @@ export class GithubService {
     }
   }
 
+  async getBranchHeadSha(userId: string, repoFullName: string, branch: string): Promise<string> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch });
+      return data.commit.sha;
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
   private toHttpException(error: unknown): Error {
     const status = (error as { status?: number } | null)?.status;
     if (status === 404) {

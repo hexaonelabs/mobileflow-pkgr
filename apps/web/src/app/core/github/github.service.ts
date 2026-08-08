@@ -20,4 +20,10 @@ export class GithubService {
   listRepos(): Promise<GithubRepo[]> {
     return firstValueFrom(this.http.get<GithubRepo[]>(`${this.baseUrl}/repos`));
   }
+
+  listBranches(repoFullName: string): Promise<string[]> {
+    return firstValueFrom(
+      this.http.get<string[]>(`${this.baseUrl}/repos/${encodeURIComponent(repoFullName)}/branches`),
+    );
+  }
 }

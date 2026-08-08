@@ -34,5 +34,29 @@ export const routes: Routes = [
         (m) => m.GithubConnectCallback,
       ),
   },
+  {
+    path: 'projects',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/list/projects-list').then((m) => m.ProjectsList),
+  },
+  {
+    path: 'projects/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/detail/project-detail').then((m) => m.ProjectDetail),
+  },
+  {
+    path: 'projects/:id/builds/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/build-new/project-build-new').then((m) => m.ProjectBuildNew),
+  },
+  {
+    path: 'projects/:id/builds',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/builds/project-builds').then((m) => m.ProjectBuilds),
+  },
   { path: '**', redirectTo: '' },
 ];

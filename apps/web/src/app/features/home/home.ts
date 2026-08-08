@@ -21,6 +21,9 @@ import { AuthService } from '../../core/auth/auth.service';
             Connecter GitHub
           }
         </a>
+        <a class="rounded border border-gray-400 px-4 py-2 text-center" routerLink="/projects">
+          Mes projets
+        </a>
       }
       <button type="button" class="rounded border border-gray-400 px-4 py-2" (click)="logout()">
         Se déconnecter
