@@ -36,7 +36,7 @@ describe('AuthService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({
       accessToken: 'jwt-token',
-      user: { id: '1', email: 'a@b.com', plan: 'free' },
+      user: { id: '1', email: 'a@b.com', plan: 'free', githubInstallationId: null },
     });
 
     await loginPromise;
@@ -50,7 +50,10 @@ describe('AuthService', () => {
     const loginPromise = service.login('a@b.com', 'password123');
     httpMock
       .expectOne(`${environment.apiUrl}/auth/login`)
-      .flush({ accessToken: 'jwt-token', user: { id: '1', email: 'a@b.com', plan: 'free' } });
+      .flush({
+        accessToken: 'jwt-token',
+        user: { id: '1', email: 'a@b.com', plan: 'free', githubInstallationId: null },
+      });
     await loginPromise;
 
     service.logout();

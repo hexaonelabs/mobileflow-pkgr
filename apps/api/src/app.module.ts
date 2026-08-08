@@ -4,10 +4,17 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { FirestoreModule } from './firestore/firestore.module';
+import { GithubModule } from './github/github.module';
 import { QueueModule } from './queue/queue.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), FirestoreModule, QueueModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    FirestoreModule,
+    QueueModule,
+    AuthModule,
+    GithubModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

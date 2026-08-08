@@ -20,5 +20,19 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/callback/auth-callback').then((m) => m.AuthCallback),
   },
+  {
+    path: 'github/connect',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/github/connect/github-connect').then((m) => m.GithubConnect),
+  },
+  {
+    path: 'github/connect/callback',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/github/connect-callback/github-connect-callback').then(
+        (m) => m.GithubConnectCallback,
+      ),
+  },
   { path: '**', redirectTo: '' },
 ];

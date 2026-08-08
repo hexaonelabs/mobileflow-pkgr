@@ -38,7 +38,12 @@ export class AuthService {
       updatedAt: now,
     };
     const docRef = await this.users.add(doc);
-    return this.issueSession({ id: docRef.id, email: dto.email, plan: Plan.free });
+    return this.issueSession({
+      id: docRef.id,
+      email: dto.email,
+      plan: Plan.free,
+      githubInstallationId: null,
+    });
   }
 
   async validateEmailPassword(email: string, password: string): Promise<AuthenticatedUser> {
@@ -48,7 +53,12 @@ export class AuthService {
     if (!data?.passwordHash || !(await bcrypt.compare(password, data.passwordHash))) {
       throw new UnauthorizedException('Identifiants invalides.');
     }
-    return { id: doc.id, email: data.email, plan: data.plan };
+    return {
+      id: doc.id,
+      email: data.email,
+      plan: data.plan,
+      githubInstallationId: data.githubInstallationId,
+    };
   }
 
   async findOrCreateOAuthUser(email: string, provider: AuthProvider): Promise<AuthenticatedUser> {
@@ -56,7 +66,12 @@ export class AuthService {
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
       const data = doc.data() as UserDocument;
-      return { id: doc.id, email: data.email, plan: data.plan };
+      return {
+        id: doc.id,
+        email: data.email,
+        plan: data.plan,
+        githubInstallationId: data.githubInstallationId,
+      };
     }
     const now = FieldValue.serverTimestamp();
     const doc: UserDocument = {
@@ -69,7 +84,7 @@ export class AuthService {
       updatedAt: now,
     };
     const docRef = await this.users.add(doc);
-    return { id: docRef.id, email, plan: Plan.free };
+    return { id: docRef.id, email, plan: Plan.free, githubInstallationId: null };
   }
 
   issueSession(user: AuthenticatedUser) {

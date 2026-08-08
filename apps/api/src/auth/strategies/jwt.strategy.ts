@@ -26,6 +26,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
     const data = doc.data() as UserDocument;
-    return { id: doc.id, email: data.email, plan: data.plan };
+    return {
+      id: doc.id,
+      email: data.email,
+      plan: data.plan,
+      githubInstallationId: data.githubInstallationId,
+    };
   }
 }

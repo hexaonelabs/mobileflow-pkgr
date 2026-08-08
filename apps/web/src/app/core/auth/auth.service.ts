@@ -41,6 +41,10 @@ export class AuthService {
 
   async completeOAuthSession(token: string): Promise<void> {
     this.setToken(token);
+    await this.refreshUser();
+  }
+
+  async refreshUser(): Promise<void> {
     const user = await firstValueFrom(this.http.get<AuthUser>(`${this.baseUrl}/me`));
     this.storeUser(user);
   }
