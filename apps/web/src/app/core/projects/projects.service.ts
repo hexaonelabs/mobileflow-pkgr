@@ -6,7 +6,9 @@ import type {
   Build,
   CreateBuildPayload,
   CreateProjectPayload,
+  CreateSecretPayload,
   Project,
+  Secret,
   UpdateProjectPayload,
 } from './project.models';
 
@@ -41,5 +43,21 @@ export class ProjectsService {
 
   createBuild(projectId: string, payload: CreateBuildPayload): Promise<Build[]> {
     return firstValueFrom(this.http.post<Build[]>(`${this.baseUrl}/${projectId}/builds`, payload));
+  }
+
+  listSecrets(projectId: string): Promise<Secret[]> {
+    return firstValueFrom(this.http.get<Secret[]>(`${this.baseUrl}/${projectId}/secrets`));
+  }
+
+  createSecret(projectId: string, payload: CreateSecretPayload): Promise<Secret> {
+    return firstValueFrom(
+      this.http.post<Secret>(`${this.baseUrl}/${projectId}/secrets`, payload),
+    );
+  }
+
+  removeSecret(projectId: string, secretId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.baseUrl}/${projectId}/secrets/${secretId}`),
+    );
   }
 }

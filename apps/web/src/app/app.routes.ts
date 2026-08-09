@@ -58,5 +58,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/projects/builds/project-builds').then((m) => m.ProjectBuilds),
   },
+  {
+    path: 'projects/:id/secrets',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/secrets/project-secrets').then((m) => m.ProjectSecrets),
+  },
   { path: '**', redirectTo: '' },
 ];

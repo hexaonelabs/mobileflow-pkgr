@@ -8,6 +8,7 @@ import { FirestoreModule } from './firestore/firestore.module';
 import { GithubModule } from './github/github.module';
 import { ProjectsModule } from './projects/projects.module';
 import { QueueModule } from './queue/queue.module';
+import { SecretsModule } from './secrets/secrets.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { QueueModule } from './queue/queue.module';
     GithubModule,
     ProjectsModule,
     BuildsModule,
+    SecretsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

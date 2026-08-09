@@ -30,9 +30,12 @@ import type { Project } from '../../../core/projects/project.models';
           >
             Historique des builds
           </a>
-          <span class="rounded border border-gray-200 px-4 py-2 text-gray-400" aria-disabled="true">
-            Secret Vault (bientôt disponible)
-          </span>
+          <a
+            class="rounded border border-gray-400 px-4 py-2 text-center"
+            [routerLink]="['/projects', project.id, 'secrets']"
+          >
+            Secret Vault
+          </a>
         </nav>
 
         <button

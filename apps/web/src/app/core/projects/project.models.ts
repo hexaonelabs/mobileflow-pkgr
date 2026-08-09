@@ -37,3 +37,21 @@ export interface CreateBuildPayload {
   branch: string;
   envVars?: Record<string, string>;
 }
+
+export type SecretType = 'ios_certificate' | 'android_keystore';
+
+export interface Secret {
+  id: string;
+  type: SecretType;
+  fileName: string;
+  createdAt: string;
+}
+
+export interface CreateSecretPayload {
+  type: SecretType;
+  fileName: string;
+  fileBase64: string;
+  password: string;
+  alias?: string;
+  keyPassword?: string;
+}

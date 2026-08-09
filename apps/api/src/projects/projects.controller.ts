@@ -4,6 +4,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { BuildsService } from '../builds/builds.service';
 import { CreateBuildDto } from '../builds/dto/create-build.dto';
+import { CreateSecretDto } from '../secrets/dto/create-secret.dto';
+import { SecretsService } from '../secrets/secrets.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
@@ -16,6 +18,7 @@ export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly buildsService: BuildsService,
+    private readonly secretsService: SecretsService,
   ) {}
 
   @Post()
@@ -55,5 +58,28 @@ export class ProjectsController {
   @Get(':id/builds')
   listBuilds(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.buildsService.findAllForProject(req.user.id, id);
+  }
+
+  @Post(':id/secrets')
+  createSecret(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: CreateSecretDto,
+  ) {
+    return this.secretsService.create(req.user.id, id, dto);
+  }
+
+  @Get(':id/secrets')
+  listSecrets(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.secretsService.findAllForProject(req.user.id, id);
+  }
+
+  @Delete(':id/secrets/:secretId')
+  removeSecret(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('secretId') secretId: string,
+  ) {
+    return this.secretsService.remove(req.user.id, id, secretId);
   }
 }
