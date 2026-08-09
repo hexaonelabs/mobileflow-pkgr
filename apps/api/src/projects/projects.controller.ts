@@ -7,6 +7,7 @@ import { CreateBuildDto } from '../builds/dto/create-build.dto';
 import { CreateSecretDto } from '../secrets/dto/create-secret.dto';
 import { SecretsService } from '../secrets/secrets.service';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { TriggerSetupDto } from './dto/trigger-setup.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsService } from './projects.service';
 
@@ -46,6 +47,25 @@ export class ProjectsController {
     return this.projectsService.remove(req.user.id, id);
   }
 
+  @Get(':id/readiness')
+  getReadiness(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.projectsService.getReadiness(req.user.id, id);
+  }
+
+  @Post(':id/readiness/setup')
+  triggerSetup(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: TriggerSetupDto,
+  ) {
+    return this.projectsService.triggerSetup(req.user.id, id, dto);
+  }
+
+  @Post(':id/workflow/reset')
+  resetBuildWorkflow(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.projectsService.resetBuildWorkflow(req.user.id, id);
+  }
+
   @Post(':id/builds')
   createBuild(
     @Req() req: AuthenticatedRequest,
@@ -58,6 +78,15 @@ export class ProjectsController {
   @Get(':id/builds')
   listBuilds(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.buildsService.findAllForProject(req.user.id, id);
+  }
+
+  @Post(':id/builds/:buildId/refresh')
+  refreshBuild(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('buildId') buildId: string,
+  ) {
+    return this.buildsService.refreshStatus(req.user.id, id, buildId);
   }
 
   @Post(':id/secrets')

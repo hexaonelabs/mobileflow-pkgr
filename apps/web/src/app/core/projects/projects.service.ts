@@ -8,7 +8,9 @@ import type {
   CreateProjectPayload,
   CreateSecretPayload,
   Project,
+  RepoReadiness,
   Secret,
+  SetupTriggerResult,
   UpdateProjectPayload,
 } from './project.models';
 
@@ -37,12 +39,32 @@ export class ProjectsService {
     return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }
 
+  getReadiness(id: string): Promise<RepoReadiness> {
+    return firstValueFrom(this.http.get<RepoReadiness>(`${this.baseUrl}/${id}/readiness`));
+  }
+
+  triggerSetup(id: string, webDir: string): Promise<SetupTriggerResult> {
+    return firstValueFrom(
+      this.http.post<SetupTriggerResult>(`${this.baseUrl}/${id}/readiness/setup`, { webDir }),
+    );
+  }
+
+  resetBuildWorkflow(id: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/${id}/workflow/reset`, {}));
+  }
+
   listBuilds(projectId: string): Promise<Build[]> {
     return firstValueFrom(this.http.get<Build[]>(`${this.baseUrl}/${projectId}/builds`));
   }
 
   createBuild(projectId: string, payload: CreateBuildPayload): Promise<Build[]> {
     return firstValueFrom(this.http.post<Build[]>(`${this.baseUrl}/${projectId}/builds`, payload));
+  }
+
+  refreshBuild(projectId: string, buildId: string): Promise<Build> {
+    return firstValueFrom(
+      this.http.post<Build>(`${this.baseUrl}/${projectId}/builds/${buildId}/refresh`, {}),
+    );
   }
 
   listSecrets(projectId: string): Promise<Secret[]> {

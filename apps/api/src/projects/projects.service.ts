@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
 import { GithubService } from '../github/github.service';
+import { MOBILEFLOW_SETUP_WORKFLOW_FILENAME } from '../github/setup-workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
 import type { CreateProjectDto } from './dto/create-project.dto';
+import type { TriggerSetupDto } from './dto/trigger-setup.dto';
 import type { UpdateProjectDto } from './dto/update-project.dto';
 import { Framework, PROJECTS_COLLECTION, type ProjectDocument } from './project.model';
 
@@ -79,5 +81,90 @@ export class ProjectsService {
   async remove(userId: string, id: string): Promise<void> {
     await this.findOneOwned(userId, id);
     await this.projects.doc(id).delete();
+  }
+
+  async getReadiness(userId: string, id: string) {
+    const project = await this.findOneOwned(userId, id);
+    return this.githubService.getRepoReadiness(userId, project.githubRepoFullName);
+  }
+
+  async triggerSetup(userId: string, id: string, dto: TriggerSetupDto) {
+    const project = await this.findOneOwned(userId, id);
+    const readiness = await this.githubService.getRepoReadiness(userId, project.githubRepoFullName);
+    if (
+      readiness.capacitorInstalled &&
+      readiness.androidPlatformAdded &&
+      readiness.iosPlatformAdded
+    ) {
+      throw new BadRequestException('Ce dépôt est déjà prêt, aucune configuration nécessaire.');
+    }
+
+    const repos = await this.githubService.listRepos(userId);
+    const repo = repos.find((r) => r.fullName === project.githubRepoFullName);
+    if (!repo) {
+      throw new BadRequestException(
+        `Le dépôt "${project.githubRepoFullName}" n'est pas accessible via votre installation GitHub.`,
+      );
+    }
+    const branch = repo.defaultBranch;
+
+    await this.githubService.ensureSetupWorkflowInstalled(
+      userId,
+      project.githubRepoFullName,
+      branch,
+    );
+
+    const setupId = `${id}-${Date.now()}`;
+    const repoSlug =
+      project.githubRepoFullName
+        .split('/')[1]
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]/g, '') || 'app';
+
+    await this.githubService.dispatchWorkflowWithRetry(
+      userId,
+      project.githubRepoFullName,
+      branch,
+      MOBILEFLOW_SETUP_WORKFLOW_FILENAME,
+      {
+        setup_id: setupId,
+        app_name: project.name,
+        app_id: `io.mobileflow.${repoSlug}`,
+        web_dir: dto.webDir,
+        install_capacitor: String(!readiness.capacitorInstalled),
+        add_android: String(!readiness.androidPlatformAdded),
+        add_ios: String(!readiness.iosPlatformAdded),
+      },
+    );
+
+    const runId = await this.githubService.correlateWorkflowRun(
+      userId,
+      project.githubRepoFullName,
+      setupId,
+    );
+
+    return {
+      runId,
+      htmlUrl:
+        runId !== null
+          ? `https://github.com/${project.githubRepoFullName}/actions/runs/${runId}`
+          : null,
+    };
+  }
+
+  async resetBuildWorkflow(userId: string, id: string): Promise<void> {
+    const project = await this.findOneOwned(userId, id);
+    const repos = await this.githubService.listRepos(userId);
+    const repo = repos.find((r) => r.fullName === project.githubRepoFullName);
+    if (!repo) {
+      throw new BadRequestException(
+        `Le dépôt "${project.githubRepoFullName}" n'est pas accessible via votre installation GitHub.`,
+      );
+    }
+    await this.githubService.resetBuildWorkflowToDefault(
+      userId,
+      project.githubRepoFullName,
+      repo.defaultBranch,
+    );
   }
 }

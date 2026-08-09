@@ -34,7 +34,7 @@ export interface BuildDocument {
   commitSha: string;
   envVars: Record<string, string>;
   status: BuildStatus;
-  githubRunId: string | null;
+  githubRunId: number | null;
   startedAt: Timestamp | FieldValue | null;
   finishedAt: Timestamp | FieldValue | null;
   durationSeconds: number | null;

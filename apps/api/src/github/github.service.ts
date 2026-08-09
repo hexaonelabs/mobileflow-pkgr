@@ -4,6 +4,26 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { App as OctokitApp } from 'octokit';
 import { FirestoreService } from '../firestore/firestore.service';
 import { USERS_COLLECTION, type UserDocument } from '../users/user.model';
+import { MOBILEFLOW_SETUP_WORKFLOW_PATH, buildSetupWorkflowYaml } from './setup-workflow-template';
+import { MOBILEFLOW_WORKFLOW_PATH, buildWorkflowYaml } from './workflow-template';
+
+const RUN_DISPATCH_ATTEMPTS = 5;
+const RUN_DISPATCH_RETRY_DELAY_MS = 1500;
+
+export interface WorkflowRunStatus {
+  status: string | null;
+  conclusion: string | null;
+  htmlUrl: string;
+  startedAt: string | null;
+  updatedAt: string;
+}
+
+export interface RepoReadiness {
+  hasPackageJson: boolean;
+  capacitorInstalled: boolean;
+  androidPlatformAdded: boolean;
+  iosPlatformAdded: boolean;
+}
 
 export const GITHUB_APP_REQUESTED_PERMISSIONS = [
   { scope: 'contents:write', label: 'Contenu du dépôt (lecture/écriture)' },
@@ -67,6 +87,298 @@ export class GithubService {
     try {
       const { data } = await octokit.rest.repos.getBranch({ owner, repo, branch });
       return data.commit.sha;
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  // Lecture seule : n'exécute rien, se contente d'inspecter package.json et la présence des
+  // dossiers natifs générés par `npx cap add` pour dire à l'utilisateur ce qu'il lui manque.
+  async getRepoReadiness(userId: string, repoFullName: string): Promise<RepoReadiness> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const packageJson = await this.tryGetJsonFile(octokit, owner, repo, 'package.json');
+      const deps = {
+        ...(packageJson?.dependencies as Record<string, string> | undefined),
+        ...(packageJson?.devDependencies as Record<string, string> | undefined),
+      };
+      const [androidPlatformAdded, iosPlatformAdded] = await Promise.all([
+        this.pathExists(octokit, owner, repo, 'android/app/build.gradle'),
+        this.pathExists(octokit, owner, repo, 'ios/App/Podfile'),
+      ]);
+      return {
+        hasPackageJson: packageJson !== null,
+        capacitorInstalled: '@capacitor/core' in deps,
+        androidPlatformAdded,
+        iosPlatformAdded,
+      };
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  private async tryGetJsonFile(
+    octokit: Awaited<ReturnType<GithubService['getInstallationOctokit']>>,
+    owner: string,
+    repo: string,
+    path: string,
+  ): Promise<Record<string, unknown> | null> {
+    try {
+      const { data } = await octokit.rest.repos.getContent({ owner, repo, path });
+      if (Array.isArray(data) || data.type !== 'file') {
+        return null;
+      }
+      return JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')) as Record<
+        string,
+        unknown
+      >;
+    } catch (error) {
+      if ((error as { status?: number } | null)?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  private async pathExists(
+    octokit: Awaited<ReturnType<GithubService['getInstallationOctokit']>>,
+    owner: string,
+    repo: string,
+    path: string,
+  ): Promise<boolean> {
+    try {
+      await octokit.rest.repos.getContent({ owner, repo, path });
+      return true;
+    } catch (error) {
+      if ((error as { status?: number } | null)?.status === 404) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  // N'installe le fichier que s'il est absent — une fois présent, MobileFlow n'y touche plus
+  // jamais automatiquement, pour que l'utilisateur puisse le personnaliser sans risquer de se
+  // le faire écraser au build suivant (cf. resetWorkflowToDefault pour revenir au template).
+  // GitHub exige que le fichier existe sur la branche ciblée par workflow_dispatch elle-même
+  // (pas seulement sur la branche par défaut), donc on l'installe branche par branche à la demande.
+  async ensureWorkflowInstalled(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+  ): Promise<void> {
+    await this.pushWorkflowFileIfMissing(
+      userId,
+      repoFullName,
+      branch,
+      MOBILEFLOW_WORKFLOW_PATH,
+      buildWorkflowYaml(),
+      'MobileFlow build workflow',
+    );
+  }
+
+  async ensureSetupWorkflowInstalled(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+  ): Promise<void> {
+    await this.pushWorkflowFileIfMissing(
+      userId,
+      repoFullName,
+      branch,
+      MOBILEFLOW_SETUP_WORKFLOW_PATH,
+      buildSetupWorkflowYaml(),
+      'MobileFlow setup workflow',
+    );
+  }
+
+  // Action explicite et destructive (écrase toute personnalisation) : réservée à un bouton
+  // dédié où l'utilisateur confirme vouloir revenir au template MobileFlow par défaut.
+  async resetBuildWorkflowToDefault(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+  ): Promise<void> {
+    await this.forcePushWorkflowFile(
+      userId,
+      repoFullName,
+      branch,
+      MOBILEFLOW_WORKFLOW_PATH,
+      buildWorkflowYaml(),
+      'MobileFlow build workflow',
+    );
+  }
+
+  private async pushWorkflowFileIfMissing(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+    path: string,
+    content: string,
+    label: string,
+  ): Promise<void> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      try {
+        await octokit.rest.repos.getContent({ owner, repo, path, ref: branch });
+        return;
+      } catch (error) {
+        if ((error as { status?: number } | null)?.status !== 404) {
+          throw error;
+        }
+      }
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        branch,
+        message: `chore: install ${label}`,
+        content: Buffer.from(content, 'utf8').toString('base64'),
+      });
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  private async forcePushWorkflowFile(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+    path: string,
+    content: string,
+    label: string,
+  ): Promise<void> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      let sha: string | undefined;
+      try {
+        const { data } = await octokit.rest.repos.getContent({ owner, repo, path, ref: branch });
+        if (!Array.isArray(data) && data.type === 'file') {
+          sha = data.sha;
+        }
+      } catch (error) {
+        if ((error as { status?: number } | null)?.status !== 404) {
+          throw error;
+        }
+      }
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        branch,
+        message: `chore: reset ${label} to default`,
+        content: Buffer.from(content, 'utf8').toString('base64'),
+        sha,
+      });
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  async dispatchWorkflow(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+    workflowFilename: string,
+    inputs: Record<string, string>,
+  ): Promise<void> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      await octokit.rest.actions.createWorkflowDispatch({
+        owner,
+        repo,
+        workflow_id: workflowFilename,
+        ref: branch,
+        inputs,
+      });
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  // Juste après la création/mise à jour d'un fichier workflow, GitHub met parfois quelques
+  // secondes à l'indexer : workflow_dispatch peut répondre 404 pendant cette fenêtre.
+  async dispatchWorkflowWithRetry(
+    userId: string,
+    repoFullName: string,
+    branch: string,
+    workflowFilename: string,
+    inputs: Record<string, string>,
+  ): Promise<void> {
+    for (let attempt = 0; attempt < RUN_DISPATCH_ATTEMPTS; attempt++) {
+      try {
+        await this.dispatchWorkflow(userId, repoFullName, branch, workflowFilename, inputs);
+        return;
+      } catch (error) {
+        const isLastAttempt = attempt === RUN_DISPATCH_ATTEMPTS - 1;
+        if (!(error instanceof NotFoundException) || isLastAttempt) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, RUN_DISPATCH_RETRY_DELAY_MS));
+      }
+    }
+  }
+
+  // GitHub ne renvoie pas l'ID du run au moment du dispatch : on retente la corrélation
+  // quelques secondes, le temps que GitHub enregistre le run déclenché.
+  async correlateWorkflowRun(
+    userId: string,
+    repoFullName: string,
+    runLabel: string,
+  ): Promise<number | null> {
+    for (let attempt = 0; attempt < RUN_DISPATCH_ATTEMPTS; attempt++) {
+      const runId = await this.findWorkflowRunId(userId, repoFullName, runLabel);
+      if (runId !== null) {
+        return runId;
+      }
+      await new Promise((resolve) => setTimeout(resolve, RUN_DISPATCH_RETRY_DELAY_MS));
+    }
+    return null;
+  }
+
+  // GitHub ne renvoie pas l'ID du run au moment du dispatch : on le retrouve en listant les
+  // runs récents et en cherchant le run-name (templaté avec build_id dans le workflow).
+  async findWorkflowRunId(
+    userId: string,
+    repoFullName: string,
+    buildId: string,
+  ): Promise<number | null> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const { data } = await octokit.rest.actions.listWorkflowRunsForRepo({
+        owner,
+        repo,
+        event: 'workflow_dispatch',
+        per_page: 20,
+      });
+      const match = data.workflow_runs.find((run) => run.name?.includes(buildId));
+      return match?.id ?? null;
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  async getWorkflowRun(
+    userId: string,
+    repoFullName: string,
+    runId: number,
+  ): Promise<WorkflowRunStatus> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const { data } = await octokit.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+      return {
+        status: data.status,
+        conclusion: data.conclusion,
+        htmlUrl: data.html_url,
+        startedAt: data.run_started_at ?? null,
+        updatedAt: data.updated_at,
+      };
     } catch (error) {
       throw this.toHttpException(error);
     }

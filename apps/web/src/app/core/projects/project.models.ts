@@ -29,6 +29,9 @@ export interface Build {
   commitSha: string;
   envVars: Record<string, string>;
   status: BuildStatus;
+  githubRunId: number | null;
+  durationSeconds: number | null;
+  logsUrl: string | null;
 }
 
 export interface CreateBuildPayload {
@@ -45,6 +48,18 @@ export interface Secret {
   type: SecretType;
   fileName: string;
   createdAt: string;
+}
+
+export interface RepoReadiness {
+  hasPackageJson: boolean;
+  capacitorInstalled: boolean;
+  androidPlatformAdded: boolean;
+  iosPlatformAdded: boolean;
+}
+
+export interface SetupTriggerResult {
+  runId: number | null;
+  htmlUrl: string | null;
 }
 
 export interface CreateSecretPayload {
