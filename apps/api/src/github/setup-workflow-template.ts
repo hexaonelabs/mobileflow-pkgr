@@ -53,6 +53,13 @@ jobs:
       - name: Add Android platform
         if: \${{ inputs.add_android == 'true' }}
         run: npx cap add android
+      - name: Patch Android Gradle (exclude legacy kotlin-stdlib modules)
+        if: \${{ inputs.add_android == 'true' }}
+        run: |
+          GRADLE_FILE="android/app/build.gradle"
+          if [ -f "$GRADLE_FILE" ] && ! grep -q "kotlin-stdlib-jdk7" "$GRADLE_FILE"; then
+            printf "\\nconfigurations.all {\\n    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'\\n    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'\\n}\\n" >> "$GRADLE_FILE"
+          fi
       - name: Add iOS platform
         if: \${{ inputs.add_ios == 'true' }}
         run: npx cap add ios
