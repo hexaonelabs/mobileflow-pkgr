@@ -2,6 +2,7 @@ import type { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 export const SecretType = {
   ios_certificate: 'ios_certificate',
+  ios_provisioning_profile: 'ios_provisioning_profile',
   android_keystore: 'android_keystore',
 } as const;
 export type SecretType = (typeof SecretType)[keyof typeof SecretType];

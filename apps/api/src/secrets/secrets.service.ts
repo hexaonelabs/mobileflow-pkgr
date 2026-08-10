@@ -2,15 +2,28 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
 import { EncryptionService } from '../crypto/encryption.service';
 import { FirestoreService } from '../firestore/firestore.service';
-import { PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
+import { PROJECTS_COLLECTION, Platform, type ProjectDocument } from '../projects/project.model';
 import type { CreateSecretDto } from './dto/create-secret.dto';
-import { SECRETS_COLLECTION, type SecretDocument } from './secret.model';
+import { SECRETS_COLLECTION, SecretType, type SecretDocument } from './secret.model';
 
 export interface SecretSummary {
   id: string;
   type: SecretDocument['type'];
   fileName: string;
   createdAt: SecretDocument['createdAt'];
+}
+
+interface DecryptedSecretPayload {
+  fileBase64: string;
+  password: string | null;
+  alias: string | null;
+  keyPassword: string | null;
+}
+
+export interface BuildSecretsPayload {
+  androidKeystore: DecryptedSecretPayload | null;
+  iosCertificate: DecryptedSecretPayload | null;
+  iosProvisioningProfile: DecryptedSecretPayload | null;
 }
 
 @Injectable()
@@ -45,7 +58,7 @@ export class SecretsService {
 
     const payload = JSON.stringify({
       fileBase64: dto.fileBase64,
-      password: dto.password,
+      password: dto.password ?? null,
       alias: dto.alias ?? null,
       keyPassword: dto.keyPassword ?? null,
     });
@@ -85,6 +98,45 @@ export class SecretsService {
       throw new NotFoundException('Secret introuvable.');
     }
     await doc.ref.delete();
+  }
+
+  // Réservé à l'endpoint interne (cf. src/internal/) consommé par le run GitHub Actions via
+  // un token de run à courte durée de vie — jamais exposé sur une route authentifiée par JWT
+  // utilisateur (le payload déchiffré ne doit jamais transiter par le navigateur).
+  async getDecryptedForPlatform(
+    userId: string,
+    projectId: string,
+    platform: Platform,
+  ): Promise<BuildSecretsPayload> {
+    const snapshot = await this.secrets.where('projectId', '==', projectId).get();
+    const byType = new Map(
+      snapshot.docs.map((doc) => [doc.data().type as SecretType, doc.data() as SecretDocument]),
+    );
+
+    const decrypt = (doc: SecretDocument | undefined): DecryptedSecretPayload | null => {
+      if (!doc) {
+        return null;
+      }
+      const plaintext = this.encryption.decrypt(userId, {
+        ciphertext: doc.ciphertext,
+        iv: doc.iv,
+        authTag: doc.authTag,
+      });
+      return JSON.parse(plaintext) as DecryptedSecretPayload;
+    };
+
+    if (platform === Platform.android) {
+      return {
+        androidKeystore: decrypt(byType.get(SecretType.android_keystore)),
+        iosCertificate: null,
+        iosProvisioningProfile: null,
+      };
+    }
+    return {
+      androidKeystore: null,
+      iosCertificate: decrypt(byType.get(SecretType.ios_certificate)),
+      iosProvisioningProfile: decrypt(byType.get(SecretType.ios_provisioning_profile)),
+    };
   }
 
   private toMillis(value: SecretDocument['createdAt']): number {

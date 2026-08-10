@@ -13,9 +13,11 @@ export class CreateSecretDto {
   @IsNotEmpty()
   fileBase64!: string;
 
+  // Un provisioning profile (.mobileprovision) n'est pas protégé par mot de passe.
+  @ValidateIf((dto: CreateSecretDto) => dto.type !== SecretType.ios_provisioning_profile)
   @IsString()
   @IsNotEmpty()
-  password!: string;
+  password?: string;
 
   @ValidateIf((dto: CreateSecretDto) => dto.type === SecretType.android_keystore)
   @IsString()

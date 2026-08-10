@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FieldValue } from 'firebase-admin/firestore';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
-import {
-  PROJECTS_COLLECTION,
-  type Platform,
-  type ProjectDocument,
-} from '../projects/project.model';
+import { RunTokensService } from '../internal/run-tokens.service';
+import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
 import { BUILDS_COLLECTION, BuildStatus, TriggeredBy, type BuildDocument } from './build.model';
 import type { CreateBuildDto } from './dto/create-build.dto';
 
@@ -16,6 +14,8 @@ export class BuildsService {
   constructor(
     private readonly firestore: FirestoreService,
     private readonly githubService: GithubService,
+    private readonly runTokensService: RunTokensService,
+    private readonly config: ConfigService,
   ) {}
 
   private get builds() {
@@ -80,12 +80,30 @@ export class BuildsService {
     };
     const ref = await this.builds.add(doc);
 
+    const inputs: Record<string, string> = {
+      build_id: ref.id,
+      environment: dto.environment,
+      platform,
+    };
+    // Le certificat/provisioning profile iOS ne sont jamais committés dans le repo : le run
+    // les récupère à l'exécution via un token de run à courte durée de vie (cf. src/internal/).
+    if (platform === Platform.ios) {
+      const secretsToken = await this.runTokensService.issueToken({
+        buildId: ref.id,
+        projectId,
+        userId,
+        platform,
+      });
+      inputs.secrets_token = secretsToken;
+      inputs.api_url = this.config.getOrThrow<string>('API_URL');
+    }
+
     await this.githubService.dispatchWorkflowWithRetry(
       userId,
       project.githubRepoFullName,
       dto.branch,
       MOBILEFLOW_WORKFLOW_FILENAME,
-      { build_id: ref.id, environment: dto.environment, platform },
+      inputs,
     );
 
     const runId = await this.githubService.correlateWorkflowRun(

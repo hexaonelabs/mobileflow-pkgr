@@ -63,6 +63,13 @@ jobs:
       - name: Add iOS platform
         if: \${{ inputs.add_ios == 'true' }}
         run: npx cap add ios
+      - name: Patch iOS minimum deployment target
+        if: \${{ inputs.add_ios == 'true' }}
+        run: |
+          PODFILE="ios/App/Podfile"
+          if [ -f "$PODFILE" ]; then
+            sed -i -E "s/platform :ios, '[0-9]+\\.[0-9]+'/platform :ios, '16.0'/" "$PODFILE"
+          fi
       - name: Commit generated files
         run: |
           git config user.name "mobileflow-bot"

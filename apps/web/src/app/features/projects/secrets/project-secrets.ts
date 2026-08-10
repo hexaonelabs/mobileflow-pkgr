@@ -23,8 +23,15 @@ function aliasRequiredForAndroidValidator(control: AbstractControl): ValidationE
   return type === 'android_keystore' && !alias.trim() ? { aliasRequired: true } : null;
 }
 
+// Un provisioning profile (.mobileprovision) n'est pas protégé par mot de passe.
+function passwordRequiredValidator(control: AbstractControl): ValidationErrors | null {
+  const { type, password } = control.value as { type: SecretType; password: string };
+  return type !== 'ios_provisioning_profile' && !password.trim() ? { passwordRequired: true } : null;
+}
+
 const SECRET_TYPE_LABELS: Record<SecretType, string> = {
   ios_certificate: 'Certificat iOS (.p12)',
+  ios_provisioning_profile: 'Provisioning profile iOS (.mobileprovision)',
   android_keystore: 'Keystore Android',
 };
 
@@ -85,6 +92,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
               <label class="text-sm font-medium" for="type">Type</label>
               <select id="type" formControlName="type" class="rounded border border-gray-400 px-3 py-2">
                 <option value="ios_certificate">Certificat iOS (.p12)</option>
+                <option value="ios_provisioning_profile">Provisioning profile iOS (.mobileprovision)</option>
                 <option value="android_keystore">Keystore Android</option>
               </select>
             </div>
@@ -95,7 +103,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
                 id="file"
                 #fileInput
                 type="file"
-                [accept]="selectedType() === 'android_keystore' ? '.jks,.keystore' : '.p12'"
+                [accept]="fileAccept()"
                 class="rounded border border-gray-400 px-3 py-2"
                 (change)="onFileChange($event)"
               />
@@ -104,21 +112,23 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
               }
             </div>
 
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium" for="password">
-                {{ selectedType() === 'android_keystore' ? 'Mot de passe du keystore' : 'Mot de passe du certificat' }}
-              </label>
-              <input
-                id="password"
-                type="password"
-                formControlName="password"
-                class="rounded border border-gray-400 px-3 py-2"
-                [attr.aria-invalid]="isPasswordInvalid()"
-              />
-              @if (isPasswordInvalid()) {
-                <p class="text-sm text-red-600" role="alert">Le mot de passe est requis.</p>
-              }
-            </div>
+            @if (selectedType() !== 'ios_provisioning_profile') {
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium" for="password">
+                  {{ selectedType() === 'android_keystore' ? 'Mot de passe du keystore' : 'Mot de passe du certificat' }}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  formControlName="password"
+                  class="rounded border border-gray-400 px-3 py-2"
+                  [attr.aria-invalid]="isPasswordInvalid()"
+                />
+                @if (isPasswordInvalid()) {
+                  <p class="text-sm text-red-600" role="alert">Le mot de passe est requis.</p>
+                }
+              </div>
+            }
 
             @if (selectedType() === 'android_keystore') {
               <div class="flex flex-col gap-1">
@@ -186,17 +196,28 @@ export class ProjectSecrets implements OnInit {
   protected readonly form = this.fb.nonNullable.group(
     {
       type: this.fb.nonNullable.control<SecretType>('ios_certificate', Validators.required),
-      password: ['', Validators.required],
+      password: [''],
       alias: [''],
       keyPassword: [''],
     },
-    { validators: aliasRequiredForAndroidValidator },
+    { validators: [aliasRequiredForAndroidValidator, passwordRequiredValidator] },
   );
 
   private projectId = '';
 
   protected selectedType(): SecretType {
     return this.form.controls.type.value;
+  }
+
+  protected fileAccept(): string {
+    switch (this.selectedType()) {
+      case 'android_keystore':
+        return '.jks,.keystore';
+      case 'ios_provisioning_profile':
+        return '.mobileprovision';
+      default:
+        return '.p12';
+    }
   }
 
   async ngOnInit(): Promise<void> {
@@ -219,8 +240,7 @@ export class ProjectSecrets implements OnInit {
   }
 
   protected isPasswordInvalid(): boolean {
-    const control = this.form.controls.password;
-    return control.invalid && control.touched;
+    return this.form.hasError('passwordRequired') && this.form.controls.password.touched;
   }
 
   protected isAliasInvalid(): boolean {
@@ -267,7 +287,7 @@ export class ProjectSecrets implements OnInit {
         type,
         fileName: file.name,
         fileBase64: file.base64,
-        password,
+        password: type === 'ios_provisioning_profile' ? undefined : password,
         alias: type === 'android_keystore' ? alias : undefined,
         keyPassword: keyPassword.trim() ? keyPassword : undefined,
       });

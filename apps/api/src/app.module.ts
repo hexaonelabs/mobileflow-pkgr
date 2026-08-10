@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { BuildsModule } from './builds/builds.module';
 import { FirestoreModule } from './firestore/firestore.module';
 import { GithubModule } from './github/github.module';
+import { InternalModule } from './internal/internal.module';
 import { ProjectsModule } from './projects/projects.module';
 import { QueueModule } from './queue/queue.module';
 import { SecretsModule } from './secrets/secrets.module';
@@ -20,6 +21,7 @@ import { SecretsModule } from './secrets/secrets.module';
     ProjectsModule,
     BuildsModule,
     SecretsModule,
+    InternalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
