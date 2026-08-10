@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
 
 const stripeLink =
   import.meta.env.PUBLIC_STRIPE_PAYMENT_LINK ?? 'https://buy.stripe.com/REPLACE_WITH_YOUR_LINK';
@@ -33,15 +34,17 @@ const perks = [
           Get MobileFlow for life
         </h1>
         <p class="mx-auto mt-6 max-w-xl text-lg text-neutral-600">
-          We're opening early access to a small group of developers. This is a one-time founding
-          price — once MobileFlow launches publicly, pricing moves to a recurring subscription.
-          Everyone who joins now keeps lifetime access, no subscription, ever.
+          We're capping founding access at {FOUNDER_SPOTS} developers, total. This is a one-time founding
+          price — once MobileFlow launches publicly, pricing moves to a recurring subscription. Everyone
+          who joins now keeps lifetime access, no subscription, ever.
         </p>
 
         <div
           class="mx-auto mt-10 inline-flex items-baseline gap-2 rounded-2xl border border-neutral-200 px-8 py-6"
         >
-          <span class="text-5xl font-extrabold tracking-tight text-neutral-900">CHF 250</span>
+          <span class="text-5xl font-extrabold tracking-tight text-neutral-900"
+            >CHF {FOUNDER_PRICE_CHF}</span
+          >
           <span class="text-sm text-neutral-500">one-time · lifetime access</span>
         </div>
 
@@ -102,9 +105,9 @@ const perks = [
         <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left">
           <p class="text-sm font-semibold text-amber-900">MobileFlow is still under development</p>
           <p class="mt-1.5 text-sm text-amber-800">
-            If you don't have access to the product by <strong>December 31, 2026</strong>, we'll
-            refund your CHF 250 in full — no questions asked. Card payments are refunded via Stripe;
-            crypto payments are sent back to the wallet you paid from.
+            If you don't have access to the product by <strong>{ACCESS_DEADLINE}</strong>, we'll
+            refund your CHF {FOUNDER_PRICE_CHF} in full — no questions asked. Card payments are refunded
+            via Stripe; crypto payments are sent back to the wallet you paid from.
           </p>
         </div>
 

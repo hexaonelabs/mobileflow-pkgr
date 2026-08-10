@@ -1,8 +1,10 @@
 ---
+import Logo from './Logo.astro';
+
 const navLinks = [
-  { href: '#features', label: 'Features' },
-  { href: '#how-it-works', label: 'How it works' },
-  { href: '#why-mobileflow', label: 'Why MobileFlow' },
+  { href: '/#features', label: 'Features' },
+  { href: '/#how-it-works', label: 'How it works' },
+  { href: '/#why-mobileflow', label: 'Why MobileFlow' },
 ];
 ---
 
@@ -11,7 +13,10 @@ const navLinks = [
   class="sticky top-0 z-40 border-b border-transparent bg-white/80 backdrop-blur-md transition-colors data-[scrolled=true]:border-neutral-200"
 >
   <nav aria-label="Primary" class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a href="/" class="text-lg font-bold tracking-tight text-neutral-900"> MobileFlow </a>
+    <a href="/" class="flex items-center gap-2 text-lg font-bold tracking-tight text-neutral-900">
+      <Logo class="h-7 w-7" />
+      <span>MobileFlow</span>
+    </a>
 
     <ul class="hidden items-center gap-8 md:flex">
       {
@@ -31,7 +36,7 @@ const navLinks = [
     <div class="hidden items-center gap-3 md:flex">
       <a
         href="/early-access"
-        class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
       >
         Get lifetime access
       </a>

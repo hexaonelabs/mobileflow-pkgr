@@ -1,0 +1,76 @@
+---
+const painPoints = [
+  {
+    title: "You don't own a Mac",
+    description:
+      "iOS builds require Xcode, which means macOS. Renting cloud Macs or borrowing a teammate's laptop turns every release into a favor you have to ask for.",
+    icon: '<rect x="6" y="4" width="12" height="14" rx="1.5" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="18" x2="12" y2="20" /><line x1="4.5" y1="15.5" x2="19.5" y2="15.5" />',
+  },
+  {
+    title: 'Signing is a minefield',
+    description:
+      'Provisioning profiles expire without warning. Keystores get emailed around, misplaced, or forgotten — and losing an Android keystore means you can never update that app again.',
+    icon: '<circle cx="9.5" cy="14.5" r="3" /><line x1="11.6" y1="12.4" x2="19.5" y2="4.5" /><line x1="16.5" y1="7.5" x2="19" y2="10" /><line x1="14" y1="10" x2="16" y2="12" />',
+  },
+  {
+    title: 'Every release eats an afternoon',
+    description:
+      'Build locally, wait, fix a version mismatch, build again, upload manually. Multiply that by every platform, every release.',
+    icon: '<circle cx="12" cy="12.5" r="8" /><line x1="12" y1="7.5" x2="12" y2="12.5" /><line x1="12" y1="12.5" x2="15.5" y2="14.5" /><line x1="9" y1="2.5" x2="15" y2="2.5" />',
+  },
+  {
+    title: "You can't tell what broke",
+    description:
+      'A red X in CI with three lines of log output. No history, no context, no idea if the last five builds even worked.',
+    icon: '<circle cx="12" cy="12" r="8.5" /><line x1="12" y1="8" x2="12" y2="13" /><circle cx="12" cy="16.2" r="0.9" fill="currentColor" stroke="none" />',
+  },
+];
+---
+
+<section class="bg-neutral-50 py-24 sm:py-32">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl" data-reveal>
+      <p class="text-accent-600 inline-flex items-center gap-2 text-sm font-semibold">
+        <span class="bg-accent-600 inline-block h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+        The problem
+      </p>
+      <h2 class="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+        Shipping a Capacitor app shouldn't feel like this
+      </h2>
+      <p class="mt-4 text-lg text-neutral-600">
+        If any of this sounds familiar, it's not you — mobile delivery was never built for teams
+        that live in GitHub.
+      </p>
+    </div>
+
+    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        painPoints.map((point, i) => (
+          <div
+            class="rounded-xl border border-neutral-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+            data-reveal
+            style={`--reveal-delay: ${i * 80}ms`}
+          >
+            <div
+              class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-500"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                set:html={point.icon}
+              />
+            </div>
+            <h3 class="text-base font-semibold text-neutral-900">{point.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-neutral-600">{point.description}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

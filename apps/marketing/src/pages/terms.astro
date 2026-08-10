@@ -1,5 +1,6 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
+import { FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
 
 const lastUpdated = 'August 10, 2026';
 ---
@@ -32,12 +33,11 @@ const lastUpdated = 'August 10, 2026';
 
   <h2>Early access &amp; refund guarantee</h2>
   <p>
-    MobileFlow is still under active development. Early access purchased for CHF 250 grants lifetime
-    access once the product is available. If we have not granted you product access by <strong
-      >December 31, 2026</strong
-    >, we will refund your CHF 250 in full, no questions asked. Card payments are refunded via
-    Stripe to the original payment method; crypto payments are refunded to the wallet address the
-    payment was sent from.
+    MobileFlow is still under active development. Early access purchased for CHF {FOUNDER_PRICE_CHF}
+    grants lifetime access once the product is available. If we have not granted you product access by
+    <strong>{ACCESS_DEADLINE}</strong>, we will refund your CHF {FOUNDER_PRICE_CHF} in full, no questions
+    asked. Card payments are refunded via Stripe to the original payment method; crypto payments are refunded
+    to the wallet address the payment was sent from.
   </p>
 
   <h2>Signing secrets</h2>

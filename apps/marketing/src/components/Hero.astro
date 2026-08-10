@@ -1,7 +1,8 @@
 <section class="relative overflow-hidden pt-20 pb-24 sm:pt-28 sm:pb-32">
   <div
     aria-hidden="true"
-    class="from-accent-100 pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[480px] bg-gradient-to-b to-white blur-3xl"
+    class="from-accent-100 animate-float pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[480px] bg-gradient-to-b to-white blur-3xl"
+    style="animation-duration: 8s"
   >
   </div>
 
@@ -22,13 +23,13 @@
       <div class="mt-10 flex flex-col gap-4 sm:flex-row">
         <a
           href="/early-access"
-          class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-6 py-3 text-center text-base font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-6 py-3 text-center text-base font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
         >
           Get lifetime access — CHF 250
         </a>
         <a
           href="#how-it-works"
-          class="focus-visible:ring-accent-600 rounded-full border border-neutral-300 px-6 py-3 text-center text-base font-semibold text-neutral-800 transition-colors hover:bg-neutral-50 focus-visible:ring-2 focus-visible:outline-none"
+          class="focus-visible:ring-accent-600 rounded-full border border-neutral-300 px-6 py-3 text-center text-base font-semibold text-neutral-800 transition-all duration-150 hover:-translate-y-0.5 hover:bg-neutral-50 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
         >
           See how it works
         </a>
@@ -48,22 +49,41 @@
             <span class="h-2.5 w-2.5 rounded-full bg-yellow-500/80"></span>
             <span class="h-2.5 w-2.5 rounded-full bg-green-500/80"></span>
           </div>
-          <p class="text-neutral-400">$ git push origin main</p>
-          <p class="mt-2 text-neutral-400">→ MobileFlow build #128 triggered</p>
+          <p class="text-neutral-400">
+            $ git push origin main<span class="animate-blink" aria-hidden="true">▌</span>
+          </p>
+          <p class="animate-fade-in-up mt-2 text-neutral-400" style="--reveal-delay: 300ms">
+            → MobileFlow build #128 triggered
+          </p>
           <ul class="mt-4 space-y-2">
-            <li class="flex items-center gap-2 text-green-400">
+            <li
+              class="animate-fade-in-up flex items-center gap-2 text-green-400"
+              style="--reveal-delay: 600ms"
+            >
               <span aria-hidden="true">✓</span> Fetch repository
             </li>
-            <li class="flex items-center gap-2 text-green-400">
+            <li
+              class="animate-fade-in-up flex items-center gap-2 text-green-400"
+              style="--reveal-delay: 900ms"
+            >
               <span aria-hidden="true">✓</span> Install dependencies
             </li>
-            <li class="flex items-center gap-2 text-green-400">
+            <li
+              class="animate-fade-in-up flex items-center gap-2 text-green-400"
+              style="--reveal-delay: 1200ms"
+            >
               <span aria-hidden="true">✓</span> Build Android (release)
             </li>
-            <li class="flex items-center gap-2 text-green-400">
+            <li
+              class="animate-fade-in-up flex items-center gap-2 text-green-400"
+              style="--reveal-delay: 1500ms"
+            >
               <span aria-hidden="true">✓</span> Sign with Secret Vault keystore
             </li>
-            <li class="flex items-center gap-2 font-semibold text-white">
+            <li
+              class="animate-fade-in-up flex items-center gap-2 font-semibold text-white"
+              style="--reveal-delay: 1800ms"
+            >
               <span aria-hidden="true">●</span> Artifact ready — app-release.aab
             </li>
           </ul>
@@ -71,7 +91,7 @@
       </div>
 
       <div
-        class="absolute -right-6 -bottom-6 hidden rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-lg sm:block"
+        class="animate-float absolute -right-6 -bottom-6 hidden rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-lg sm:block"
       >
         <p class="text-xs font-medium text-neutral-500">Build time</p>
         <p class="text-accent-600 text-2xl font-bold">3m 42s</p>

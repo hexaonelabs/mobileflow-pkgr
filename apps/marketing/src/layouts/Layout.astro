@@ -38,6 +38,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
   </head>
   <body class="bg-white text-neutral-900 antialiased">
     <a
@@ -47,5 +50,25 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
       Skip to content
     </a>
     <slot />
+
+    <script>
+      const revealTargets = document.querySelectorAll('[data-reveal]');
+
+      if (revealTargets.length > 0) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                observer.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
+        );
+
+        revealTargets.forEach((target) => observer.observe(target));
+      }
+    </script>
   </body>
 </html>

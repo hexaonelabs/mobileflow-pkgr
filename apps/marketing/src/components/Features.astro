@@ -4,41 +4,68 @@ const features = [
     title: 'Connect GitHub',
     description:
       'Authorize the MobileFlow GitHub App, pick a repo and branch, and revoke access at any time. No manual code uploads.',
+    icon: '<path d="M9 15l6-6" /><path d="M8 12l-1.5 1.5a3 3 0 0 0 4.2 4.2L12 16" /><path d="M16 12l1.5-1.5a3 3 0 0 0-4.2-4.2L12 8" />',
   },
   {
     title: 'Automatic builds on push',
     description:
       'Every push to your configured branch triggers a build automatically. Redundant runs are cancelled, and manual builds are always one click away.',
+    icon: '<path d="M13 3 5 14h6l-1 7 8-11h-6z" />',
   },
   {
     title: 'Secret Vault',
     description:
       'Upload your certificates and keystore once. They stay encrypted at rest and are never exposed to the client — reused securely on every run.',
+    icon: '<rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />',
   },
   {
     title: 'Signed binaries & history',
     description:
       'Get signed Android and iOS binaries out of every build, with a full history of status, duration, commit, and branch.',
+    icon: '<path d="M12 3 19 6v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" /><path d="M9 12l2 2 4-4" />',
   },
 ];
 ---
 
 <section id="features" class="py-24 sm:py-32">
   <div class="mx-auto max-w-6xl px-6">
-    <div class="max-w-2xl">
-      <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-        Everything you need to ship
+    <div class="max-w-2xl" data-reveal>
+      <p class="text-accent-600 inline-flex items-center gap-2 text-sm font-semibold">
+        <span class="bg-accent-600 inline-block h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+        The fix
+      </p>
+      <h2 class="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+        All four problems, solved by one push
       </h2>
       <p class="mt-4 text-lg text-neutral-600">
-        MobileFlow handles the parts of mobile delivery that used to require a Mac, a certificate
-        manager, and a lot of patience.
+        MobileFlow replaces the Mac, the manual signing, and the black-box CI with one pipeline that
+        starts the moment you push to GitHub.
       </p>
     </div>
 
     <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {
-        features.map((feature) => (
-          <div class="rounded-xl border border-neutral-200 p-6 transition-shadow hover:shadow-md">
+        features.map((feature, i) => (
+          <div
+            class="rounded-xl border border-neutral-200 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+            data-reveal
+            style={`--reveal-delay: ${i * 80}ms`}
+          >
+            <div
+              class="bg-accent-50 text-accent-600 mb-4 flex h-10 w-10 items-center justify-center rounded-lg"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                set:html={feature.icon}
+              />
+            </div>
             <h3 class="text-base font-semibold text-neutral-900">{feature.title}</h3>
             <p class="mt-2 text-sm leading-relaxed text-neutral-600">{feature.description}</p>
           </div>

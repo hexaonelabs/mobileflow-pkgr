@@ -11,22 +11,31 @@ const benefits = [
 
 <section id="why-mobileflow" class="py-24 sm:py-32">
   <div class="mx-auto max-w-6xl px-6">
-    <div class="max-w-2xl">
-      <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-        Why teams choose MobileFlow
+    <div class="max-w-2xl" data-reveal>
+      <p class="text-accent-600 inline-flex items-center gap-2 text-sm font-semibold">
+        <span class="bg-accent-600 inline-block h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+        Why us
+      </p>
+      <h2 class="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+        Built by developers tired of the old way
       </h2>
       <p class="mt-4 text-lg text-neutral-600">
-        A cloud delivery pipeline built for developers who'd rather ship than manage infrastructure.
+        No black-box build farm, no vendor lock-in, no infrastructure to babysit — just a pipeline
+        that respects the GitHub workflow you already trust.
       </p>
     </div>
 
     <ul class="mt-14 grid gap-x-8 gap-y-6 sm:grid-cols-2">
       {
-        benefits.map((benefit) => (
-          <li class="flex gap-3 text-neutral-700">
+        benefits.map((benefit, i) => (
+          <li
+            class="group flex gap-3 text-neutral-700"
+            data-reveal
+            style={`--reveal-delay: ${i * 60}ms`}
+          >
             <svg
               aria-hidden="true"
-              class="text-accent-600 mt-0.5 h-5 w-5 flex-none"
+              class="text-accent-600 mt-0.5 h-5 w-5 flex-none transition-transform duration-200 group-hover:scale-110"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

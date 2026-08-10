@@ -13,13 +13,17 @@ const statusStyles: Record<string, string> = {
 
 <section class="bg-neutral-50 py-24 sm:py-32">
   <div class="mx-auto grid max-w-6xl items-center gap-16 px-6 lg:grid-cols-2">
-    <div>
-      <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-        Every build, fully traceable
+    <div data-reveal>
+      <p class="text-accent-600 inline-flex items-center gap-2 text-sm font-semibold">
+        <span class="bg-accent-600 inline-block h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+        Visibility
+      </p>
+      <h2 class="mt-2 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+        No more "did it even build?"
       </h2>
       <p class="mt-4 text-lg text-neutral-600">
-        See the status, duration, commit, and branch for every build — with logs available as soon
-        as a run completes.
+        See the status, duration, commit, and branch for every build — with full logs available the
+        moment a run completes. No more guessing whether last night's release actually shipped.
       </p>
       <a
         href="#why-mobileflow"
@@ -42,7 +46,11 @@ const statusStyles: Record<string, string> = {
       </a>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <div
+      class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
+      data-reveal
+      style="--reveal-delay: 100ms"
+    >
       <table class="w-full text-left text-sm">
         <caption class="sr-only">Recent build history</caption>
         <thead class="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
@@ -56,7 +64,7 @@ const statusStyles: Record<string, string> = {
         <tbody class="divide-y divide-neutral-100">
           {
             builds.map((build) => (
-              <tr>
+              <tr class="transition-colors duration-150 hover:bg-neutral-50">
                 <td class="px-5 py-4 font-medium text-neutral-900">{build.branch}</td>
                 <td class="px-5 py-4 font-mono text-neutral-500">{build.commit}</td>
                 <td class="px-5 py-4">
