@@ -1,0 +1,26 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+
+const contactEmail = 'hello@mobileflow.dev';
+---
+
+<PageLayout
+  title="Contact"
+  description="Get in touch with the MobileFlow team for support, sales, or partnership questions."
+  eyebrow="Contact"
+>
+  <p>
+    Whether you're stuck on a build, curious about the roadmap, or exploring MobileFlow for your
+    team — we'd like to hear from you.
+  </p>
+  <h2>Support &amp; general questions</h2>
+  <p>
+    Email us at <a href={`mailto:${contactEmail}`}>{contactEmail}</a> and we'll get back to you as soon
+    as we can.
+  </p>
+  <h2>Company</h2>
+  <p>
+    MobileFlow is built by
+    <a href="https://hexaonelabs.com/" target="_blank" rel="noopener noreferrer">HexaOne Labs</a>.
+  </p>
+</PageLayout>

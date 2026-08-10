@@ -1,0 +1,49 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+
+const entries = [
+  {
+    version: 'MVP',
+    items: [
+      'Connect a GitHub repository and branch via the MobileFlow GitHub App.',
+      'Configure build platform, environment variables, and signing secrets once per project.',
+      'Trigger builds automatically on push, or manually from the dashboard.',
+      'Store certificates and keystores encrypted at rest in the Secret Vault.',
+      'Download signed Android and iOS binaries with full build history and logs.',
+    ],
+  },
+];
+
+const upcoming = [
+  'Automatic deployment to the App Store and Google Play',
+  'Real-time build log streaming',
+  'Proactive alerts before Apple certificates expire',
+  'Team management with roles and invitations',
+  'Slack and Discord notifications',
+];
+---
+
+<PageLayout
+  title="Changelog"
+  description="What's shipped in MobileFlow, and what's coming next."
+  eyebrow="Changelog"
+>
+  {
+    entries.map((entry) => (
+      <>
+        <h2>{entry.version}</h2>
+        <ul>
+          {entry.items.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      </>
+    ))
+  }
+
+  <h2>Coming next</h2>
+  <p>Not shipped yet, but on the roadmap:</p>
+  <ul>
+    {upcoming.map((item) => <li>{item}</li>)}
+  </ul>
+</PageLayout>

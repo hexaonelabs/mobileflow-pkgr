@@ -1,0 +1,66 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+
+const lastUpdated = 'August 10, 2026';
+---
+
+<PageLayout
+  title="Privacy Policy"
+  description="How MobileFlow collects, stores, and protects your data."
+  eyebrow="Legal"
+>
+  <p>Last updated: {lastUpdated}</p>
+
+  <p>
+    MobileFlow is built by HexaOne Labs ("we", "us"). This policy explains what data we collect when
+    you use MobileFlow and how we handle it.
+  </p>
+
+  <h2>Data we collect</h2>
+  <ul>
+    <li>Account information: your email address and authentication details.</li>
+    <li>
+      GitHub data: the repositories and branches you authorize via the MobileFlow GitHub App, and
+      metadata needed to trigger and track builds (commits, branches, run status).
+    </li>
+    <li>
+      Signing secrets: certificates, provisioning profiles, and keystores you upload to the Secret
+      Vault, used solely to sign your own builds.
+    </li>
+    <li>Build artifacts and logs generated when your app is compiled.</li>
+  </ul>
+
+  <h2>How we protect it</h2>
+  <p>
+    Secrets are encrypted at rest and transmitted over TLS. They are never exposed to the client and
+    are only decrypted transiently, scoped to the run that needs them. Data is hosted in the EU to
+    align with GDPR data residency requirements.
+  </p>
+
+  <h2>Sub-processors</h2>
+  <p>
+    We rely on a small number of infrastructure providers to operate MobileFlow, including GitHub
+    (repository access and Actions execution) and our cloud hosting and storage providers. Formal
+    data processing agreements with each sub-processor are maintained as part of our ongoing
+    compliance work.
+  </p>
+
+  <h2>Your responsibility for keystores</h2>
+  <p>
+    Android keystores you upload cannot be recovered by us if lost — losing your keystore means you
+    will be unable to publish updates to an existing app listing. We strongly recommend keeping an
+    independent backup.
+  </p>
+
+  <h2>Retention</h2>
+  <p>
+    We retain build artifacts, logs, and secrets for as long as your project remains active, or
+    until you delete them. You can revoke MobileFlow's GitHub access and remove stored secrets at
+    any time.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about this policy? <a href="/contact">Contact us</a>.
+  </p>
+</PageLayout>

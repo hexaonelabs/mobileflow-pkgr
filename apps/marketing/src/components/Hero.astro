@@ -1,0 +1,81 @@
+<section class="relative overflow-hidden pt-20 pb-24 sm:pt-28 sm:pb-32">
+  <div
+    aria-hidden="true"
+    class="from-accent-100 pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[480px] bg-gradient-to-b to-white blur-3xl"
+  >
+  </div>
+
+  <div class="mx-auto grid max-w-6xl items-center gap-16 px-6 lg:grid-cols-2">
+    <div>
+      <p
+        class="text-accent-700 bg-accent-50 mb-6 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+      >
+        Now building Capacitor apps in the cloud
+      </p>
+      <h1 class="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
+        Ship mobile apps <span class="text-accent-600">without a Mac</span>
+      </h1>
+      <p class="mt-6 max-w-xl text-lg text-neutral-600">
+        Connect your GitHub repo and MobileFlow builds, signs, and delivers your Capacitor app for
+        Android and iOS — automatically, on every push. No Xcode, no Android Studio, no local setup.
+      </p>
+      <div class="mt-10 flex flex-col gap-4 sm:flex-row">
+        <a
+          href="/early-access"
+          class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-6 py-3 text-center text-base font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Get lifetime access — CHF 250
+        </a>
+        <a
+          href="#how-it-works"
+          class="focus-visible:ring-accent-600 rounded-full border border-neutral-300 px-6 py-3 text-center text-base font-semibold text-neutral-800 transition-colors hover:bg-neutral-50 focus-visible:ring-2 focus-visible:outline-none"
+        >
+          See how it works
+        </a>
+      </div>
+      <p class="mt-6 text-sm text-neutral-500">
+        Founding price: CHF 250 once. Future access is subscription-only.
+      </p>
+    </div>
+
+    <div class="relative">
+      <div
+        class="rounded-2xl border border-neutral-200 bg-white p-2 shadow-xl shadow-neutral-200/60"
+      >
+        <div class="rounded-xl bg-neutral-900 p-5 font-mono text-sm text-neutral-200">
+          <div class="mb-4 flex items-center gap-1.5" aria-hidden="true">
+            <span class="h-2.5 w-2.5 rounded-full bg-red-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-yellow-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-green-500/80"></span>
+          </div>
+          <p class="text-neutral-400">$ git push origin main</p>
+          <p class="mt-2 text-neutral-400">→ MobileFlow build #128 triggered</p>
+          <ul class="mt-4 space-y-2">
+            <li class="flex items-center gap-2 text-green-400">
+              <span aria-hidden="true">✓</span> Fetch repository
+            </li>
+            <li class="flex items-center gap-2 text-green-400">
+              <span aria-hidden="true">✓</span> Install dependencies
+            </li>
+            <li class="flex items-center gap-2 text-green-400">
+              <span aria-hidden="true">✓</span> Build Android (release)
+            </li>
+            <li class="flex items-center gap-2 text-green-400">
+              <span aria-hidden="true">✓</span> Sign with Secret Vault keystore
+            </li>
+            <li class="flex items-center gap-2 font-semibold text-white">
+              <span aria-hidden="true">●</span> Artifact ready — app-release.aab
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div
+        class="absolute -right-6 -bottom-6 hidden rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-lg sm:block"
+      >
+        <p class="text-xs font-medium text-neutral-500">Build time</p>
+        <p class="text-accent-600 text-2xl font-bold">3m 42s</p>
+      </div>
+    </div>
+  </div>
+</section>

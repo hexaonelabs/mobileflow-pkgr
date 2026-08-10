@@ -1,0 +1,106 @@
+---
+const navLinks = [
+  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How it works' },
+  { href: '#why-mobileflow', label: 'Why MobileFlow' },
+];
+---
+
+<header
+  id="site-header"
+  class="sticky top-0 z-40 border-b border-transparent bg-white/80 backdrop-blur-md transition-colors data-[scrolled=true]:border-neutral-200"
+>
+  <nav aria-label="Primary" class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <a href="/" class="text-lg font-bold tracking-tight text-neutral-900"> MobileFlow </a>
+
+    <ul class="hidden items-center gap-8 md:flex">
+      {
+        navLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="focus-visible:ring-accent-600 rounded-sm text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="hidden items-center gap-3 md:flex">
+      <a
+        href="/early-access"
+        class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      >
+        Get lifetime access
+      </a>
+    </div>
+
+    <button
+      type="button"
+      id="mobile-menu-button"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      class="focus-visible:ring-accent-600 -mr-2 rounded-md p-2 text-neutral-700 focus-visible:ring-2 focus-visible:outline-none md:hidden"
+    >
+      <span class="sr-only">Open main menu</span>
+      <svg
+        aria-hidden="true"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="1.8"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"></path>
+      </svg>
+    </button>
+  </nav>
+
+  <div id="mobile-menu" class="hidden border-t border-neutral-200 bg-white md:hidden">
+    <ul class="flex flex-col gap-1 px-6 py-4">
+      {
+        navLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="focus-visible:ring-accent-600 block rounded-md px-2 py-2 text-base font-medium text-neutral-700 hover:bg-neutral-50 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+      <li class="mt-2 flex flex-col gap-2 border-t border-neutral-200 pt-4">
+        <a
+          href="/early-access"
+          class="bg-accent-600 focus-visible:ring-accent-600 rounded-full px-4 py-2 text-center text-base font-semibold text-white focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Get lifetime access
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById('site-header');
+  const menuButton = document.getElementById('mobile-menu-button');
+  const menu = document.getElementById('mobile-menu');
+
+  const onScroll = (): void => {
+    header?.setAttribute('data-scrolled', window.scrollY > 4 ? 'true' : 'false');
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  menuButton?.addEventListener('click', () => {
+    const expanded = menuButton.getAttribute('aria-expanded') === 'true';
+    menuButton.setAttribute('aria-expanded', String(!expanded));
+    menu?.classList.toggle('hidden', expanded);
+  });
+</script>

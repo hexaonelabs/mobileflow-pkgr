@@ -1,0 +1,43 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+
+const components = [
+  'Dashboard',
+  'GitHub integration',
+  'Build pipeline (Android)',
+  'Build pipeline (iOS)',
+  'Secret Vault',
+];
+---
+
+<PageLayout
+  title="Status"
+  description="Current operational status of MobileFlow's dashboard, GitHub integration, build pipeline, and Secret Vault."
+  eyebrow="Status"
+>
+  <div
+    class="not-prose flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-4"
+  >
+    <span class="h-2.5 w-2.5 flex-none rounded-full bg-green-500" aria-hidden="true"></span>
+    <p class="text-sm font-medium text-green-800">All systems operational</p>
+  </div>
+
+  <ul class="not-prose mt-8 divide-y divide-neutral-200 rounded-xl border border-neutral-200">
+    {
+      components.map((name) => (
+        <li class="flex items-center justify-between px-5 py-4">
+          <span class="text-sm font-medium text-neutral-900">{name}</span>
+          <span class="inline-flex items-center gap-2 text-sm text-green-700">
+            <span class="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
+            Operational
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <p class="mt-8 text-sm text-neutral-500">
+    Build times depend in part on GitHub Actions runner availability, which is outside MobileFlow's
+    direct control. Questions about an outage? <a href="/contact">Contact us</a>.
+  </p>
+</PageLayout>

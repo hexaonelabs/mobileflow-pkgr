@@ -1,0 +1,35 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  title="About MobileFlow"
+  description="MobileFlow is built by HexaOne Labs to remove the Mac, Xcode, and certificate hassle from shipping Capacitor apps."
+  eyebrow="About us"
+>
+  <p>
+    Publishing a mobile app shouldn't require a Mac, Xcode, Android Studio, and a personal
+    relationship with your certificate manager. That barrier is disproportionate to the actual
+    difficulty of building the app itself — and it's the problem MobileFlow exists to remove.
+  </p>
+  <p>
+    MobileFlow connects to your GitHub repository, compiles your Capacitor app for Android and iOS
+    using GitHub Actions, signs the binaries with the certificates you upload once to the Secret
+    Vault, and hands you back the artifact. No local install, no manual certificate juggling on
+    every release.
+  </p>
+  <h2>Who it's for</h2>
+  <ul>
+    <li>Freelancers shipping client apps who don't want to maintain a Mac.</li>
+    <li>Small agencies automating builds across several apps at once.</li>
+    <li>Web developers — Angular, React, Ionic — without native mobile tooling on hand.</li>
+  </ul>
+  <h2>Built by HexaOne Labs</h2>
+  <p>
+    MobileFlow is designed and built by <a
+      href="https://hexaonelabs.com/"
+      target="_blank"
+      rel="noopener noreferrer">HexaOne Labs</a
+    >. Have a question about the product or the team? <a href="/contact">Get in touch</a>.
+  </p>
+</PageLayout>

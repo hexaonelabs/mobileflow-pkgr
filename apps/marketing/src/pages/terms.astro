@@ -1,0 +1,73 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+
+const lastUpdated = 'August 10, 2026';
+---
+
+<PageLayout
+  title="Terms of Service"
+  description="The terms that govern your use of MobileFlow."
+  eyebrow="Legal"
+>
+  <p>Last updated: {lastUpdated}</p>
+
+  <p>
+    These terms govern your use of MobileFlow, a service built and operated by HexaOne Labs. By
+    creating an account, you agree to them.
+  </p>
+
+  <h2>The service</h2>
+  <p>
+    MobileFlow connects to a GitHub repository you authorize, triggers builds through GitHub Actions
+    on your behalf, and returns signed Android and iOS binaries. Builds run on GitHub-hosted runners
+    and consume your own GitHub Actions minutes.
+  </p>
+
+  <h2>Your account</h2>
+  <p>
+    You're responsible for the repositories you connect and the secrets you upload. Only authorize
+    access to repositories you have the right to build, and revoke MobileFlow's GitHub access at any
+    time from your dashboard.
+  </p>
+
+  <h2>Early access &amp; refund guarantee</h2>
+  <p>
+    MobileFlow is still under active development. Early access purchased for CHF 250 grants lifetime
+    access once the product is available. If we have not granted you product access by <strong
+      >December 31, 2026</strong
+    >, we will refund your CHF 250 in full, no questions asked. Card payments are refunded via
+    Stripe to the original payment method; crypto payments are refunded to the wallet address the
+    payment was sent from.
+  </p>
+
+  <h2>Signing secrets</h2>
+  <p>
+    You upload your own certificates and keystores; we store and use them only to sign your builds.
+    We cannot recover a lost Android keystore — see our
+    <a href="/privacy">Privacy Policy</a> for details.
+  </p>
+
+  <h2>Service availability</h2>
+  <p>
+    MobileFlow is under active development. We aim for high availability but do not guarantee
+    uninterrupted service, and build times outside our control — such as GitHub Actions queue times
+    — are not covered by any SLA.
+  </p>
+
+  <h2>Acceptable use</h2>
+  <p>
+    Don't use MobileFlow to build or distribute unlawful, infringing, or malicious software, or to
+    attempt to abuse or disrupt the service.
+  </p>
+
+  <h2>Changes to these terms</h2>
+  <p>
+    We may update these terms as the product evolves. Material changes will be communicated before
+    they take effect.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about these terms? <a href="/contact">Contact us</a>.
+  </p>
+</PageLayout>

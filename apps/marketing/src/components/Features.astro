@@ -1,0 +1,49 @@
+---
+const features = [
+  {
+    title: 'Connect GitHub',
+    description:
+      'Authorize the MobileFlow GitHub App, pick a repo and branch, and revoke access at any time. No manual code uploads.',
+  },
+  {
+    title: 'Automatic builds on push',
+    description:
+      'Every push to your configured branch triggers a build automatically. Redundant runs are cancelled, and manual builds are always one click away.',
+  },
+  {
+    title: 'Secret Vault',
+    description:
+      'Upload your certificates and keystore once. They stay encrypted at rest and are never exposed to the client — reused securely on every run.',
+  },
+  {
+    title: 'Signed binaries & history',
+    description:
+      'Get signed Android and iOS binaries out of every build, with a full history of status, duration, commit, and branch.',
+  },
+];
+---
+
+<section id="features" class="py-24 sm:py-32">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+        Everything you need to ship
+      </h2>
+      <p class="mt-4 text-lg text-neutral-600">
+        MobileFlow handles the parts of mobile delivery that used to require a Mac, a certificate
+        manager, and a lot of patience.
+      </p>
+    </div>
+
+    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        features.map((feature) => (
+          <div class="rounded-xl border border-neutral-200 p-6 transition-shadow hover:shadow-md">
+            <h3 class="text-base font-semibold text-neutral-900">{feature.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-neutral-600">{feature.description}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

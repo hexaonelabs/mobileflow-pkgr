@@ -1,0 +1,18 @@
+---
+const stack = ['Capacitor', 'Ionic', 'Angular', 'React', 'Vue', 'Android', 'iOS'];
+---
+
+<section class="border-y border-neutral-200 bg-neutral-50 py-12">
+  <div class="mx-auto max-w-6xl px-6">
+    <p class="text-center text-sm font-medium text-neutral-500">Works with your stack</p>
+    <ul class="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+      {
+        stack.map((name) => (
+          <li class="text-lg font-semibold text-neutral-400 transition-colors hover:text-neutral-700">
+            {name}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

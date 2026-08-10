@@ -1,0 +1,39 @@
+---
+import Layout from './Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow?: string;
+}
+
+const { title, description, eyebrow } = Astro.props;
+---
+
+<Layout title={`${title} — MobileFlow`} description={description}>
+  <Header />
+  <main id="main-content">
+    <section class="py-20 sm:py-28">
+      <div class="mx-auto max-w-3xl px-6">
+        {
+          eyebrow && (
+            <p class="text-accent-700 bg-accent-50 mb-6 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
+              {eyebrow}
+            </p>
+          )
+        }
+        <h1 class="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
+          {title}
+        </h1>
+        <div
+          class="prose prose-neutral mt-10 max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-600 prose-a:font-medium hover:prose-a:text-accent-700"
+        >
+          <slot />
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

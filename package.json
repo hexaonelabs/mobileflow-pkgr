@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "apps/web",
-    "apps/api"
+    "apps/api",
+    "apps/marketing"
   ],
   "scripts": {
     "web": "npm run start --workspace=web",
@@ -12,10 +13,13 @@
     "web:test": "npm run test --workspace=web",
     "api": "npm run start:dev --workspace=api",
     "api:build": "npm run build --workspace=api",
-    "api:test": "npm run test --workspace=api"
+    "api:test": "npm run test --workspace=api",
+    "marketing": "npm run dev --workspace=marketing",
+    "marketing:build": "npm run build --workspace=marketing"
   },
   "packageManager": "npm@11.8.0",
   "devDependencies": {
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^0.14.1"
   }
 }
