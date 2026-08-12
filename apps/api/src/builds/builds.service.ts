@@ -6,7 +6,13 @@ import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
 import { RunTokensService } from '../internal/run-tokens.service';
 import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
-import { BUILDS_COLLECTION, BuildStatus, TriggeredBy, type BuildDocument } from './build.model';
+import {
+  BUILDS_COLLECTION,
+  BuildStatus,
+  Environment,
+  TriggeredBy,
+  type BuildDocument,
+} from './build.model';
 import type { CreateBuildDto } from './dto/create-build.dto';
 
 @Injectable()
@@ -85,9 +91,14 @@ export class BuildsService {
       environment: dto.environment,
       platform,
     };
-    // Le certificat/provisioning profile iOS ne sont jamais committés dans le repo : le run
-    // les récupère à l'exécution via un token de run à courte durée de vie (cf. src/internal/).
-    if (platform === Platform.ios) {
+    // Les secrets de signature (certificat/provisioning profile iOS, keystore Android) ne sont
+    // jamais committés dans le repo : le run les récupère à l'exécution via un token de run à
+    // courte durée de vie (cf. src/internal/). iOS signe systématiquement (Ad Hoc) ; Android ne
+    // signe qu'en production — le staging reste un `assembleDebug` non signé, sans appel réseau.
+    const needsSigningSecrets =
+      platform === Platform.ios ||
+      (platform === Platform.android && dto.environment === Environment.production);
+    if (needsSigningSecrets) {
       const secretsToken = await this.runTokensService.issueToken({
         buildId: ref.id,
         projectId,

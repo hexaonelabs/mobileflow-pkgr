@@ -1,10 +1,12 @@
 export const MOBILEFLOW_WORKFLOW_PATH = '.github/workflows/mobileflow.yml';
 export const MOBILEFLOW_WORKFLOW_FILENAME = 'mobileflow.yml';
 
-// Android : compilation réelle (gradlew assembleDebug, non signé).
-// iOS : compilation + signature réelles (Ad Hoc) — le certificat/provisioning profile ne sont
-// jamais committés dans le repo, ils sont récupérés à l'exécution via un token de run à courte
-// durée de vie (cf. apps/api/src/internal/) appelant l'endpoint interne GET /internal/secrets.
+// Android : staging = compilation réelle non signée (gradlew assembleDebug) ; production =
+// compilation + signature réelles (gradlew assembleRelease, puis zipalign/apksigner).
+// iOS : compilation + signature réelles (Ad Hoc), toujours.
+// Dans tous les cas où une signature est requise, le certificat/keystore ne sont jamais
+// committés dans le repo : ils sont récupérés à l'exécution via un token de run à courte durée
+// de vie (cf. apps/api/src/internal/) appelant l'endpoint interne GET /internal/secrets.
 export function buildWorkflowYaml(): string {
   return `name: MobileFlow Build
 run-name: "MobileFlow build \${{ inputs.build_id }} (\${{ inputs.platform }})"
@@ -22,10 +24,10 @@ on:
         description: 'Plateforme (android/ios)'
         required: true
       secrets_token:
-        description: 'Token de run à courte durée de vie pour récupérer les secrets de signature (iOS uniquement)'
+        description: 'Token de run à courte durée de vie pour récupérer les secrets de signature (iOS, ou Android en production)'
         required: false
       api_url:
-        description: "URL publique de l'API MobileFlow (iOS uniquement)"
+        description: "URL publique de l'API MobileFlow (requis si secrets_token est fourni)"
         required: false
 
 jobs:
@@ -45,12 +47,61 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
-      - name: Build debug APK
+      - name: Build debug APK (staging)
+        if: \${{ inputs.environment != 'production' }}
         run: cd android && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
+        if: \${{ inputs.environment != 'production' }}
         with:
           name: mobileflow-\${{ inputs.build_id }}-android
           path: android/app/build/outputs/apk/debug/*.apk
+      - name: Fetch signing secrets
+        if: \${{ inputs.environment == 'production' }}
+        env:
+          SECRETS_TOKEN: \${{ inputs.secrets_token }}
+          API_URL: \${{ inputs.api_url }}
+        run: |
+          RESPONSE=$(curl -sf -H "Authorization: Bearer $SECRETS_TOKEN" "$API_URL/internal/secrets")
+          if [ "$(echo "$RESPONSE" | jq -r '.androidKeystore')" = "null" ]; then
+            echo "::error::Aucun keystore Android configuré dans le Secret Vault pour ce projet."
+            exit 1
+          fi
+          echo "$RESPONSE" | jq -r '.androidKeystore.fileBase64' | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          STORE_PASSWORD=$(echo "$RESPONSE" | jq -r '.androidKeystore.password')
+          KEY_ALIAS=$(echo "$RESPONSE" | jq -r '.androidKeystore.alias')
+          KEY_PASSWORD=$(echo "$RESPONSE" | jq -r '.androidKeystore.keyPassword')
+          if [ "$KEY_PASSWORD" = "null" ] || [ -z "$KEY_PASSWORD" ]; then
+            KEY_PASSWORD="$STORE_PASSWORD"
+          fi
+          echo "::add-mask::$STORE_PASSWORD"
+          echo "::add-mask::$KEY_PASSWORD"
+          echo "STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build signed release APK (production)
+        if: \${{ inputs.environment == 'production' }}
+        run: |
+          cd android && ./gradlew assembleRelease
+          SDK_DIR="\${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          BUILD_TOOLS_DIR=$(dirname "$(ls -d "$SDK_DIR"/build-tools/*/ | sort -V | tail -1)")
+          "$BUILD_TOOLS_DIR"/zipalign -v -p 4 \\
+            app/build/outputs/apk/release/app-release-unsigned.apk \\
+            "$RUNNER_TEMP/app-release-aligned.apk"
+          "$BUILD_TOOLS_DIR"/apksigner sign \\
+            --ks "$RUNNER_TEMP/release.keystore" \\
+            --ks-pass "pass:$STORE_PASSWORD" \\
+            --ks-key-alias "$KEY_ALIAS" \\
+            --key-pass "pass:$KEY_PASSWORD" \\
+            --out "$RUNNER_TEMP/app-release-signed.apk" \\
+            "$RUNNER_TEMP/app-release-aligned.apk"
+      - uses: actions/upload-artifact@v4
+        if: \${{ inputs.environment == 'production' }}
+        with:
+          name: mobileflow-\${{ inputs.build_id }}-android
+          path: \${{ runner.temp }}/app-release-signed.apk
+      - name: Clean up keystore
+        if: \${{ always() && inputs.environment == 'production' }}
+        run: rm -f "$RUNNER_TEMP/release.keystore"
 
   build-ios:
     if: \${{ inputs.platform == 'ios' }}
