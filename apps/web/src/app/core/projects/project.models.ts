@@ -33,6 +33,7 @@ export interface Build {
   durationSeconds: number | null;
   logsUrl: string | null;
   artifactUrl: string | null;
+  artifactStoragePath: string | null;
 }
 
 export interface CreateBuildPayload {

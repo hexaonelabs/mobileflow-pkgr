@@ -40,5 +40,13 @@ export interface BuildDocument {
   durationSeconds: number | null;
   artifactUrl: string | null;
   logsUrl: string | null;
+  // Chemin (pas l'URL) dans le bucket Firebase Storage où l'exécutable buildé (.ipa/.apk) a été
+  // déposé par le run — une URL signée fraîche est mintée à la demande (cf. StorageService),
+  // jamais stockée telle quelle car elle expire.
+  artifactStoragePath: string | null;
+  // Renseignés uniquement pour iOS, à partir du provisioning profile / de l'archive Xcode —
+  // utilisés dans le manifest.plist d'installation OTA (itms-services).
+  bundleId: string | null;
+  bundleVersion: string | null;
   createdAt: Timestamp | FieldValue;
 }

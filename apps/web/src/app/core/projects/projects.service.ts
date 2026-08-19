@@ -67,6 +67,20 @@ export class ProjectsService {
     );
   }
 
+  getBuildArtifactUrl(projectId: string, buildId: string): Promise<{ url: string }> {
+    return firstValueFrom(
+      this.http.get<{ url: string }>(
+        `${this.baseUrl}/${projectId}/builds/${buildId}/artifact-url`,
+      ),
+    );
+  }
+
+  installBuild(projectId: string, buildId: string): Promise<Build> {
+    return firstValueFrom(
+      this.http.post<Build>(`${this.baseUrl}/${projectId}/builds/${buildId}/install`, {}),
+    );
+  }
+
   listSecrets(projectId: string): Promise<Secret[]> {
     return firstValueFrom(this.http.get<Secret[]>(`${this.baseUrl}/${projectId}/secrets`));
   }

@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import QRCode from 'qrcode';
+import { environment } from '../../../../environments/environment';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Build, BuildStatus, Project } from '../../../core/projects/project.models';
 
@@ -77,7 +79,60 @@ const STATUS_LABELS: Record<BuildStatus, string> = {
                             Télécharger l'artefact
                           </a>
                         }
+                        @if (build.environment === 'staging' && build.status === 'success') {
+                          @if (!build.artifactStoragePath) {
+                            <button
+                              type="button"
+                              class="text-sm font-medium text-blue-700 underline disabled:opacity-50"
+                              [disabled]="installingIds().has(build.id)"
+                              (click)="installBuild(build.id)"
+                            >
+                              {{ installingIds().has(build.id) ? 'Préparation…' : 'Installer' }}
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="text-sm underline disabled:opacity-50"
+                              [disabled]="downloadingIds().has(build.id)"
+                              (click)="downloadArtifact(build.id)"
+                            >
+                              {{
+                                downloadingIds().has(build.id)
+                                  ? 'Préparation du lien…'
+                                  : 'Télécharger (hébergé MobileFlow)'
+                              }}
+                            </button>
+                            @if (build.platform === 'ios') {
+                              <a
+                                class="text-sm font-medium text-blue-700 underline"
+                                [href]="itmsServicesUrl(build.id)"
+                              >
+                                Installer sur iPhone
+                              </a>
+                              <button
+                                type="button"
+                                class="text-sm underline"
+                                (click)="toggleQr(build.id)"
+                              >
+                                {{
+                                  qrDataUrls().has(build.id)
+                                    ? 'Masquer le QR code'
+                                    : 'Afficher le QR code'
+                                }}
+                              </button>
+                            }
+                          }
+                        }
                       </div>
+                      @if (qrDataUrls().has(build.id)) {
+                        <img
+                          [src]="qrDataUrls().get(build.id)"
+                          alt="QR code d'installation iPhone pour ce build"
+                          width="180"
+                          height="180"
+                          class="mt-2 rounded border border-gray-200"
+                        />
+                      }
                     </div>
                     <button
                       type="button"
@@ -110,6 +165,9 @@ export class ProjectBuilds implements OnInit, OnDestroy {
   protected readonly builds = signal<Build[] | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly refreshingIds = signal<Set<string>>(new Set());
+  protected readonly downloadingIds = signal<Set<string>>(new Set());
+  protected readonly installingIds = signal<Set<string>>(new Set());
+  protected readonly qrDataUrls = signal<Map<string, string>>(new Map());
 
   private projectId = '';
   private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -155,6 +213,72 @@ export class ProjectBuilds implements OnInit, OnDestroy {
         next.delete(buildId);
         return next;
       });
+    }
+  }
+
+  protected async downloadArtifact(buildId: string): Promise<void> {
+    this.downloadingIds.update((ids) => new Set(ids).add(buildId));
+    try {
+      const { url } = await this.projectsService.getBuildArtifactUrl(this.projectId, buildId);
+      window.open(url, '_blank', 'noopener');
+    } catch {
+      this.errorMessage.set('Impossible de récupérer le lien de téléchargement.');
+    } finally {
+      this.downloadingIds.update((ids) => {
+        const next = new Set(ids);
+        next.delete(buildId);
+        return next;
+      });
+    }
+  }
+
+  // Hébergement à la demande : le binaire n'est extrait de l'archive GitHub et déposé sur
+  // Firebase Storage que si l'utilisateur clique sur "Installer" (pas systématiquement à chaque
+  // build), pour limiter le stockage utilisé aux builds staging réellement installés.
+  protected async installBuild(buildId: string): Promise<void> {
+    this.installingIds.update((ids) => new Set(ids).add(buildId));
+    try {
+      const updated = await this.projectsService.installBuild(this.projectId, buildId);
+      this.builds.update((list) =>
+        (list ?? []).map((build) => (build.id === buildId ? updated : build)),
+      );
+    } catch {
+      this.errorMessage.set("Impossible de préparer l'installation de ce build.");
+    } finally {
+      this.installingIds.update((ids) => {
+        const next = new Set(ids);
+        next.delete(buildId);
+        return next;
+      });
+    }
+  }
+
+  // Le Springboard iOS déclenche l'installation OTA en résolvant ce schéma d'URL, qui pointe
+  // vers notre manifest.plist public (cf. PublicBuildsController côté API) — pas d'appel HTTP
+  // direct possible ici, itms-services:// doit être ouvert depuis Safari sur l'iPhone lui-même.
+  protected itmsServicesUrl(buildId: string): string {
+    const manifestUrl = `${environment.apiUrl}/builds/${buildId}/manifest.plist`;
+    return `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`;
+  }
+
+  protected async toggleQr(buildId: string): Promise<void> {
+    const current = this.qrDataUrls();
+    if (current.has(buildId)) {
+      const next = new Map(current);
+      next.delete(buildId);
+      this.qrDataUrls.set(next);
+      return;
+    }
+    try {
+      const dataUrl = await QRCode.toDataURL(this.itmsServicesUrl(buildId), {
+        margin: 1,
+        width: 180,
+      });
+      const next = new Map(current);
+      next.set(buildId, dataUrl);
+      this.qrDataUrls.set(next);
+    } catch {
+      this.errorMessage.set('Impossible de générer le QR code.');
     }
   }
 

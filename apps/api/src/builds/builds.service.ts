@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import AdmZip from 'adm-zip';
+import bplistParser from 'bplist-parser';
 import { FieldValue } from 'firebase-admin/firestore';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
 import { RunTokensService } from '../internal/run-tokens.service';
 import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
+import { StorageService } from '../storage/storage.service';
 import {
   BUILDS_COLLECTION,
   BuildStatus,
@@ -15,12 +18,15 @@ import {
 } from './build.model';
 import type { CreateBuildDto } from './dto/create-build.dto';
 
+const ARTIFACT_DOWNLOAD_URL_TTL_MS = 15 * 60 * 1000;
+
 @Injectable()
 export class BuildsService {
   constructor(
     private readonly firestore: FirestoreService,
     private readonly githubService: GithubService,
     private readonly runTokensService: RunTokensService,
+    private readonly storageService: StorageService,
     private readonly config: ConfigService,
   ) {}
 
@@ -82,6 +88,9 @@ export class BuildsService {
       durationSeconds: null,
       artifactUrl: null,
       logsUrl: null,
+      artifactStoragePath: null,
+      bundleId: null,
+      bundleVersion: null,
       createdAt: now,
     };
     const ref = await this.builds.add(doc);
@@ -135,6 +144,105 @@ export class BuildsService {
     const snapshot = await this.builds.where('projectId', '==', projectId).get();
     const items = snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as BuildDocument) }));
     return items.sort((a, b) => this.toMillis(b.createdAt) - this.toMillis(a.createdAt));
+  }
+
+  async getArtifactDownloadUrl(
+    userId: string,
+    projectId: string,
+    buildId: string,
+  ): Promise<{ url: string }> {
+    await this.getOwnedProject(userId, projectId);
+    const doc = await this.builds.doc(buildId).get();
+    const data = doc.data() as BuildDocument | undefined;
+    if (!doc.exists || !data || data.projectId !== projectId) {
+      throw new NotFoundException('Build introuvable.');
+    }
+    if (!data.artifactStoragePath) {
+      throw new NotFoundException('Aucun artefact hébergé disponible pour ce build.');
+    }
+    const url = await this.storageService.getSignedDownloadUrl(
+      data.artifactStoragePath,
+      ARTIFACT_DOWNLOAD_URL_TTL_MS,
+    );
+    return { url };
+  }
+
+  // Hébergement à la demande (clic sur "Installer") plutôt que systématique à chaque build :
+  // l'artefact GitHub Actions (zip, gratuit, déjà là) sert de source ; on ne le décompresse et
+  // ne le dépose sur Firebase Storage — payant — que si l'utilisateur veut réellement l'installer.
+  // Idempotent : si déjà hébergé, retourne le build tel quel sans repasser par GitHub/Storage.
+  async ensureHostedArtifact(userId: string, projectId: string, buildId: string) {
+    const project = await this.getOwnedProject(userId, projectId);
+    const ref = this.builds.doc(buildId);
+    const doc = await ref.get();
+    const data = doc.data() as BuildDocument | undefined;
+    if (!doc.exists || !data || data.projectId !== projectId) {
+      throw new NotFoundException('Build introuvable.');
+    }
+    if (data.artifactStoragePath) {
+      return { id: buildId, ...data };
+    }
+    if (data.environment !== Environment.staging) {
+      throw new BadRequestException(
+        "L'installation OTA n'est disponible que pour les builds staging (Ad Hoc).",
+      );
+    }
+    if (data.status !== BuildStatus.success || data.githubRunId === null) {
+      throw new BadRequestException("Ce build n'a pas abouti.");
+    }
+
+    const zipBuffer = await this.githubService.downloadRunArtifactZip(
+      userId,
+      project.githubRepoFullName,
+      data.githubRunId,
+      `mobileflow-${buildId}-${data.platform}`,
+    );
+    const extension = data.platform === Platform.ios ? 'ipa' : 'apk';
+    const zip = new AdmZip(zipBuffer);
+    const entry = zip.getEntries().find((item) => item.entryName.endsWith(`.${extension}`));
+    if (!entry) {
+      throw new NotFoundException("Binaire introuvable dans l'archive GitHub.");
+    }
+    const fileBuffer = entry.getData();
+
+    const update: Partial<BuildDocument> = {};
+    if (data.platform === Platform.ios) {
+      const metadata = this.extractIosMetadata(fileBuffer);
+      update.bundleId = metadata.bundleId;
+      update.bundleVersion = metadata.bundleVersion;
+    }
+
+    const storagePath = `builds/${projectId}/${buildId}/app.${extension}`;
+    await this.storageService.uploadBuffer(storagePath, fileBuffer, 'application/octet-stream');
+    update.artifactStoragePath = storagePath;
+
+    await ref.update(update);
+    const refreshed = await ref.get();
+    return { id: buildId, ...(refreshed.data() as BuildDocument) };
+  }
+
+  private extractIosMetadata(ipaBuffer: Buffer): {
+    bundleId: string | null;
+    bundleVersion: string | null;
+  } {
+    try {
+      const ipaZip = new AdmZip(ipaBuffer);
+      const infoPlistEntry = ipaZip
+        .getEntries()
+        .find((item) => /^Payload\/[^/]+\.app\/Info\.plist$/.test(item.entryName));
+      if (!infoPlistEntry) {
+        return { bundleId: null, bundleVersion: null };
+      }
+      const [parsed] = bplistParser.parseBuffer<Record<string, unknown>>(infoPlistEntry.getData());
+      const bundleId = parsed?.['CFBundleIdentifier'];
+      const bundleVersion = parsed?.['CFBundleShortVersionString'];
+      return {
+        bundleId: typeof bundleId === 'string' ? bundleId : null,
+        bundleVersion: typeof bundleVersion === 'string' ? bundleVersion : null,
+      };
+    } catch {
+      return { bundleId: null, bundleVersion: null };
+    }
   }
 
   async refreshStatus(userId: string, projectId: string, buildId: string) {

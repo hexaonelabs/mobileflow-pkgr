@@ -397,13 +397,7 @@ export class GithubService {
     const { owner, repo } = this.splitRepo(repoFullName);
     const octokit = await this.getInstallationOctokit(userId);
     try {
-      const { data } = await octokit.rest.actions.listWorkflowRunArtifacts({
-        owner,
-        repo,
-        run_id: runId,
-        per_page: 100,
-      });
-      const artifact = data.artifacts.find((item) => item.name === artifactName && !item.expired);
+      const artifact = await this.findArtifact(octokit, owner, repo, runId, artifactName);
       if (!artifact) {
         return null;
       }
@@ -411,6 +405,54 @@ export class GithubService {
     } catch (error) {
       throw this.toHttpException(error);
     }
+  }
+
+  // Télécharge le contenu brut (zip) d'un artefact de run — utilisé à la demande (clic sur
+  // "Installer") pour en extraire le binaire buildé et l'héberger sur Firebase Storage, plutôt
+  // que d'héberger systématiquement chaque build (coût de stockage).
+  async downloadRunArtifactZip(
+    userId: string,
+    repoFullName: string,
+    runId: number,
+    artifactName: string,
+  ): Promise<Buffer> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const artifact = await this.findArtifact(octokit, owner, repo, runId, artifactName);
+      if (!artifact) {
+        throw new NotFoundException('Artefact GitHub introuvable ou expiré.');
+      }
+      const response = await octokit.rest.actions.downloadArtifact({
+        owner,
+        repo,
+        artifact_id: artifact.id,
+        archive_format: 'zip',
+      });
+      return Buffer.from(response.data as ArrayBuffer);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw this.toHttpException(error);
+    }
+  }
+
+  private async findArtifact(
+    octokit: Awaited<ReturnType<GithubService['getInstallationOctokit']>>,
+    owner: string,
+    repo: string,
+    runId: number,
+    artifactName: string,
+  ): Promise<{ id: number } | null> {
+    const { data } = await octokit.rest.actions.listWorkflowRunArtifacts({
+      owner,
+      repo,
+      run_id: runId,
+      per_page: 100,
+    });
+    const artifact = data.artifacts.find((item) => item.name === artifactName && !item.expired);
+    return artifact ? { id: artifact.id } : null;
   }
 
   private toHttpException(error: unknown): Error {

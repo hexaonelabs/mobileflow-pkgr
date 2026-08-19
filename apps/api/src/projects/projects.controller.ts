@@ -89,6 +89,24 @@ export class ProjectsController {
     return this.buildsService.refreshStatus(req.user.id, id, buildId);
   }
 
+  @Get(':id/builds/:buildId/artifact-url')
+  getBuildArtifactUrl(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('buildId') buildId: string,
+  ) {
+    return this.buildsService.getArtifactDownloadUrl(req.user.id, id, buildId);
+  }
+
+  @Post(':id/builds/:buildId/install')
+  installBuild(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('buildId') buildId: string,
+  ) {
+    return this.buildsService.ensureHostedArtifact(req.user.id, id, buildId);
+  }
+
   @Post(':id/secrets')
   createSecret(
     @Req() req: AuthenticatedRequest,
