@@ -46,7 +46,7 @@ const MENU_MAX_HEIGHT = 320;
         <div class="flex flex-wrap items-center justify-between gap-4">
           <h2 class="text-lg font-bold tracking-tight text-neutral-900">Builds</h2>
           <a
-            class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [routerLink]="['/projects', project.id, 'builds', 'new']"
           >
             Lancer un build
@@ -59,7 +59,7 @@ const MENU_MAX_HEIGHT = 320;
               <p class="text-sm text-neutral-600">Aucun build lancé pour le moment.</p>
             </div>
           } @else {
-            <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
+            <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
               <table class="w-full text-left text-sm">
                 <caption class="sr-only">Historique des builds</caption>
                 <thead class="border-b border-neutral-200 bg-neutral-50/70">
@@ -226,7 +226,7 @@ const MENU_MAX_HEIGHT = 320;
 
         <div
           role="menu"
-          class="fixed z-20 w-64 rounded-xl border border-neutral-200 bg-white p-1.5 text-left shadow-lg"
+          class="fixed z-20 w-64 rounded-xl border border-neutral-200 bg-white p-1.5 text-left"
           [style.top.px]="menuPosition()?.top"
           [style.left.px]="menuPosition()?.left"
           (keydown.escape)="closeMenu()"

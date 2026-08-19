@@ -15,7 +15,7 @@ import { Logo } from '../../../shared/ui/logo';
         <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Connexion</h1>
       </div>
 
-      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6">
         <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-neutral-900" for="email">Email</label>
@@ -59,7 +59,7 @@ import { Logo } from '../../../shared/ui/logo';
 
           <button
             type="submit"
-            class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [disabled]="form.invalid || submitting()"
           >
             {{ submitting() ? 'Connexion en cours…' : 'Se connecter' }}

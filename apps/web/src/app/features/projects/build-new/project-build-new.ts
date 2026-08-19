@@ -41,7 +41,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
         </div>
 
         <form
-          class="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5"
+          class="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6"
           [formGroup]="form"
           (ngSubmit)="submit()"
           novalidate
@@ -150,7 +150,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
 
           <button
             type="submit"
-            class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [disabled]="form.invalid || submitting()"
           >
             {{ submitting() ? 'Lancement…' : 'Lancer le build' }}

@@ -56,7 +56,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
           </p>
         </div>
 
-        <section class="rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
+        <section class="rounded-2xl border border-neutral-200 bg-white">
           <h3 class="border-b border-neutral-200 px-5 py-4 text-sm font-semibold text-neutral-900">
             Secrets enregistrés
           </h3>
@@ -94,7 +94,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
           }
         </section>
 
-        <section class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
+        <section class="rounded-2xl border border-neutral-200 bg-white p-6">
           <h3 class="text-sm font-semibold text-neutral-900">Ajouter un secret</h3>
           <form class="mt-4 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
             <div class="flex flex-col gap-1">
@@ -177,7 +177,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
 
             <button
               type="submit"
-              class="self-start rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+              class="self-start rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
               [disabled]="submitting()"
             >
               {{ submitting() ? 'Envoi…' : 'Enregistrer' }}

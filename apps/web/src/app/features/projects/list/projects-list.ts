@@ -21,7 +21,7 @@ const AVATAR_COLORS = [
       <div class="flex items-center justify-between gap-4">
         <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Projets</h1>
         <a
-          class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           routerLink="/github/connect"
         >
           Activer un dépôt
@@ -38,7 +38,7 @@ const AVATAR_COLORS = [
             <p class="text-sm text-neutral-600">Aucun projet pour le moment.</p>
           </div>
         } @else {
-          <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
+          <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
             <ul class="divide-y divide-neutral-100">
               @for (project of list; track project.id) {
                 <li>

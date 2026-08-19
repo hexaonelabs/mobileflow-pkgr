@@ -16,7 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <p class="mt-1 text-sm text-neutral-600">Voici un aperçu de votre compte MobileFlow.</p>
         </div>
 
-        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6">
           <div class="flex items-center justify-between gap-4">
             <div>
               <p class="text-sm font-semibold text-neutral-900">GitHub</p>
@@ -48,14 +48,14 @@ import { AuthService } from '../../core/auth/auth.service';
           </a>
         </div>
 
-        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6">
           <p class="text-sm font-semibold text-neutral-900">Projets</p>
           <p class="mt-1 text-sm text-neutral-600">
             Retrouvez vos dépôts activés et l'historique de vos builds.
           </p>
           <a
             routerLink="/projects"
-            class="mt-4 inline-flex items-center gap-1 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            class="mt-4 inline-flex items-center gap-1 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           >
             Voir mes projets
           </a>
