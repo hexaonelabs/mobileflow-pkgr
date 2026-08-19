@@ -15,7 +15,7 @@ import { Logo } from '../../../shared/ui/logo';
         <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Connexion</h1>
       </div>
 
-      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
         <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-neutral-900" for="email">Email</label>

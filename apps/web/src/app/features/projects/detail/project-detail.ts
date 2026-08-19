@@ -28,7 +28,7 @@ import type {
           </a>
         </div>
 
-        <section aria-labelledby="readiness-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <section aria-labelledby="readiness-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
           <h3 id="readiness-heading" class="text-sm font-semibold text-neutral-900">Préparation du dépôt</h3>
           @if (readiness(); as readiness) {
             <ul class="mt-3 flex flex-col gap-2">
@@ -153,7 +153,7 @@ import type {
           }
         </section>
 
-        <section aria-labelledby="workflow-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <section aria-labelledby="workflow-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
           <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Workflow de build</h3>
           <p class="mt-1 text-sm text-neutral-600">
             MobileFlow n'installe le workflow ({{ '.github/workflows/mobileflow.yml' }}) qu'une seule

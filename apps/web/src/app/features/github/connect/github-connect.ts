@@ -15,7 +15,7 @@ import type { Project } from '../../../core/projects/project.models';
       <h1 class="text-2xl font-bold tracking-tight text-neutral-900">GitHub</h1>
 
       @if (isConnected()) {
-        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
           <div class="border-b border-neutral-200 px-5 py-4">
             <p class="text-sm font-semibold text-neutral-900">Dépôts accessibles</p>
             <p class="text-xs text-neutral-500">Activez un dépôt pour commencer à builder.</p>
@@ -71,7 +71,7 @@ import type { Project } from '../../../core/projects/project.models';
           Connecter d'autres dépôts
         </a>
       } @else {
-        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm ring-1 ring-neutral-900/5">
           <p class="text-sm text-neutral-600">
             MobileFlow a besoin d'installer une GitHub App sur les dépôts que vous souhaitez
             builder. Les permissions suivantes seront demandées lors de l'installation :

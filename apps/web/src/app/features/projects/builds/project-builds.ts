@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Build, BuildStatus, Project } from '../../../core/projects/project.models';
+import { PlatformIcon } from '../../../shared/ui/platform-icon';
 
 const ACTIVE_STATUSES: BuildStatus[] = ['queued', 'running'];
 const POLL_INTERVAL_MS = 4000;
@@ -31,7 +32,7 @@ const MENU_MAX_HEIGHT = 320;
 
 @Component({
   selector: 'app-project-builds',
-  imports: [RouterLink],
+  imports: [RouterLink, PlatformIcon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-6">
@@ -58,41 +59,115 @@ const MENU_MAX_HEIGHT = 320;
               <p class="text-sm text-neutral-600">Aucun build lancé pour le moment.</p>
             </div>
           } @else {
-            <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
               <table class="w-full text-left text-sm">
                 <caption class="sr-only">Historique des builds</caption>
-                <thead class="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
+                <thead class="border-b border-neutral-200 bg-neutral-50/70">
                   <tr>
-                    <th scope="col" class="px-5 py-3 font-medium">Build</th>
-                    <th scope="col" class="px-5 py-3 font-medium">Statut</th>
-                    <th scope="col" class="px-5 py-3 font-medium">Plateforme</th>
-                    <th scope="col" class="px-5 py-3 font-medium">Branche / commit</th>
-                    <th scope="col" class="px-5 py-3 font-medium">Durée</th>
+                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                      Build
+                    </th>
+                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                      Statut
+                    </th>
+                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                      Plateforme
+                    </th>
+                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                      Branche / commit
+                    </th>
+                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                      Durée
+                    </th>
                     <th scope="col" class="px-5 py-3"><span class="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                   @for (build of list; track build.id; let i = $index) {
-                    <tr class="transition-colors hover:bg-neutral-50">
-                      <td class="px-5 py-4 font-medium text-neutral-900">#{{ list.length - i }}</td>
+                    <tr class="transition-colors hover:bg-neutral-50/80">
+                      <td class="px-5 py-4 font-semibold text-neutral-900">#{{ list.length - i }}</td>
                       <td class="px-5 py-4">
                         <span
-                          class="rounded-full px-2.5 py-1 text-xs font-medium"
+                          class="inline-flex items-center gap-1.5 rounded-full text-xs font-medium"
                           [class]="statusBadgeClasses[build.status]"
                         >
-                          {{ statusLabels[build.status] }}
+                          @switch (build.status) {
+                            @case ('success') {
+                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            }
+                            @case ('failed') {
+                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            }
+                            @case ('cancelled') {
+                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H7z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            }
+                            @case ('queued') {
+                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            }
+                            @case ('running') {
+                              <svg
+                                class="h-3.5 w-3.5 animate-spin"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <circle class="opacity-25" cx="10" cy="10" r="7" stroke="currentColor" stroke-width="3" />
+                                <path
+                                  d="M17 10a7 7 0 00-7-7"
+                                  stroke="currentColor"
+                                  stroke-width="3"
+                                  stroke-linecap="round"
+                                />
+                              </svg>
+                            }
+                          }
+                          <!-- {{ statusLabels[build.status] }} -->
                         </span>
                       </td>
-                      <td class="px-5 py-4 text-neutral-700">
-                        <span class="capitalize">{{ build.platform }}</span>
-                        <span class="text-neutral-400">·</span>
-                        {{ build.environment }}
+                      <td class="px-5 py-4">
+                        <div class="flex items-center gap-2">
+                          <app-platform-icon [platform]="build.platform" />
+                          <div>
+                            <span class="block font-medium text-neutral-900 capitalize">{{
+                              build.platform
+                            }}</span>
+                            <span class="block text-xs text-neutral-500 capitalize">{{
+                              build.environment
+                            }}</span>
+                          </div>
+                        </div>
                       </td>
                       <td class="px-5 py-4 text-neutral-700">
                         {{ build.branch }}
-                        <span class="block font-mono text-xs text-neutral-500">{{
-                          build.commitSha.slice(0, 7)
-                        }}</span>
+                        <span
+                          class="mt-0.5 block w-fit rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-xs text-neutral-500"
+                        >
+                          {{ build.commitSha.slice(0, 7) }}
+                        </span>
                       </td>
                       <td class="px-5 py-4 text-neutral-500">
                         {{ build.durationSeconds !== null ? build.durationSeconds + 's' : '—' }}

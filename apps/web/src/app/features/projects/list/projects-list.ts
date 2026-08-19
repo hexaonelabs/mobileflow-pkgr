@@ -38,7 +38,7 @@ const AVATAR_COLORS = [
             <p class="text-sm text-neutral-600">Aucun projet pour le moment.</p>
           </div>
         } @else {
-          <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm ring-1 ring-neutral-900/5">
             <ul class="divide-y divide-neutral-100">
               @for (project of list; track project.id) {
                 <li>
