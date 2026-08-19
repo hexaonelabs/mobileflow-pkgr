@@ -16,24 +16,36 @@ const STATUS_LABELS: Record<BuildStatus, string> = {
   cancelled: 'Annulé',
 };
 
+const STATUS_BADGE_CLASSES: Record<BuildStatus, string> = {
+  queued: 'bg-amber-50 text-amber-700',
+  running: 'bg-amber-50 text-amber-700',
+  success: 'bg-green-50 text-green-700',
+  failed: 'bg-red-50 text-red-700',
+  cancelled: 'bg-neutral-100 text-neutral-500',
+};
+
+const MENU_ITEM_CLASS =
+  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-600 disabled:opacity-50';
+const MENU_WIDTH = 256;
+const MENU_MAX_HEIGHT = 320;
+
 @Component({
   selector: 'app-project-builds',
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 px-4 py-8">
+    <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="text-sm text-red-600">{{ errorMessage() }}</p>
+        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </p>
       }
 
       @if (project(); as project) {
-        <div class="flex items-center justify-between">
-          <div>
-            <a class="text-sm underline" [routerLink]="['/projects', project.id]">← {{ project.name }}</a>
-            <h1 class="text-2xl font-semibold">Historique des builds</h1>
-          </div>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h2 class="text-lg font-bold tracking-tight text-neutral-900">Builds</h2>
           <a
-            class="rounded bg-gray-900 px-4 py-2 text-white"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [routerLink]="['/projects', project.id, 'builds', 'new']"
           >
             Lancer un build
@@ -42,118 +54,190 @@ const STATUS_LABELS: Record<BuildStatus, string> = {
 
         @if (builds(); as list) {
           @if (list.length === 0) {
-            <p>Aucun build lancé pour le moment.</p>
+            <div class="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center">
+              <p class="text-sm text-neutral-600">Aucun build lancé pour le moment.</p>
+            </div>
           } @else {
-            <ul class="flex flex-col gap-2">
-              @for (build of list; track build.id) {
-                <li class="rounded border border-gray-300 p-4">
-                  <div class="flex items-start justify-between gap-4">
-                    <div>
-                      <p class="font-medium">
-                        {{ build.environment }} — {{ build.platform }} — {{ build.branch }}
-                      </p>
-                      <p class="text-sm text-gray-600">
-                        Statut : {{ statusLabels[build.status] }} — commit {{ build.commitSha.slice(0, 7) }}
-                        @if (build.durationSeconds !== null) {
-                          — {{ build.durationSeconds }}s
-                        }
-                      </p>
-                      <div class="flex flex-wrap gap-3">
-                        @if (build.logsUrl) {
-                          <a
-                            class="text-sm underline"
-                            [href]="build.logsUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Voir le run sur GitHub
-                          </a>
-                        }
-                        @if (build.artifactUrl) {
-                          <a
-                            class="text-sm font-medium text-green-700 underline"
-                            [href]="build.artifactUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Télécharger l'artefact
-                          </a>
-                        }
-                        @if (build.environment === 'staging' && build.status === 'success') {
-                          @if (!build.artifactStoragePath) {
-                            <button
-                              type="button"
-                              class="text-sm font-medium text-blue-700 underline disabled:opacity-50"
-                              [disabled]="installingIds().has(build.id)"
-                              (click)="installBuild(build.id)"
-                            >
-                              {{ installingIds().has(build.id) ? 'Préparation…' : 'Installer' }}
-                            </button>
-                          } @else {
-                            <button
-                              type="button"
-                              class="text-sm underline disabled:opacity-50"
-                              [disabled]="downloadingIds().has(build.id)"
-                              (click)="downloadArtifact(build.id)"
-                            >
-                              {{
-                                downloadingIds().has(build.id)
-                                  ? 'Préparation du lien…'
-                                  : 'Télécharger (hébergé MobileFlow)'
-                              }}
-                            </button>
-                            @if (build.platform === 'ios') {
-                              <a
-                                class="text-sm font-medium text-blue-700 underline"
-                                [href]="itmsServicesUrl(build.id)"
-                              >
-                                Installer sur iPhone
-                              </a>
-                              <button
-                                type="button"
-                                class="text-sm underline"
-                                (click)="toggleQr(build.id)"
-                              >
-                                {{
-                                  qrDataUrls().has(build.id)
-                                    ? 'Masquer le QR code'
-                                    : 'Afficher le QR code'
-                                }}
-                              </button>
-                            }
-                          }
-                        }
-                      </div>
-                      @if (qrDataUrls().has(build.id)) {
-                        <img
-                          [src]="qrDataUrls().get(build.id)"
-                          alt="QR code d'installation iPhone pour ce build"
-                          width="180"
-                          height="180"
-                          class="mt-2 rounded border border-gray-200"
-                        />
-                      }
-                    </div>
-                    <button
-                      type="button"
-                      class="shrink-0 rounded border border-gray-400 px-3 py-1 text-sm disabled:opacity-50"
-                      [disabled]="refreshingIds().has(build.id)"
-                      (click)="refresh(build.id)"
-                    >
-                      {{ refreshingIds().has(build.id) ? 'Rafraîchissement…' : 'Rafraîchir' }}
-                    </button>
-                  </div>
-                </li>
-              }
-            </ul>
+            <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm">
+              <table class="w-full text-left text-sm">
+                <caption class="sr-only">Historique des builds</caption>
+                <thead class="border-b border-neutral-200 bg-neutral-50 text-neutral-500">
+                  <tr>
+                    <th scope="col" class="px-5 py-3 font-medium">Build</th>
+                    <th scope="col" class="px-5 py-3 font-medium">Statut</th>
+                    <th scope="col" class="px-5 py-3 font-medium">Plateforme</th>
+                    <th scope="col" class="px-5 py-3 font-medium">Branche / commit</th>
+                    <th scope="col" class="px-5 py-3 font-medium">Durée</th>
+                    <th scope="col" class="px-5 py-3"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-100">
+                  @for (build of list; track build.id; let i = $index) {
+                    <tr class="transition-colors hover:bg-neutral-50">
+                      <td class="px-5 py-4 font-medium text-neutral-900">#{{ list.length - i }}</td>
+                      <td class="px-5 py-4">
+                        <span
+                          class="rounded-full px-2.5 py-1 text-xs font-medium"
+                          [class]="statusBadgeClasses[build.status]"
+                        >
+                          {{ statusLabels[build.status] }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-4 text-neutral-700">
+                        <span class="capitalize">{{ build.platform }}</span>
+                        <span class="text-neutral-400">·</span>
+                        {{ build.environment }}
+                      </td>
+                      <td class="px-5 py-4 text-neutral-700">
+                        {{ build.branch }}
+                        <span class="block font-mono text-xs text-neutral-500">{{
+                          build.commitSha.slice(0, 7)
+                        }}</span>
+                      </td>
+                      <td class="px-5 py-4 text-neutral-500">
+                        {{ build.durationSeconds !== null ? build.durationSeconds + 's' : '—' }}
+                      </td>
+                      <td class="px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          class="rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                          aria-haspopup="menu"
+                          [attr.aria-expanded]="openBuild()?.id === build.id"
+                          [attr.aria-label]="'Actions pour le build ' + (list.length - i)"
+                          (click)="toggleMenu(build, $event)"
+                          (keydown.escape)="closeMenu()"
+                        >
+                          <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="5" r="1.6" />
+                            <circle cx="12" cy="12" r="1.6" />
+                            <circle cx="12" cy="19" r="1.6" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                    @if (qrDataUrls().has(build.id)) {
+                      <tr>
+                        <td colspan="6" class="bg-neutral-50 px-5 py-4">
+                          <img
+                            [src]="qrDataUrls().get(build.id)"
+                            alt="QR code d'installation iPhone pour ce build"
+                            width="160"
+                            height="160"
+                            class="rounded-lg border border-neutral-200"
+                          />
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         } @else if (!errorMessage()) {
-          <p role="status">Chargement des builds…</p>
+          <p role="status" class="text-sm text-neutral-500">Chargement des builds…</p>
         }
       } @else if (!errorMessage()) {
-        <p role="status">Chargement…</p>
+        <p role="status" class="text-sm text-neutral-500">Chargement…</p>
       }
-    </main>
+
+      @if (openBuild(); as build) {
+        <button
+          type="button"
+          class="fixed inset-0 z-10 cursor-default"
+          aria-hidden="true"
+          tabindex="-1"
+          (click)="closeMenu()"
+        ></button>
+
+        <div
+          role="menu"
+          class="fixed z-20 w-64 rounded-xl border border-neutral-200 bg-white p-1.5 text-left shadow-lg"
+          [style.top.px]="menuPosition()?.top"
+          [style.left.px]="menuPosition()?.left"
+          (keydown.escape)="closeMenu()"
+        >
+          @if (build.logsUrl) {
+            <a
+              role="menuitem"
+              class="${MENU_ITEM_CLASS}"
+              [href]="build.logsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              (click)="closeMenu()"
+            >
+              Voir le run sur GitHub
+            </a>
+          }
+          @if (build.artifactUrl) {
+            <a
+              role="menuitem"
+              class="${MENU_ITEM_CLASS}"
+              [href]="build.artifactUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              (click)="closeMenu()"
+            >
+              Télécharger l'artefact
+            </a>
+          }
+          @if (build.environment === 'staging' && build.status === 'success') {
+            @if (!build.artifactStoragePath) {
+              <button
+                role="menuitem"
+                type="button"
+                class="${MENU_ITEM_CLASS}"
+                [disabled]="installingIds().has(build.id)"
+                (click)="installBuild(build.id); closeMenu()"
+              >
+                {{ installingIds().has(build.id) ? 'Préparation…' : 'Installer' }}
+              </button>
+            } @else {
+              <button
+                role="menuitem"
+                type="button"
+                class="${MENU_ITEM_CLASS}"
+                [disabled]="downloadingIds().has(build.id)"
+                (click)="downloadArtifact(build.id); closeMenu()"
+              >
+                {{
+                  downloadingIds().has(build.id)
+                    ? 'Préparation du lien…'
+                    : 'Télécharger (hébergé MobileFlow)'
+                }}
+              </button>
+              @if (build.platform === 'ios') {
+                <a
+                  role="menuitem"
+                  class="${MENU_ITEM_CLASS}"
+                  [href]="itmsServicesUrl(build.id)"
+                  (click)="closeMenu()"
+                >
+                  Installer sur iPhone
+                </a>
+                <button
+                  role="menuitem"
+                  type="button"
+                  class="${MENU_ITEM_CLASS}"
+                  (click)="toggleQr(build.id); closeMenu()"
+                >
+                  {{ qrDataUrls().has(build.id) ? 'Masquer le QR code' : 'Afficher le QR code' }}
+                </button>
+              }
+            }
+          }
+          <div class="my-1 border-t border-neutral-100"></div>
+          <button
+            role="menuitem"
+            type="button"
+            class="${MENU_ITEM_CLASS}"
+            [disabled]="refreshingIds().has(build.id)"
+            (click)="refresh(build.id); closeMenu()"
+          >
+            {{ refreshingIds().has(build.id) ? 'Rafraîchissement…' : 'Rafraîchir' }}
+          </button>
+        </div>
+      }
+    </div>
   `,
 })
 export class ProjectBuilds implements OnInit, OnDestroy {
@@ -161,6 +245,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
   private readonly projectsService = inject(ProjectsService);
 
   protected readonly statusLabels = STATUS_LABELS;
+  protected readonly statusBadgeClasses = STATUS_BADGE_CLASSES;
   protected readonly project = signal<Project | null>(null);
   protected readonly builds = signal<Build[] | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
@@ -168,6 +253,8 @@ export class ProjectBuilds implements OnInit, OnDestroy {
   protected readonly downloadingIds = signal<Set<string>>(new Set());
   protected readonly installingIds = signal<Set<string>>(new Set());
   protected readonly qrDataUrls = signal<Map<string, string>>(new Map());
+  protected readonly openBuild = signal<Build | null>(null);
+  protected readonly menuPosition = signal<{ top: number; left: number } | null>(null);
 
   private projectId = '';
   private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -196,6 +283,32 @@ export class ProjectBuilds implements OnInit, OnDestroy {
     if (this.pollHandle !== null) {
       clearInterval(this.pollHandle);
     }
+  }
+
+  protected toggleMenu(build: Build, event: MouseEvent): void {
+    if (this.openBuild()?.id === build.id) {
+      this.closeMenu();
+      return;
+    }
+
+    const buttonRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const gap = 4;
+    const left = Math.max(
+      8,
+      Math.min(buttonRect.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8),
+    );
+    const top =
+      buttonRect.bottom + gap + MENU_MAX_HEIGHT > window.innerHeight
+        ? Math.max(8, buttonRect.top - gap - MENU_MAX_HEIGHT)
+        : buttonRect.bottom + gap;
+
+    this.menuPosition.set({ top, left });
+    this.openBuild.set(build);
+  }
+
+  protected closeMenu(): void {
+    this.openBuild.set(null);
+    this.menuPosition.set(null);
   }
 
   protected async refresh(buildId: string): Promise<void> {

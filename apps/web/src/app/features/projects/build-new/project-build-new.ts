@@ -21,24 +21,36 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
   imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-4 py-8">
+    <div class="mx-auto flex max-w-xl flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="text-sm text-red-600">{{ errorMessage() }}</p>
+        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </p>
       }
 
       @if (project(); as project) {
         <div>
-          <a class="text-sm underline" [routerLink]="['/projects', project.id]">← {{ project.name }}</a>
-          <h1 class="text-2xl font-semibold">Nouveau build</h1>
+          <a
+            class="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            [routerLink]="['/projects', project.id, 'builds']"
+          >
+            ← Retour aux builds
+          </a>
+          <h2 class="mt-1 text-lg font-bold tracking-tight text-neutral-900">Nouveau build</h2>
         </div>
 
-        <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <form
+          class="flex flex-col gap-5 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          novalidate
+        >
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="environment">Environnement</label>
+            <label class="text-sm font-medium text-neutral-900" for="environment">Environnement</label>
             <select
               id="environment"
               formControlName="environment"
-              class="rounded border border-gray-400 px-3 py-2"
+              class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
             >
               <option value="staging">Staging</option>
               <option value="production">Production</option>
@@ -46,11 +58,11 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium" for="branch">Branche</label>
+            <label class="text-sm font-medium text-neutral-900" for="branch">Branche</label>
             <select
               id="branch"
               formControlName="branch"
-              class="rounded border border-gray-400 px-3 py-2 disabled:opacity-50"
+              class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600 disabled:opacity-50"
               [attr.aria-invalid]="isBranchInvalid()"
             >
               <option value="" disabled>
@@ -66,24 +78,40 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           </div>
 
           <fieldset class="flex flex-col gap-1">
-            <legend class="text-sm font-medium">Plateformes</legend>
-            <label class="flex items-center gap-2">
-              <input type="checkbox" formControlName="android" />
-              Android
-            </label>
-            <label class="flex items-center gap-2">
-              <input type="checkbox" formControlName="ios" />
-              iOS
-            </label>
+            <legend class="text-sm font-medium text-neutral-900">Plateformes</legend>
+            <div class="mt-1 grid grid-cols-2 gap-3">
+              <label
+                class="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-neutral-200 p-4 text-center transition-colors has-[:checked]:border-accent-600 has-[:checked]:bg-accent-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent-600 hover:border-neutral-300"
+              >
+                <input type="checkbox" formControlName="android" class="sr-only" />
+                <svg aria-hidden="true" class="h-6 w-6 text-neutral-700" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M6.5 8.5v6a1 1 0 001 1h9a1 1 0 001-1v-6h-11zM8.3 5.3l-1-1.7a.4.4 0 01.7-.4l1.1 1.9a6.4 6.4 0 015.8 0l1.1-1.9a.4.4 0 01.7.4l-1 1.7a6.5 6.5 0 013 5.2H5.3a6.5 6.5 0 013-5.2zM9 8a.7.7 0 110-1.4A.7.7 0 019 8zm6 0a.7.7 0 110-1.4A.7.7 0 0115 8zM5 16.2v-5a.9.9 0 011.8 0v5a.9.9 0 01-1.8 0zm11.2 0v-5a.9.9 0 011.8 0v5a.9.9 0 01-1.8 0zM8 16.2v3.1a1 1 0 002 0v-3.1H8zm4 0v3.1a1 1 0 002 0v-3.1h-2z"
+                  />
+                </svg>
+                <span class="text-sm font-medium text-neutral-900">Android</span>
+              </label>
+              <label
+                class="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-neutral-200 p-4 text-center transition-colors has-[:checked]:border-accent-600 has-[:checked]:bg-accent-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent-600 hover:border-neutral-300"
+              >
+                <input type="checkbox" formControlName="ios" class="sr-only" />
+                <svg aria-hidden="true" class="h-6 w-6 text-neutral-700" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M17.05 12.04c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.44-2.5-1.63-3.04-1.65-1.3-.13-2.53.76-3.19.76-.66 0-1.67-.74-2.75-.72-1.42.02-2.72.82-3.45 2.09-1.47 2.55-.38 6.32 1.06 8.39.7 1.01 1.53 2.14 2.63 2.1 1.05-.04 1.45-.68 2.72-.68 1.27 0 1.63.68 2.75.66 1.13-.02 1.85-1.02 2.55-2.03.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.19-.84-2.23-3.4zM14.98 5.7c.58-.71.98-1.68.87-2.66-.84.03-1.87.56-2.47 1.26-.54.62-1.02 1.62-.89 2.57.93.07 1.9-.47 2.49-1.17z"
+                  />
+                </svg>
+                <span class="text-sm font-medium text-neutral-900">iOS</span>
+              </label>
+            </div>
             @if (form.invalid && form.touched) {
-              <p class="text-sm text-red-600" role="alert">
+              <p class="mt-1 text-sm text-red-600" role="alert">
                 Au moins une plateforme doit être sélectionnée.
               </p>
             }
           </fieldset>
 
           <fieldset class="flex flex-col gap-2">
-            <legend class="text-sm font-medium">Variables d'environnement</legend>
+            <legend class="text-sm font-medium text-neutral-900">Variables d'environnement</legend>
             @for (row of envVarRows(); track row.id; let i = $index) {
               <div class="flex items-center gap-2">
                 <label class="sr-only" [attr.for]="'env-key-' + i">Clé</label>
@@ -91,7 +119,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
                   [id]="'env-key-' + i"
                   type="text"
                   placeholder="Clé"
-                  class="w-1/3 rounded border border-gray-400 px-3 py-2"
+                  class="w-1/3 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [value]="row.key"
                   (input)="updateEnvVarRow(i, 'key', $any($event.target).value)"
                 />
@@ -100,13 +128,13 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
                   [id]="'env-value-' + i"
                   type="text"
                   placeholder="Valeur"
-                  class="flex-1 rounded border border-gray-400 px-3 py-2"
+                  class="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [value]="row.value"
                   (input)="updateEnvVarRow(i, 'value', $any($event.target).value)"
                 />
                 <button
                   type="button"
-                  class="rounded border border-gray-400 px-2 py-1 text-sm"
+                  class="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                   (click)="removeEnvVarRow(i)"
                   [attr.aria-label]="'Supprimer la variable ' + (row.key || i)"
                 >
@@ -116,7 +144,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
             }
             <button
               type="button"
-              class="self-start rounded border border-gray-400 px-3 py-1 text-sm"
+              class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
               (click)="addEnvVarRow()"
             >
               Ajouter une variable
@@ -129,16 +157,16 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
 
           <button
             type="submit"
-            class="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
+            class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [disabled]="form.invalid || submitting()"
           >
             {{ submitting() ? 'Lancement…' : 'Lancer le build' }}
           </button>
         </form>
       } @else if (!errorMessage()) {
-        <p role="status">Chargement…</p>
+        <p role="status" class="text-sm text-neutral-500">Chargement…</p>
       }
-    </main>
+    </div>
   `,
 })
 export class ProjectBuildNew implements OnInit {

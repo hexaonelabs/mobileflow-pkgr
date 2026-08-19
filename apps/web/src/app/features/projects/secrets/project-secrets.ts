@@ -14,7 +14,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Project, Secret, SecretType } from '../../../core/projects/project.models';
 
@@ -37,40 +37,47 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
 
 @Component({
   selector: 'app-project-secrets',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 px-4 py-8">
+    <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="text-sm text-red-600">{{ errorMessage() }}</p>
+        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </p>
       }
 
       @if (project(); as project) {
         <div>
-          <a class="text-sm underline" [routerLink]="['/projects', project.id]">← {{ project.name }}</a>
-          <h1 class="text-2xl font-semibold">Secret Vault</h1>
-          <p class="text-sm text-gray-600">
+          <h2 class="text-lg font-bold tracking-tight text-neutral-900">Secret Vault</h2>
+          <p class="mt-1 text-sm text-neutral-600">
             Certificats de signature iOS et keystores Android. Le contenu est chiffré au repos et
             n'est jamais réaffiché après l'upload.
           </p>
         </div>
 
-        <section>
-          <h2 class="text-lg font-medium">Secrets enregistrés</h2>
+        <section class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <h3 class="border-b border-neutral-200 px-5 py-4 text-sm font-semibold text-neutral-900">
+            Secrets enregistrés
+          </h3>
           @if (secrets(); as list) {
             @if (list.length === 0) {
-              <p class="text-sm text-gray-600">Aucun secret enregistré pour le moment.</p>
+              <p class="px-5 py-8 text-center text-sm text-neutral-600">
+                Aucun secret enregistré pour le moment.
+              </p>
             } @else {
-              <ul class="flex flex-col gap-2">
+              <ul class="divide-y divide-neutral-100">
                 @for (secret of list; track secret.id) {
-                  <li class="flex items-center justify-between rounded border border-gray-300 p-4">
-                    <div>
-                      <p class="font-medium">{{ secretTypeLabels[secret.type] }}</p>
-                      <p class="text-sm text-gray-600">{{ secret.fileName }}</p>
+                  <li class="flex items-center justify-between gap-4 px-5 py-4">
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium text-neutral-900">
+                        {{ secretTypeLabels[secret.type] }}
+                      </p>
+                      <p class="truncate text-xs text-neutral-500">{{ secret.fileName }}</p>
                     </div>
                     <button
                       type="button"
-                      class="rounded border border-red-400 px-3 py-1 text-sm text-red-600"
+                      class="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                       (click)="removeSecret(secret)"
                       [attr.aria-label]="'Supprimer ' + secretTypeLabels[secret.type]"
                     >
@@ -81,16 +88,22 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
               </ul>
             }
           } @else if (!errorMessage()) {
-            <p role="status">Chargement des secrets…</p>
+            <p role="status" class="px-5 py-8 text-center text-sm text-neutral-500">
+              Chargement des secrets…
+            </p>
           }
         </section>
 
-        <section>
-          <h2 class="text-lg font-medium">Ajouter un secret</h2>
-          <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <section class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <h3 class="text-sm font-semibold text-neutral-900">Ajouter un secret</h3>
+          <form class="mt-4 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
             <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium" for="type">Type</label>
-              <select id="type" formControlName="type" class="rounded border border-gray-400 px-3 py-2">
+              <label class="text-sm font-medium text-neutral-900" for="type">Type</label>
+              <select
+                id="type"
+                formControlName="type"
+                class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
+              >
                 <option value="ios_certificate">Certificat iOS (.p12)</option>
                 <option value="ios_provisioning_profile">Provisioning profile iOS (.mobileprovision)</option>
                 <option value="android_keystore">Keystore Android</option>
@@ -98,13 +111,13 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
             </div>
 
             <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium" for="file">Fichier</label>
+              <label class="text-sm font-medium text-neutral-900" for="file">Fichier</label>
               <input
                 id="file"
                 #fileInput
                 type="file"
                 [accept]="fileAccept()"
-                class="rounded border border-gray-400 px-3 py-2"
+                class="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                 (change)="onFileChange($event)"
               />
               @if (submitted() && !selectedFile()) {
@@ -114,14 +127,14 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
 
             @if (selectedType() !== 'ios_provisioning_profile') {
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="password">
+                <label class="text-sm font-medium text-neutral-900" for="password">
                   {{ selectedType() === 'android_keystore' ? 'Mot de passe du keystore' : 'Mot de passe du certificat' }}
                 </label>
                 <input
                   id="password"
                   type="password"
                   formControlName="password"
-                  class="rounded border border-gray-400 px-3 py-2"
+                  class="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [attr.aria-invalid]="isPasswordInvalid()"
                 />
                 @if (isPasswordInvalid()) {
@@ -132,12 +145,12 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
 
             @if (selectedType() === 'android_keystore') {
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="alias">Alias de la clé</label>
+                <label class="text-sm font-medium text-neutral-900" for="alias">Alias de la clé</label>
                 <input
                   id="alias"
                   type="text"
                   formControlName="alias"
-                  class="rounded border border-gray-400 px-3 py-2"
+                  class="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [attr.aria-invalid]="isAliasInvalid()"
                 />
                 @if (isAliasInvalid()) {
@@ -146,14 +159,14 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
               </div>
 
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium" for="keyPassword">
+                <label class="text-sm font-medium text-neutral-900" for="keyPassword">
                   Mot de passe de la clé (si différent du keystore)
                 </label>
                 <input
                   id="keyPassword"
                   type="password"
                   formControlName="keyPassword"
-                  class="rounded border border-gray-400 px-3 py-2"
+                  class="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                 />
               </div>
             }
@@ -164,7 +177,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
 
             <button
               type="submit"
-              class="self-start rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
+              class="self-start rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
               [disabled]="submitting()"
             >
               {{ submitting() ? 'Envoi…' : 'Enregistrer' }}
@@ -172,9 +185,9 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
           </form>
         </section>
       } @else if (!errorMessage()) {
-        <p role="status">Chargement…</p>
+        <p role="status" class="text-sm text-neutral-500">Chargement…</p>
       }
-    </main>
+    </div>
   `,
 })
 export class ProjectSecrets implements OnInit {

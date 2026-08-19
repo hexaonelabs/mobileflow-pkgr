@@ -11,85 +11,98 @@ import type { Project } from '../../../core/projects/project.models';
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-4 py-8">
-      <h1 class="text-2xl font-semibold">Connecter GitHub</h1>
+    <div class="mx-auto flex max-w-3xl flex-col gap-6">
+      <h1 class="text-2xl font-bold tracking-tight text-neutral-900">GitHub</h1>
 
       @if (isConnected()) {
-        <p>GitHub est connecté à votre compte MobileFlow.</p>
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="border-b border-neutral-200 px-5 py-4">
+            <p class="text-sm font-semibold text-neutral-900">Dépôts accessibles</p>
+            <p class="text-xs text-neutral-500">Activez un dépôt pour commencer à builder.</p>
+          </div>
 
-        @if (reposError()) {
-          <p role="alert">{{ reposError() }}</p>
-        } @else if (repos(); as list) {
-          @if (list.length === 0) {
-            <p>Aucun dépôt accessible pour le moment.</p>
+          @if (reposError()) {
+            <p role="alert" class="px-5 py-4 text-sm text-red-600">{{ reposError() }}</p>
+          } @else if (repos(); as list) {
+            @if (list.length === 0) {
+              <p class="px-5 py-8 text-center text-sm text-neutral-600">
+                Aucun dépôt accessible pour le moment.
+              </p>
+            } @else {
+              <ul class="divide-y divide-neutral-100">
+                @for (repo of list; track repo.fullName) {
+                  <li class="flex items-center justify-between gap-4 px-5 py-3">
+                    <span class="truncate text-sm font-medium text-neutral-900">{{
+                      repo.fullName
+                    }}</span>
+                    @if (projectIdByRepo().has(repo.fullName)) {
+                      <a
+                        class="shrink-0 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                        [routerLink]="['/projects', projectIdByRepo().get(repo.fullName)]"
+                      >
+                        Actif
+                      </a>
+                    } @else {
+                      <button
+                        type="button"
+                        class="shrink-0 rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                        [disabled]="activating() === repo.fullName"
+                        (click)="activate(repo)"
+                      >
+                        {{ activating() === repo.fullName ? 'Activation…' : 'Activer' }}
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
           } @else {
-            <ul class="flex flex-col gap-2 rounded border border-gray-300 p-4">
-              @for (repo of list; track repo.fullName) {
-                <li class="flex items-center justify-between gap-2">
-                  <span>{{ repo.fullName }}</span>
-                  @if (projectIdByRepo().has(repo.fullName)) {
-                    <a
-                      class="rounded border border-gray-400 px-3 py-1 text-sm"
-                      [routerLink]="['/projects', projectIdByRepo().get(repo.fullName)]"
-                    >
-                      Actif
-                    </a>
-                  } @else {
-                    <button
-                      type="button"
-                      class="rounded bg-gray-900 px-3 py-1 text-sm text-white disabled:opacity-50"
-                      [disabled]="activating() === repo.fullName"
-                      (click)="activate(repo)"
-                    >
-                      {{ activating() === repo.fullName ? 'Activation…' : 'Activer' }}
-                    </button>
-                  }
-                </li>
-              }
-            </ul>
+            <p role="status" class="px-5 py-8 text-center text-sm text-neutral-500">
+              Chargement des dépôts connectés…
+            </p>
           }
-        } @else {
-          <p role="status">Chargement des dépôts connectés…</p>
-        }
+        </div>
 
         <a
-          class="rounded border border-gray-400 px-4 py-2 text-center"
+          class="inline-flex w-fit items-center gap-1.5 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           [attr.href]="installUrl()"
           [attr.aria-disabled]="!installUrl()"
         >
           Connecter d'autres dépôts
         </a>
       } @else {
-        <p>
-          MobileFlow a besoin d'installer une GitHub App sur les dépôts que vous souhaitez
-          builder. Les permissions suivantes seront demandées lors de l'installation :
-        </p>
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <p class="text-sm text-neutral-600">
+            MobileFlow a besoin d'installer une GitHub App sur les dépôts que vous souhaitez
+            builder. Les permissions suivantes seront demandées lors de l'installation :
+          </p>
 
-        @if (permissions(); as list) {
-          <ul class="flex flex-col gap-2 rounded border border-gray-300 p-4">
-            @for (permission of list; track permission.scope) {
-              <li>
-                <span class="font-mono text-sm">{{ permission.scope }}</span>
-                — {{ permission.label }}
-              </li>
-            }
-          </ul>
-        } @else if (errorMessage()) {
-          <p role="alert">{{ errorMessage() }}</p>
-        } @else {
-          <p role="status">Chargement des permissions…</p>
-        }
+          @if (permissions(); as list) {
+            <ul class="mt-4 divide-y divide-neutral-100 rounded-xl border border-neutral-200">
+              @for (permission of list; track permission.scope) {
+                <li class="px-4 py-3 text-sm">
+                  <span class="font-mono text-xs text-neutral-500">{{ permission.scope }}</span>
+                  <span class="ml-2 text-neutral-700">{{ permission.label }}</span>
+                </li>
+              }
+            </ul>
+          } @else if (errorMessage()) {
+            <p role="alert" class="mt-4 text-sm text-red-600">{{ errorMessage() }}</p>
+          } @else {
+            <p role="status" class="mt-4 text-sm text-neutral-500">Chargement des permissions…</p>
+          }
 
-        <button
-          type="button"
-          class="rounded border border-gray-400 px-4 py-2 disabled:opacity-50"
-          [disabled]="!installUrl()"
-          (click)="connect()"
-        >
-          Connecter GitHub
-        </button>
+          <button
+            type="button"
+            class="mt-6 inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            [disabled]="!installUrl()"
+            (click)="connect()"
+          >
+            Connecter GitHub
+          </button>
+        </div>
       }
-    </main>
+    </div>
   `,
 })
 export class GithubConnect implements OnInit {

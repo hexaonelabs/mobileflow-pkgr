@@ -2,13 +2,16 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
+import { Logo } from '../../../shared/ui/logo';
 
 @Component({
   selector: 'app-github-connect-callback',
+  imports: [Logo],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-4 px-4">
-      <p role="status">{{ statusMessage() }}</p>
+    <main class="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-4 px-4 text-center">
+      <app-logo class="h-9 w-9" />
+      <p role="status" class="text-sm text-neutral-600">{{ statusMessage() }}</p>
     </main>
   `,
 })

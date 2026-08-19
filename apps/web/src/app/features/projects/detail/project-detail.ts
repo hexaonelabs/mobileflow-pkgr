@@ -12,72 +12,102 @@ import type {
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 px-4 py-8">
+    <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="text-sm text-red-600">{{ errorMessage() }}</p>
+        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ errorMessage() }}
+        </p>
       } @else if (project(); as project) {
-        <div>
-          <h1 class="text-2xl font-semibold">{{ project.name }}</h1>
-          <p class="text-sm text-gray-600">{{ project.githubRepoFullName }}</p>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h2 class="text-lg font-bold tracking-tight text-neutral-900">Vue d'ensemble</h2>
+          <a
+            class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+            [routerLink]="['/projects', project.id, 'builds', 'new']"
+          >
+            Lancer un build
+          </a>
         </div>
 
-        <section aria-labelledby="readiness-heading" class="rounded border border-gray-300 p-4">
-          <h2 id="readiness-heading" class="text-lg font-medium">Préparation du dépôt</h2>
+        <section aria-labelledby="readiness-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <h3 id="readiness-heading" class="text-sm font-semibold text-neutral-900">Préparation du dépôt</h3>
           @if (readiness(); as readiness) {
-            <ul class="mt-2 flex flex-col gap-1 text-sm">
-              <li [class]="readiness.capacitorInstalled ? 'text-green-700' : 'text-amber-700'">
-                {{ readiness.capacitorInstalled ? '✓' : '✗' }} Capacitor installé (@capacitor/core dans package.json)
+            <ul class="mt-3 flex flex-col gap-2">
+              <li class="flex items-center gap-2 text-sm">
+                <span
+                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                  [class]="readiness.capacitorInstalled ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  aria-hidden="true"
+                >
+                  {{ readiness.capacitorInstalled ? '✓' : '!' }}
+                </span>
+                <span class="text-neutral-700">
+                  Capacitor installé (@capacitor/core dans package.json)
+                </span>
               </li>
-              <li [class]="readiness.androidPlatformAdded ? 'text-green-700' : 'text-amber-700'">
-                {{ readiness.androidPlatformAdded ? '✓' : '✗' }} Plateforme Android ajoutée (dossier android/)
+              <li class="flex items-center gap-2 text-sm">
+                <span
+                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                  [class]="readiness.androidPlatformAdded ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  aria-hidden="true"
+                >
+                  {{ readiness.androidPlatformAdded ? '✓' : '!' }}
+                </span>
+                <span class="text-neutral-700">Plateforme Android ajoutée (dossier android/)</span>
               </li>
-              <li [class]="readiness.iosPlatformAdded ? 'text-green-700' : 'text-amber-700'">
-                {{ readiness.iosPlatformAdded ? '✓' : '✗' }} Plateforme iOS ajoutée (dossier ios/)
+              <li class="flex items-center gap-2 text-sm">
+                <span
+                  class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                  [class]="readiness.iosPlatformAdded ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  aria-hidden="true"
+                >
+                  {{ readiness.iosPlatformAdded ? '✓' : '!' }}
+                </span>
+                <span class="text-neutral-700">Plateforme iOS ajoutée (dossier ios/)</span>
               </li>
             </ul>
             @if (!isFullyReady()) {
-              <p class="mt-3 text-sm text-gray-600">
+              <p class="mt-4 text-sm text-neutral-600">
                 Pour que les builds compilent réellement, exécutez localement dans votre dépôt :
               </p>
-              <pre class="mt-1 overflow-x-auto rounded bg-gray-100 p-2 text-xs">{{ setupCommand() }}</pre>
-              <p class="mt-1 text-sm text-gray-600">puis committez et poussez les fichiers générés.</p>
+              <pre class="mt-2 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">{{ setupCommand() }}</pre>
+              <p class="mt-2 text-sm text-neutral-600">puis committez et poussez les fichiers générés.</p>
 
-              <div class="mt-3 flex flex-col gap-2">
+              <div class="mt-4 flex flex-col gap-2">
                 @if (!setupConfirming()) {
                   <button
                     type="button"
-                    class="self-start rounded border border-gray-400 px-3 py-1 text-sm"
+                    class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                     (click)="setupConfirming.set(true)"
                   >
                     Configurer automatiquement
                   </button>
                 } @else {
-                  <div class="rounded border border-amber-400 bg-amber-50 p-3 text-sm">
-                    <p>
+                  <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+                    <p class="text-amber-900">
                       Ceci va pousser un commit dans votre dépôt GitHub ({{ project.githubRepoFullName }})
                       pour installer Capacitor et/ou ajouter les plateformes manquantes.
                     </p>
-                    <div class="mt-2 flex flex-col gap-1">
-                      <label class="text-sm font-medium" for="web-dir">
+                    <div class="mt-3 flex flex-col gap-1">
+                      <label class="text-sm font-medium text-neutral-900" for="web-dir">
                         Répertoire de build web (webDir)
                       </label>
                       <input
                         id="web-dir"
                         type="text"
-                        class="rounded border border-gray-400 px-2 py-1"
+                        class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                         [value]="webDir()"
                         (input)="webDir.set($any($event.target).value)"
                       />
-                      <p class="text-xs text-gray-600">
+                      <p class="text-xs text-neutral-600">
                         Répertoire où votre commande de build (ex. <code>npm run build</code>) génère les
                         fichiers statiques. Par défaut "www", mais dépend de votre framework (ex. Angular :
                         dist/&lt;nom-projet&gt;/browser).
                       </p>
                     </div>
-                    <div class="mt-2 flex gap-2">
+                    <div class="mt-3 flex gap-2">
                       <button
                         type="button"
-                        class="rounded bg-gray-900 px-3 py-1 text-white disabled:opacity-50"
+                        class="rounded-lg bg-accent-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                         [disabled]="settingUp()"
                         (click)="triggerSetup()"
                       >
@@ -85,7 +115,7 @@ import type {
                       </button>
                       <button
                         type="button"
-                        class="rounded border border-gray-400 px-3 py-1"
+                        class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                         (click)="setupConfirming.set(false)"
                       >
                         Annuler
@@ -96,10 +126,15 @@ import type {
               </div>
 
               @if (setupResult(); as result) {
-                <p class="mt-2 text-sm text-green-700">
+                <p class="mt-3 text-sm text-green-700">
                   Configuration lancée.
                   @if (result.htmlUrl) {
-                    <a class="underline" [href]="result.htmlUrl" target="_blank" rel="noopener noreferrer">
+                    <a
+                      class="underline underline-offset-2"
+                      [href]="result.htmlUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Voir le run sur GitHub
                     </a>
                   }
@@ -107,45 +142,45 @@ import type {
                 </p>
               }
               @if (setupError()) {
-                <p role="alert" class="mt-2 text-sm text-red-600">{{ setupError() }}</p>
+                <p role="alert" class="mt-3 text-sm text-red-600">{{ setupError() }}</p>
               }
             }
           } @else if (!readinessError()) {
-            <p role="status" class="text-sm text-gray-600">Analyse du dépôt…</p>
+            <p role="status" class="mt-3 text-sm text-neutral-500">Analyse du dépôt…</p>
           }
           @if (readinessError()) {
-            <p role="alert" class="text-sm text-red-600">{{ readinessError() }}</p>
+            <p role="alert" class="mt-3 text-sm text-red-600">{{ readinessError() }}</p>
           }
         </section>
 
-        <section aria-labelledby="workflow-heading" class="rounded border border-gray-300 p-4">
-          <h2 id="workflow-heading" class="text-lg font-medium">Workflow de build</h2>
-          <p class="mt-1 text-sm text-gray-600">
+        <section aria-labelledby="workflow-heading" class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Workflow de build</h3>
+          <p class="mt-1 text-sm text-neutral-600">
             MobileFlow n'installe le workflow ({{ '.github/workflows/mobileflow.yml' }}) qu'une seule
             fois : vous pouvez ensuite le personnaliser librement, il ne sera plus jamais réécrit
             automatiquement.
           </p>
 
-          <div class="mt-3 flex flex-col gap-2">
+          <div class="mt-4 flex flex-col gap-2">
             @if (!resetConfirming()) {
               <button
                 type="button"
-                class="self-start rounded border border-gray-400 px-3 py-1 text-sm"
+                class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                 (click)="resetConfirming.set(true)"
               >
                 Réinitialiser le workflow au template par défaut
               </button>
             } @else {
-              <div class="rounded border border-red-400 bg-red-50 p-3 text-sm">
-                <p>
+              <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
+                <p class="text-red-900">
                   Ceci va <strong>écraser</strong> le fichier workflow actuel sur la branche par défaut
                   de {{ project.githubRepoFullName }}, y compris toute personnalisation que vous y avez
                   apportée.
                 </p>
-                <div class="mt-2 flex gap-2">
+                <div class="mt-3 flex gap-2">
                   <button
                     type="button"
-                    class="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
+                    class="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                     [disabled]="resetting()"
                     (click)="resetWorkflow()"
                   >
@@ -153,7 +188,7 @@ import type {
                   </button>
                   <button
                     type="button"
-                    class="rounded border border-gray-400 px-3 py-1"
+                    class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                     (click)="resetConfirming.set(false)"
                   >
                     Annuler
@@ -164,45 +199,24 @@ import type {
           </div>
 
           @if (resetDone()) {
-            <p class="mt-2 text-sm text-green-700">Workflow réinitialisé au template par défaut.</p>
+            <p class="mt-3 text-sm text-green-700">Workflow réinitialisé au template par défaut.</p>
           }
           @if (resetError()) {
-            <p role="alert" class="mt-2 text-sm text-red-600">{{ resetError() }}</p>
+            <p role="alert" class="mt-3 text-sm text-red-600">{{ resetError() }}</p>
           }
         </section>
 
-        <nav class="flex flex-col gap-2" aria-label="Sections du projet">
-          <a
-            class="rounded bg-gray-900 px-4 py-2 text-center text-white"
-            [routerLink]="['/projects', project.id, 'builds', 'new']"
-          >
-            Lancer un build
-          </a>
-          <a
-            class="rounded border border-gray-400 px-4 py-2 text-center"
-            [routerLink]="['/projects', project.id, 'builds']"
-          >
-            Historique des builds
-          </a>
-          <a
-            class="rounded border border-gray-400 px-4 py-2 text-center"
-            [routerLink]="['/projects', project.id, 'secrets']"
-          >
-            Secret Vault
-          </a>
-        </nav>
-
         <button
           type="button"
-          class="self-start rounded border border-red-400 px-4 py-2 text-red-600"
+          class="self-start rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           (click)="remove()"
         >
           Supprimer le projet
         </button>
       } @else {
-        <p role="status">Chargement du projet…</p>
+        <p role="status" class="text-sm text-neutral-500">Chargement du projet…</p>
       }
-    </main>
+    </div>
   `,
 })
 export class ProjectDetail implements OnInit {
