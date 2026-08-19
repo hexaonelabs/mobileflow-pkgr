@@ -19,12 +19,12 @@ const AVATAR_COLORS = [
   template: `
     <div class="mx-auto flex max-w-3xl flex-col gap-6">
       <div class="flex items-center justify-between gap-4">
-        <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Projets</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Projects</h1>
         <a
           class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           routerLink="/github/connect"
         >
-          Activer un dépôt
+          Enable a repository
         </a>
       </div>
 
@@ -35,7 +35,7 @@ const AVATAR_COLORS = [
       } @else if (projects(); as list) {
         @if (list.length === 0) {
           <div class="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center">
-            <p class="text-sm text-neutral-600">Aucun projet pour le moment.</p>
+            <p class="text-sm text-neutral-600">No projects yet.</p>
           </div>
         } @else {
           <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
@@ -78,7 +78,7 @@ const AVATAR_COLORS = [
           </div>
         }
       } @else {
-        <p role="status" class="text-sm text-neutral-500">Chargement des projets…</p>
+        <p role="status" class="text-sm text-neutral-500">Loading projects…</p>
       }
     </div>
   `,
@@ -93,7 +93,7 @@ export class ProjectsList implements OnInit {
     try {
       this.projects.set(await this.projectsService.list());
     } catch {
-      this.errorMessage.set('Impossible de charger les projets.');
+      this.errorMessage.set('Unable to load projects.');
     }
   }
 

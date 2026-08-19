@@ -35,9 +35,9 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
             class="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [routerLink]="['/projects', project.id, 'builds']"
           >
-            ← Retour aux builds
+            ← Back to builds
           </a>
-          <h2 class="mt-1 text-lg font-bold tracking-tight text-neutral-900">Nouveau build</h2>
+          <h2 class="mt-1 text-lg font-bold tracking-tight text-neutral-900">New build</h2>
         </div>
 
         <form
@@ -47,7 +47,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           novalidate
         >
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-neutral-900" for="environment">Environnement</label>
+            <label class="text-sm font-medium text-neutral-900" for="environment">Environment</label>
             <select
               id="environment"
               formControlName="environment"
@@ -59,7 +59,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-neutral-900" for="branch">Branche</label>
+            <label class="text-sm font-medium text-neutral-900" for="branch">Branch</label>
             <select
               id="branch"
               formControlName="branch"
@@ -67,19 +67,19 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
               [attr.aria-invalid]="isBranchInvalid()"
             >
               <option value="" disabled>
-                {{ branchesLoading() ? 'Chargement…' : 'Sélectionner une branche' }}
+                {{ branchesLoading() ? 'Loading…' : 'Select a branch' }}
               </option>
               @for (branch of branches(); track branch) {
                 <option [value]="branch">{{ branch }}</option>
               }
             </select>
             @if (isBranchInvalid()) {
-              <p class="text-sm text-red-600" role="alert">La branche est requise.</p>
+              <p class="text-sm text-red-600" role="alert">Branch is required.</p>
             }
           </div>
 
           <fieldset class="flex flex-col gap-1">
-            <legend class="text-sm font-medium text-neutral-900">Plateformes</legend>
+            <legend class="text-sm font-medium text-neutral-900">Platforms</legend>
             <div class="mt-1 grid grid-cols-2 gap-3">
               <label
                 class="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-neutral-200 p-4 text-center transition-colors has-[:checked]:border-accent-600 has-[:checked]:bg-accent-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent-600 hover:border-neutral-300"
@@ -98,29 +98,29 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
             </div>
             @if (form.invalid && form.touched) {
               <p class="mt-1 text-sm text-red-600" role="alert">
-                Au moins une plateforme doit être sélectionnée.
+                At least one platform must be selected.
               </p>
             }
           </fieldset>
 
           <fieldset class="flex flex-col gap-2">
-            <legend class="text-sm font-medium text-neutral-900">Variables d'environnement</legend>
+            <legend class="text-sm font-medium text-neutral-900">Environment Variables</legend>
             @for (row of envVarRows(); track row.id; let i = $index) {
               <div class="flex items-center gap-2">
-                <label class="sr-only" [attr.for]="'env-key-' + i">Clé</label>
+                <label class="sr-only" [attr.for]="'env-key-' + i">Key</label>
                 <input
                   [id]="'env-key-' + i"
                   type="text"
-                  placeholder="Clé"
+                  placeholder="Key"
                   class="w-1/3 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [value]="row.key"
                   (input)="updateEnvVarRow(i, 'key', $any($event.target).value)"
                 />
-                <label class="sr-only" [attr.for]="'env-value-' + i">Valeur</label>
+                <label class="sr-only" [attr.for]="'env-value-' + i">Value</label>
                 <input
                   [id]="'env-value-' + i"
                   type="text"
-                  placeholder="Valeur"
+                  placeholder="Value"
                   class="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
                   [value]="row.value"
                   (input)="updateEnvVarRow(i, 'value', $any($event.target).value)"
@@ -129,9 +129,9 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
                   type="button"
                   class="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                   (click)="removeEnvVarRow(i)"
-                  [attr.aria-label]="'Supprimer la variable ' + (row.key || i)"
+                  [attr.aria-label]="'Delete variable ' + (row.key || i)"
                 >
-                  Retirer
+                  Remove
                 </button>
               </div>
             }
@@ -140,7 +140,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
               class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
               (click)="addEnvVarRow()"
             >
-              Ajouter une variable
+              Add a variable
             </button>
           </fieldset>
 
@@ -153,7 +153,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
             class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [disabled]="form.invalid || submitting()"
           >
-            {{ submitting() ? 'Lancement…' : 'Lancer le build' }}
+            {{ submitting() ? 'Launching…' : 'Start build' }}
           </button>
         </form>
       } @else if (!errorMessage()) {
@@ -192,7 +192,7 @@ export class ProjectBuildNew implements OnInit {
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.errorMessage.set('Projet introuvable.');
+      this.errorMessage.set('Project not found.');
       return;
     }
     try {
@@ -201,7 +201,7 @@ export class ProjectBuildNew implements OnInit {
       this.branchesLoading.set(true);
       this.branches.set(await this.githubService.listBranches(project.githubRepoFullName));
     } catch {
-      this.errorMessage.set('Impossible de charger ce projet.');
+      this.errorMessage.set('Unable to load project.');
     } finally {
       this.branchesLoading.set(false);
     }
@@ -253,7 +253,7 @@ export class ProjectBuildNew implements OnInit {
       await this.projectsService.createBuild(project.id, { environment, branch, platforms, envVars });
       await this.router.navigate(['/projects', project.id, 'builds']);
     } catch {
-      this.submitError.set('Impossible de lancer ce build.');
+      this.submitError.set('Unable to start this build.');
     } finally {
       this.submitting.set(false);
     }

@@ -11,8 +11,8 @@ const ACTIVE_STATUSES: BuildStatus[] = ['queued', 'running'];
 const POLL_INTERVAL_MS = 4000;
 
 const TRIGGERED_BY_LABELS: Record<TriggeredBy, string> = {
-  manual: 'Déclenché manuellement',
-  push: 'Déclenché par un push sur la branche',
+  manual: 'Triggered manually',
+  push: 'Triggered by a push to the branch',
 };
 
 const CARD_CLASS = 'rounded-2xl border border-neutral-200 bg-white p-5';
@@ -60,11 +60,11 @@ const ACTION_BUTTON_CLASS =
 
               <div class="flex items-center gap-2">
                 <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="refreshing()" (click)="refresh()">
-                  {{ refreshing() ? 'Rafraîchissement…' : 'Rafraîchir' }}
+                  {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
                 </button>
                 @if (build.logsUrl) {
                   <a class="${ACTION_BUTTON_CLASS}" [href]="build.logsUrl" target="_blank" rel="noopener noreferrer">
-                    Voir sur GitHub ↗
+                    View on GitHub ↗
                   </a>
                 }
               </div>
@@ -76,8 +76,7 @@ const ACTION_BUTTON_CLASS =
               <h3 id="logs-heading" class="text-sm font-semibold text-neutral-900">Logs</h3>
               <div class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
                 <p class="text-sm text-neutral-600">
-                  Les logs détaillés de ce build ne sont pas encore affichés directement dans MobileFlow — c'est
-                  prévu dans une prochaine version.
+                  Detailed build logs are not yet displayed directly in MobileFlow — this is planned for a future version.
                 </p>
                 @if (build.logsUrl) {
                   <a
@@ -86,7 +85,7 @@ const ACTION_BUTTON_CLASS =
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Consulter les logs sur GitHub Actions ↗
+                    View logs on GitHub Actions ↗
                   </a>
                 }
               </div>
@@ -96,7 +95,7 @@ const ACTION_BUTTON_CLASS =
               <div class="${CARD_CLASS}">
                 <dl class="flex flex-col gap-3">
                   <div>
-                    <dt class="${DT_CLASS}">Durée</dt>
+                    <dt class="${DT_CLASS}">Duration</dt>
                     <dd class="${DD_CLASS}">{{ formatDuration(build.durationSeconds) }}</dd>
                   </div>
                   <div>
@@ -104,15 +103,15 @@ const ACTION_BUTTON_CLASS =
                     <dd class="${DD_CLASS} font-mono text-xs">{{ build.id }}</dd>
                   </div>
                   <div>
-                    <dt class="${DT_CLASS}">Plateforme</dt>
+                    <dt class="${DT_CLASS}">Platform</dt>
                     <dd class="${DD_CLASS} capitalize">{{ build.platform }}</dd>
                   </div>
                   <div>
-                    <dt class="${DT_CLASS}">Déploiement</dt>
+                    <dt class="${DT_CLASS}">Environment</dt>
                     <dd class="${DD_CLASS} capitalize">{{ build.environment }}</dd>
                   </div>
                   <div>
-                    <dt class="${DT_CLASS}">Déclenchement</dt>
+                    <dt class="${DT_CLASS}">Triggered</dt>
                     <dd class="${DD_CLASS}">
                       {{ triggeredByLabels[build.triggeredBy] }}
                       <span class="block text-neutral-500">{{ formatDate(build.createdAt) }}</span>
@@ -136,26 +135,26 @@ const ACTION_BUTTON_CLASS =
 
               @if (showArtifacts(build)) {
                 <div class="${CARD_CLASS}">
-                  <h3 class="${DT_CLASS}">Artefacts</h3>
+                  <h3 class="${DT_CLASS}">Artifacts</h3>
                   <div class="mt-2 flex flex-col items-start gap-2">
                     @if (build.artifactUrl) {
                       <a class="${ACTION_BUTTON_CLASS}" [href]="build.artifactUrl" target="_blank" rel="noopener noreferrer">
-                        Voir sur GitHub ↗
+                        View on GitHub ↗
                       </a>
                     }
                     @if (build.environment === 'staging' && build.status === 'success') {
                       @if (!build.artifactStoragePath) {
                         <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="installing()" (click)="installBuild(build.id)">
-                          {{ installing() ? 'Préparation…' : 'Installer' }}
+                          {{ installing() ? 'Preparing…' : 'Install' }}
                         </button>
                       } @else {
                         <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="downloading()" (click)="downloadArtifact(build.id)">
-                          {{ downloading() ? 'Préparation du lien…' : 'Télécharger (hébergé MobileFlow)' }}
+                          {{ downloading() ? 'Preparing link…' : 'Download (hosted by MobileFlow)' }}
                         </button>
                         @if (build.platform === 'ios') {
-                          <a class="${ACTION_BUTTON_CLASS}" [href]="itmsServicesUrl(build.id)">Installer sur iPhone</a>
+                          <a class="${ACTION_BUTTON_CLASS}" [href]="itmsServicesUrl(build.id)">Install on iPhone</a>
                           <button type="button" class="${ACTION_BUTTON_CLASS}" (click)="toggleQr(build.id)">
-                            {{ qrDataUrl() ? 'Masquer le QR code' : 'Afficher le QR code' }}
+                            {{ qrDataUrl() ? 'Hide QR code' : 'Show QR code' }}
                           </button>
                           @if (qrDataUrl(); as qrDataUrl) {
                             <img
@@ -233,7 +232,7 @@ export class BuildDetail implements OnInit, OnDestroy {
     try {
       this.build.set(await this.projectsService.refreshBuild(this.projectId, this.buildId));
     } catch {
-      this.errorMessage.set('Impossible de rafraîchir ce build.');
+      this.errorMessage.set('Unable to refresh this build.');
     } finally {
       this.refreshing.set(false);
     }
@@ -244,7 +243,7 @@ export class BuildDetail implements OnInit, OnDestroy {
     try {
       this.build.set(await this.projectsService.installBuild(this.projectId, buildId));
     } catch {
-      this.errorMessage.set("Impossible de préparer l'installation de ce build.");
+      this.errorMessage.set("Unable to prepare installation of this build.");
     } finally {
       this.installing.set(false);
     }
@@ -256,7 +255,7 @@ export class BuildDetail implements OnInit, OnDestroy {
       const { url } = await this.projectsService.getBuildArtifactUrl(this.projectId, buildId);
       window.open(url, '_blank', 'noopener');
     } catch {
-      this.errorMessage.set('Impossible de récupérer le lien de téléchargement.');
+      this.errorMessage.set('Unable to get download link.');
     } finally {
       this.downloading.set(false);
     }
@@ -275,7 +274,7 @@ export class BuildDetail implements OnInit, OnDestroy {
     try {
       this.qrDataUrl.set(await QRCode.toDataURL(this.itmsServicesUrl(buildId), { margin: 1, width: 180 }));
     } catch {
-      this.errorMessage.set('Impossible de générer le QR code.');
+      this.errorMessage.set('Unable to generate QR code.');
     }
   }
 

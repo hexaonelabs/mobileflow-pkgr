@@ -21,7 +21,7 @@ export class GithubConnectCallback implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly githubService = inject(GithubService);
 
-  protected readonly statusMessage = signal('Connexion à GitHub en cours…');
+  protected readonly statusMessage = signal('Connecting to GitHub…');
 
   async ngOnInit(): Promise<void> {
     const params = this.route.snapshot.queryParamMap;
@@ -30,13 +30,13 @@ export class GithubConnectCallback implements OnInit {
 
     if (setupAction === 'request') {
       this.statusMessage.set(
-        "Installation en attente d'approbation par un administrateur de l'organisation GitHub.",
+        "Installation awaiting approval by a GitHub organization administrator.",
       );
       return;
     }
 
     if (!installationId) {
-      this.statusMessage.set('Connexion GitHub impossible : installation_id manquant.');
+      this.statusMessage.set('GitHub connection failed: installation_id missing.');
       return;
     }
 
@@ -45,7 +45,7 @@ export class GithubConnectCallback implements OnInit {
       await this.authService.refreshUser();
       await this.router.navigateByUrl('/');
     } catch {
-      this.statusMessage.set('Connexion GitHub impossible.');
+      this.statusMessage.set('GitHub connection failed.');
     }
   }
 }

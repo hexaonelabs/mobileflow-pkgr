@@ -12,7 +12,7 @@ import { Logo } from '../../../shared/ui/logo';
     <main class="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4 py-8">
       <div class="flex flex-col items-center gap-2 text-center">
         <app-logo class="h-9 w-9" />
-        <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Créer un compte</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Create Account</h1>
       </div>
 
       <div class="rounded-2xl border border-neutral-200 bg-white p-6">
@@ -30,13 +30,13 @@ import { Logo } from '../../../shared/ui/logo';
             />
             @if (isInvalid('email')) {
               <p id="email-error" class="text-sm text-red-600" role="alert">
-                Merci de saisir un email valide.
+                Please enter a valid email.
               </p>
             }
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-neutral-900" for="password">Mot de passe</label>
+            <label class="text-sm font-medium text-neutral-900" for="password">Password</label>
             <input
               id="password"
               type="password"
@@ -48,7 +48,7 @@ import { Logo } from '../../../shared/ui/logo';
             />
             @if (isInvalid('password')) {
               <p id="password-error" class="text-sm text-red-600" role="alert">
-                Le mot de passe doit contenir au moins 8 caractères.
+                Password must be at least 8 characters.
               </p>
             }
           </div>
@@ -62,13 +62,13 @@ import { Logo } from '../../../shared/ui/logo';
             class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [disabled]="form.invalid || submitting()"
           >
-            {{ submitting() ? 'Création en cours…' : 'Créer mon compte' }}
+            {{ submitting() ? 'Creating account…' : 'Create account' }}
           </button>
         </form>
 
         <div class="mt-4 flex items-center gap-3" aria-hidden="true">
           <span class="h-px flex-1 bg-neutral-200"></span>
-          <span class="text-xs text-neutral-400">ou</span>
+          <span class="text-xs text-neutral-400">or</span>
           <span class="h-px flex-1 bg-neutral-200"></span>
         </div>
 
@@ -78,22 +78,22 @@ import { Logo } from '../../../shared/ui/logo';
             class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             (click)="authService.loginWithGoogle()"
           >
-            Continuer avec Google
+            Continue with Google
           </button>
           <button
             type="button"
             class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             (click)="authService.loginWithGithub()"
           >
-            Continuer avec GitHub
+            Continue with GitHub
           </button>
         </div>
       </div>
 
       <p class="text-center text-sm text-neutral-600">
-        Déjà un compte ?
+        Already have an account?
         <a class="font-medium text-accent-600 hover:underline" routerLink="/auth/login">
-          Se connecter
+          Sign in
         </a>
       </p>
     </main>
@@ -129,7 +129,7 @@ export class Register {
       await this.authService.register(email, password);
       await this.router.navigateByUrl('/');
     } catch {
-      this.errorMessage.set('Impossible de créer le compte. Cet email est peut-être déjà utilisé.');
+      this.errorMessage.set('Unable to create account. This email may already be in use.');
     } finally {
       this.submitting.set(false);
     }

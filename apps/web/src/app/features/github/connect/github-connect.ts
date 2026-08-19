@@ -17,8 +17,8 @@ import type { Project } from '../../../core/projects/project.models';
       @if (isConnected()) {
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
           <div class="border-b border-neutral-200 px-5 py-4">
-            <p class="text-sm font-semibold text-neutral-900">Dépôts accessibles</p>
-            <p class="text-xs text-neutral-500">Activez un dépôt pour commencer à builder.</p>
+            <p class="text-sm font-semibold text-neutral-900">Accessible Repositories</p>
+            <p class="text-xs text-neutral-500">Enable a repository to start building.</p>
           </div>
 
           @if (reposError()) {
@@ -26,7 +26,7 @@ import type { Project } from '../../../core/projects/project.models';
           } @else if (repos(); as list) {
             @if (list.length === 0) {
               <p class="px-5 py-8 text-center text-sm text-neutral-600">
-                Aucun dépôt accessible pour le moment.
+                No accessible repositories yet.
               </p>
             } @else {
               <ul class="divide-y divide-neutral-100">
@@ -40,7 +40,7 @@ import type { Project } from '../../../core/projects/project.models';
                         class="shrink-0 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                         [routerLink]="['/projects', projectIdByRepo().get(repo.fullName)]"
                       >
-                        Actif
+                        Active
                       </a>
                     } @else {
                       <button
@@ -49,7 +49,7 @@ import type { Project } from '../../../core/projects/project.models';
                         [disabled]="activating() === repo.fullName"
                         (click)="activate(repo)"
                       >
-                        {{ activating() === repo.fullName ? 'Activation…' : 'Activer' }}
+                        {{ activating() === repo.fullName ? 'Activating…' : 'Enable' }}
                       </button>
                     }
                   </li>
@@ -58,7 +58,7 @@ import type { Project } from '../../../core/projects/project.models';
             }
           } @else {
             <p role="status" class="px-5 py-8 text-center text-sm text-neutral-500">
-              Chargement des dépôts connectés…
+              Loading connected repositories…
             </p>
           }
         </div>
@@ -68,13 +68,13 @@ import type { Project } from '../../../core/projects/project.models';
           [attr.href]="installUrl()"
           [attr.aria-disabled]="!installUrl()"
         >
-          Connecter d'autres dépôts
+          Connect more repositories
         </a>
       } @else {
         <div class="rounded-2xl border border-neutral-200 bg-white p-6">
           <p class="text-sm text-neutral-600">
-            MobileFlow a besoin d'installer une GitHub App sur les dépôts que vous souhaitez
-            builder. Les permissions suivantes seront demandées lors de l'installation :
+            MobileFlow needs to install a GitHub App on the repositories you want to build.
+            The following permissions will be requested during installation:
           </p>
 
           @if (permissions(); as list) {
@@ -89,7 +89,7 @@ import type { Project } from '../../../core/projects/project.models';
           } @else if (errorMessage()) {
             <p role="alert" class="mt-4 text-sm text-red-600">{{ errorMessage() }}</p>
           } @else {
-            <p role="status" class="mt-4 text-sm text-neutral-500">Chargement des permissions…</p>
+            <p role="status" class="mt-4 text-sm text-neutral-500">Loading permissions…</p>
           }
 
           <button
@@ -144,7 +144,7 @@ export class GithubConnect implements OnInit {
         this.repos.set(repos);
         this.projects.set(projects);
       } catch {
-        this.reposError.set('Impossible de charger la liste des dépôts.');
+        this.reposError.set('Unable to load repository list.');
       }
     }
   }

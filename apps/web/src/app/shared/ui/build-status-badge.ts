@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import type { BuildStatus } from '../../core/projects/project.models';
 
 const STATUS_LABELS: Record<BuildStatus, string> = {
-  queued: 'En attente',
-  running: 'En cours',
-  success: 'Succès',
-  failed: 'Échec',
-  cancelled: 'Annulé',
+  queued: 'Queued',
+  running: 'Running',
+  success: 'Success',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
 };
 
 const STATUS_BADGE_CLASSES: Record<BuildStatus, string> = {

@@ -25,7 +25,7 @@ const NAV_LINK_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 h
           class="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           (click)="logout()"
         >
-          Déconnexion
+          Logout
         </button>
       </header>
 
@@ -35,7 +35,7 @@ const NAV_LINK_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 h
           <span class="text-base font-bold tracking-tight text-neutral-900">MobileFlow</span>
         </div>
 
-        <nav aria-label="Navigation principale" class="flex flex-1 flex-col gap-1 px-3 py-4">
+        <nav aria-label="Main navigation" class="flex flex-1 flex-col gap-1 px-3 py-4">
           <a routerLink="/projects" routerLinkActive="${NAV_LINK_ACTIVE_CLASS}" class="${NAV_LINK_CLASS}">
             <svg aria-hidden="true" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
@@ -64,7 +64,7 @@ const NAV_LINK_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 h
             class="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             (click)="logout()"
           >
-            Se déconnecter
+            Sign out
           </button>
         </div>
       </aside>

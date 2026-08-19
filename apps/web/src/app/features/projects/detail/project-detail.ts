@@ -19,17 +19,17 @@ import type {
         </p>
       } @else if (project(); as project) {
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <h2 class="text-lg font-bold tracking-tight text-neutral-900">Vue d'ensemble</h2>
+          <h2 class="text-lg font-bold tracking-tight text-neutral-900">Overview</h2>
           <a
             class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [routerLink]="['/projects', project.id, 'builds', 'new']"
           >
-            Lancer un build
+            Start a build
           </a>
         </div>
 
         <section aria-labelledby="readiness-heading" class="rounded-2xl border border-neutral-200 bg-white p-6">
-          <h3 id="readiness-heading" class="text-sm font-semibold text-neutral-900">Préparation du dépôt</h3>
+          <h3 id="readiness-heading" class="text-sm font-semibold text-neutral-900">Repository setup</h3>
           @if (readiness(); as readiness) {
             <ul class="mt-3 flex flex-col gap-2">
               <li class="flex items-center gap-2 text-sm">
@@ -41,7 +41,7 @@ import type {
                   {{ readiness.capacitorInstalled ? '✓' : '!' }}
                 </span>
                 <span class="text-neutral-700">
-                  Capacitor installé (@capacitor/core dans package.json)
+                  Capacitor installed (@capacitor/core in package.json)
                 </span>
               </li>
               <li class="flex items-center gap-2 text-sm">
@@ -52,7 +52,7 @@ import type {
                 >
                   {{ readiness.androidPlatformAdded ? '✓' : '!' }}
                 </span>
-                <span class="text-neutral-700">Plateforme Android ajoutée (dossier android/)</span>
+                <span class="text-neutral-700">Android platform added (android/ folder)</span>
               </li>
               <li class="flex items-center gap-2 text-sm">
                 <span
@@ -62,15 +62,15 @@ import type {
                 >
                   {{ readiness.iosPlatformAdded ? '✓' : '!' }}
                 </span>
-                <span class="text-neutral-700">Plateforme iOS ajoutée (dossier ios/)</span>
+                <span class="text-neutral-700">iOS platform added (ios/ folder)</span>
               </li>
             </ul>
             @if (!isFullyReady()) {
               <p class="mt-4 text-sm text-neutral-600">
-                Pour que les builds compilent réellement, exécutez localement dans votre dépôt :
+                To enable actual builds, run locally in your repository:
               </p>
               <pre class="mt-2 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">{{ setupCommand() }}</pre>
-              <p class="mt-2 text-sm text-neutral-600">puis committez et poussez les fichiers générés.</p>
+              <p class="mt-2 text-sm text-neutral-600">then commit and push the generated files.</p>
 
               <div class="mt-4 flex flex-col gap-2">
                 @if (!setupConfirming()) {
@@ -79,17 +79,17 @@ import type {
                     class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                     (click)="setupConfirming.set(true)"
                   >
-                    Configurer automatiquement
+                    Auto-configure
                   </button>
                 } @else {
                   <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
                     <p class="text-amber-900">
-                      Ceci va pousser un commit dans votre dépôt GitHub ({{ project.githubRepoFullName }})
-                      pour installer Capacitor et/ou ajouter les plateformes manquantes.
+                      This will push a commit to your GitHub repository ({{ project.githubRepoFullName }})
+                      to install Capacitor and/or add missing platforms.
                     </p>
                     <div class="mt-3 flex flex-col gap-1">
                       <label class="text-sm font-medium text-neutral-900" for="web-dir">
-                        Répertoire de build web (webDir)
+                        Web build directory (webDir)
                       </label>
                       <input
                         id="web-dir"
@@ -99,9 +99,8 @@ import type {
                         (input)="webDir.set($any($event.target).value)"
                       />
                       <p class="text-xs text-neutral-600">
-                        Répertoire où votre commande de build (ex. <code>npm run build</code>) génère les
-                        fichiers statiques. Par défaut "www", mais dépend de votre framework (ex. Angular :
-                        dist/&lt;nom-projet&gt;/browser).
+                        Directory where your build command (e.g. <code>npm run build</code>) generates static files.
+                        Default is "www", but depends on your framework (e.g. Angular: dist/&lt;project-name&gt;/browser).
                       </p>
                     </div>
                     <div class="mt-3 flex gap-2">
@@ -111,14 +110,14 @@ import type {
                         [disabled]="settingUp()"
                         (click)="triggerSetup()"
                       >
-                        {{ settingUp() ? 'Lancement…' : 'Confirmer' }}
+                        {{ settingUp() ? 'Starting…' : 'Confirm' }}
                       </button>
                       <button
                         type="button"
                         class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                         (click)="setupConfirming.set(false)"
                       >
-                        Annuler
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -127,7 +126,7 @@ import type {
 
               @if (setupResult(); as result) {
                 <p class="mt-3 text-sm text-green-700">
-                  Configuration lancée.
+                  Setup started.
                   @if (result.htmlUrl) {
                     <a
                       class="underline underline-offset-2"
@@ -135,10 +134,10 @@ import type {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Voir le run sur GitHub
+                      View run on GitHub
                     </a>
                   }
-                  — rafraîchissez cette page dans une minute pour voir le statut mis à jour.
+                  — refresh this page in a minute to see the updated status.
                 </p>
               }
               @if (setupError()) {
@@ -146,7 +145,7 @@ import type {
               }
             }
           } @else if (!readinessError()) {
-            <p role="status" class="mt-3 text-sm text-neutral-500">Analyse du dépôt…</p>
+            <p role="status" class="mt-3 text-sm text-neutral-500">Analyzing repository…</p>
           }
           @if (readinessError()) {
             <p role="alert" class="mt-3 text-sm text-red-600">{{ readinessError() }}</p>
@@ -154,11 +153,10 @@ import type {
         </section>
 
         <section aria-labelledby="workflow-heading" class="rounded-2xl border border-neutral-200 bg-white p-6">
-          <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Workflow de build</h3>
+          <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Build workflow</h3>
           <p class="mt-1 text-sm text-neutral-600">
-            MobileFlow n'installe le workflow ({{ '.github/workflows/mobileflow.yml' }}) qu'une seule
-            fois : vous pouvez ensuite le personnaliser librement, il ne sera plus jamais réécrit
-            automatiquement.
+            MobileFlow installs the workflow ({{ '.github/workflows/mobileflow.yml' }}) only once.
+            You can then customize it freely — it will never be overwritten automatically.
           </p>
 
           <div class="mt-4 flex flex-col gap-2">
@@ -168,14 +166,13 @@ import type {
                 class="self-start rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                 (click)="resetConfirming.set(true)"
               >
-                Réinitialiser le workflow au template par défaut
+                Reset workflow to default template
               </button>
             } @else {
               <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
                 <p class="text-red-900">
-                  Ceci va <strong>écraser</strong> le fichier workflow actuel sur la branche par défaut
-                  de {{ project.githubRepoFullName }}, y compris toute personnalisation que vous y avez
-                  apportée.
+                  This will <strong>overwrite</strong> the current workflow file on the default branch
+                  of {{ project.githubRepoFullName }}, including any customizations you've made.
                 </p>
                 <div class="mt-3 flex gap-2">
                   <button
@@ -184,14 +181,14 @@ import type {
                     [disabled]="resetting()"
                     (click)="resetWorkflow()"
                   >
-                    {{ resetting() ? 'Réinitialisation…' : 'Confirmer' }}
+                    {{ resetting() ? 'Resetting…' : 'Confirm' }}
                   </button>
                   <button
                     type="button"
                     class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                     (click)="resetConfirming.set(false)"
                   >
-                    Annuler
+                    Cancel
                   </button>
                 </div>
               </div>
@@ -199,7 +196,7 @@ import type {
           </div>
 
           @if (resetDone()) {
-            <p class="mt-3 text-sm text-green-700">Workflow réinitialisé au template par défaut.</p>
+            <p class="mt-3 text-sm text-green-700">Workflow reset to default template.</p>
           }
           @if (resetError()) {
             <p role="alert" class="mt-3 text-sm text-red-600">{{ resetError() }}</p>
@@ -211,10 +208,10 @@ import type {
           class="self-start rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
           (click)="remove()"
         >
-          Supprimer le projet
+          Delete project
         </button>
       } @else {
-        <p role="status" class="text-sm text-neutral-500">Chargement du projet…</p>
+        <p role="status" class="text-sm text-neutral-500">Loading project…</p>
       }
     </div>
   `,
@@ -265,19 +262,19 @@ export class ProjectDetail implements OnInit {
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.errorMessage.set('Projet introuvable.');
+      this.errorMessage.set('Project not found.');
       return;
     }
     try {
       this.project.set(await this.projectsService.get(id));
     } catch {
-      this.errorMessage.set('Impossible de charger ce projet.');
+      this.errorMessage.set('Unable to load project.');
       return;
     }
     try {
       this.readiness.set(await this.projectsService.getReadiness(id));
     } catch {
-      this.readinessError.set('Impossible d’analyser le dépôt.');
+      this.readinessError.set('Unable to analyze repository.');
     }
   }
 
@@ -292,7 +289,7 @@ export class ProjectDetail implements OnInit {
       this.setupResult.set(await this.projectsService.triggerSetup(project.id, this.webDir()));
       this.setupConfirming.set(false);
     } catch {
-      this.setupError.set('Impossible de lancer la configuration automatique.');
+      this.setupError.set('Unable to start auto-configuration.');
     } finally {
       this.settingUp.set(false);
     }
@@ -310,7 +307,7 @@ export class ProjectDetail implements OnInit {
       this.resetDone.set(true);
       this.resetConfirming.set(false);
     } catch {
-      this.resetError.set('Impossible de réinitialiser le workflow.');
+      this.resetError.set('Unable to reset workflow.');
     } finally {
       this.resetting.set(false);
     }
@@ -325,7 +322,7 @@ export class ProjectDetail implements OnInit {
       await this.projectsService.remove(project.id);
       await this.router.navigateByUrl('/projects');
     } catch {
-      this.errorMessage.set('Impossible de supprimer ce projet.');
+      this.errorMessage.set('Unable to delete project.');
     }
   }
 }

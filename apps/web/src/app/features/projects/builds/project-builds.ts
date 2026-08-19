@@ -34,35 +34,35 @@ const MENU_MAX_HEIGHT = 320;
             class="inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             [routerLink]="['/projects', project.id, 'builds', 'new']"
           >
-            Lancer un build
+            Start a build
           </a>
         </div>
 
         @if (builds(); as list) {
           @if (list.length === 0) {
             <div class="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center">
-              <p class="text-sm text-neutral-600">Aucun build lancé pour le moment.</p>
+              <p class="text-sm text-neutral-600">No builds yet.</p>
             </div>
           } @else {
             <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
               <table class="w-full text-left text-sm">
-                <caption class="sr-only">Historique des builds</caption>
+                <caption class="sr-only">Build history</caption>
                 <thead class="border-b border-neutral-200 bg-neutral-50/70">
                   <tr>
                     <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
                       Build
                     </th>
                     <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                      Statut
+                      Status
                     </th>
                     <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                      Plateforme
+                      Platform
                     </th>
                     <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                      Branche / commit
+                      Branch / commit
                     </th>
                     <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
-                      Durée
+                      Duration
                     </th>
                     <th scope="col" class="px-5 py-3"><span class="sr-only">Actions</span></th>
                   </tr>
@@ -111,7 +111,7 @@ const MENU_MAX_HEIGHT = 320;
                           class="rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                           aria-haspopup="menu"
                           [attr.aria-expanded]="openBuild()?.id === build.id"
-                          [attr.aria-label]="'Actions pour le build ' + (list.length - i)"
+                          [attr.aria-label]="'Actions for build ' + (list.length - i)"
                           (click)="toggleMenu(build, $event)"
                           (keydown.escape)="closeMenu()"
                         >
@@ -128,7 +128,7 @@ const MENU_MAX_HEIGHT = 320;
                         <td colspan="6" class="bg-neutral-50 px-5 py-4">
                           <img
                             [src]="qrDataUrls().get(build.id)"
-                            alt="QR code d'installation iPhone pour ce build"
+                            alt="QR code to install iPhone build"
                             width="160"
                             height="160"
                             class="rounded-lg border border-neutral-200"
@@ -142,10 +142,10 @@ const MENU_MAX_HEIGHT = 320;
             </div>
           }
         } @else if (!errorMessage()) {
-          <p role="status" class="text-sm text-neutral-500">Chargement des builds…</p>
+          <p role="status" class="text-sm text-neutral-500">Loading builds…</p>
         }
       } @else if (!errorMessage()) {
-        <p role="status" class="text-sm text-neutral-500">Chargement…</p>
+        <p role="status" class="text-sm text-neutral-500">Loading…</p>
       }
 
       @if (openBuild(); as build) {
@@ -173,7 +173,7 @@ const MENU_MAX_HEIGHT = 320;
               rel="noopener noreferrer"
               (click)="closeMenu()"
             >
-              Voir le run sur GitHub
+              View run on GitHub
             </a>
           }
           @if (build.artifactUrl) {
@@ -185,7 +185,7 @@ const MENU_MAX_HEIGHT = 320;
               rel="noopener noreferrer"
               (click)="closeMenu()"
             >
-              Télécharger l'artefact
+              Download artifact
             </a>
           }
           @if (build.environment === 'staging' && build.status === 'success') {
@@ -197,7 +197,7 @@ const MENU_MAX_HEIGHT = 320;
                 [disabled]="installingIds().has(build.id)"
                 (click)="installBuild(build.id); closeMenu()"
               >
-                {{ installingIds().has(build.id) ? 'Préparation…' : 'Installer' }}
+                {{ installingIds().has(build.id) ? 'Preparing…' : 'Install' }}
               </button>
             } @else {
               <button
@@ -209,8 +209,8 @@ const MENU_MAX_HEIGHT = 320;
               >
                 {{
                   downloadingIds().has(build.id)
-                    ? 'Préparation du lien…'
-                    : 'Télécharger (hébergé MobileFlow)'
+                    ? 'Preparing link…'
+                    : 'Download (hosted by MobileFlow)'
                 }}
               </button>
               @if (build.platform === 'ios') {
@@ -220,7 +220,7 @@ const MENU_MAX_HEIGHT = 320;
                   [href]="itmsServicesUrl(build.id)"
                   (click)="closeMenu()"
                 >
-                  Installer sur iPhone
+                  Install on iPhone
                 </a>
                 <button
                   role="menuitem"
@@ -228,7 +228,7 @@ const MENU_MAX_HEIGHT = 320;
                   class="${MENU_ITEM_CLASS}"
                   (click)="toggleQr(build.id); closeMenu()"
                 >
-                  {{ qrDataUrls().has(build.id) ? 'Masquer le QR code' : 'Afficher le QR code' }}
+                  {{ qrDataUrls().has(build.id) ? 'Hide QR code' : 'Show QR code' }}
                 </button>
               }
             }
@@ -241,7 +241,7 @@ const MENU_MAX_HEIGHT = 320;
             [disabled]="refreshingIds().has(build.id)"
             (click)="refresh(build.id); closeMenu()"
           >
-            {{ refreshingIds().has(build.id) ? 'Rafraîchissement…' : 'Rafraîchir' }}
+            {{ refreshingIds().has(build.id) ? 'Refreshing…' : 'Refresh' }}
           </button>
         </div>
       }
@@ -268,7 +268,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.errorMessage.set('Projet introuvable.');
+      this.errorMessage.set('Project not found.');
       return;
     }
     this.projectId = id;
@@ -281,7 +281,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
       this.builds.set(builds);
       this.schedulePolling();
     } catch {
-      this.errorMessage.set('Impossible de charger l’historique des builds.');
+      this.errorMessage.set('Unable to load build history.');
     }
   }
 
@@ -325,7 +325,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
         (list ?? []).map((build) => (build.id === buildId ? updated : build)),
       );
     } catch {
-      this.errorMessage.set('Impossible de rafraîchir ce build.');
+      this.errorMessage.set('Unable to refresh this build.');
     } finally {
       this.refreshingIds.update((ids) => {
         const next = new Set(ids);
@@ -341,7 +341,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
       const { url } = await this.projectsService.getBuildArtifactUrl(this.projectId, buildId);
       window.open(url, '_blank', 'noopener');
     } catch {
-      this.errorMessage.set('Impossible de récupérer le lien de téléchargement.');
+      this.errorMessage.set('Unable to get download link.');
     } finally {
       this.downloadingIds.update((ids) => {
         const next = new Set(ids);
@@ -351,9 +351,9 @@ export class ProjectBuilds implements OnInit, OnDestroy {
     }
   }
 
-  // Hébergement à la demande : le binaire n'est extrait de l'archive GitHub et déposé sur
-  // Firebase Storage que si l'utilisateur clique sur "Installer" (pas systématiquement à chaque
-  // build), pour limiter le stockage utilisé aux builds staging réellement installés.
+  // On-demand hosting: the binary is extracted from the GitHub archive and uploaded to
+  // Firebase Storage only if the user clicks "Install" (not systematically for each build),
+  // to limit storage usage to actually installed staging builds.
   protected async installBuild(buildId: string): Promise<void> {
     this.installingIds.update((ids) => new Set(ids).add(buildId));
     try {
@@ -362,7 +362,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
         (list ?? []).map((build) => (build.id === buildId ? updated : build)),
       );
     } catch {
-      this.errorMessage.set("Impossible de préparer l'installation de ce build.");
+      this.errorMessage.set("Unable to prepare installation of this build.");
     } finally {
       this.installingIds.update((ids) => {
         const next = new Set(ids);
@@ -372,9 +372,9 @@ export class ProjectBuilds implements OnInit, OnDestroy {
     }
   }
 
-  // Le Springboard iOS déclenche l'installation OTA en résolvant ce schéma d'URL, qui pointe
-  // vers notre manifest.plist public (cf. PublicBuildsController côté API) — pas d'appel HTTP
-  // direct possible ici, itms-services:// doit être ouvert depuis Safari sur l'iPhone lui-même.
+  // iOS Springboard triggers OTA installation by resolving this URL scheme, which points
+  // to our public manifest.plist (see PublicBuildsController on the API side) — no direct HTTP
+  // call is possible here, itms-services:// must be opened from Safari on the iPhone itself.
   protected itmsServicesUrl(buildId: string): string {
     const manifestUrl = `${environment.apiUrl}/builds/${buildId}/manifest.plist`;
     return `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`;
@@ -397,7 +397,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
       next.set(buildId, dataUrl);
       this.qrDataUrls.set(next);
     } catch {
-      this.errorMessage.set('Impossible de générer le QR code.');
+      this.errorMessage.set('Unable to generate QR code.');
     }
   }
 
