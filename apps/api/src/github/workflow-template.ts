@@ -167,6 +167,7 @@ jobs:
             CODE_SIGN_IDENTITY="iPhone Distribution" \\
             DEVELOPMENT_TEAM="$TEAM_ID" \\
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \\
+            IPHONEOS_DEPLOYMENT_TARGET=16.0 \\
             archive
       - name: Export IPA (Ad Hoc)
         run: |

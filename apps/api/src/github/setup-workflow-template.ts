@@ -70,6 +70,20 @@ jobs:
           if [ -f "$PODFILE" ]; then
             sed -i -E "s/platform :ios, '[0-9]+\\.[0-9]+'/platform :ios, '16.0'/" "$PODFILE"
           fi
+      - name: Patch iOS Podfile signing (disable manual signing on Pods targets)
+        if: \${{ inputs.add_ios == 'true' }}
+        run: |
+          PODFILE="ios/App/Podfile"
+          if [ -f "$PODFILE" ] && ! grep -q "CODE_SIGNING_ALLOWED" "$PODFILE"; then
+            {
+              echo "  installer.pods_project.targets.each do |target|"
+              echo "    target.build_configurations.each do |config|"
+              echo "      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'"
+              echo "    end"
+              echo "  end"
+            } > /tmp/podfile_signing_patch.txt
+            sed -i "/assertDeploymentTarget(installer)/r /tmp/podfile_signing_patch.txt" "$PODFILE"
+          fi
       - name: Commit generated files
         run: |
           git config user.name "mobileflow-bot"
