@@ -50,3 +50,15 @@ export interface BuildDocument {
   bundleVersion: string | null;
   createdAt: Timestamp | FieldValue;
 }
+
+// Forme exposée à l'API : les champs Timestamp de BuildDocument sont convertis en chaînes ISO
+// (Timestamp ne se sérialise pas proprement en JSON tel quel) — cf. BuildsService.toApiBuild.
+export interface BuildResponse extends Omit<
+  BuildDocument,
+  'startedAt' | 'finishedAt' | 'createdAt'
+> {
+  id: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string | null;
+}

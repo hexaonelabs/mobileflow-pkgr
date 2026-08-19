@@ -46,6 +46,13 @@ export const routes: Routes = [
           import('./features/projects/builds/project-builds').then((m) => m.ProjectBuilds),
       },
       {
+        path: 'builds/:buildId',
+        loadComponent: () =>
+          import('./features/projects/builds/build-detail/build-detail').then(
+            (m) => m.BuildDetail,
+          ),
+      },
+      {
         path: 'secrets',
         loadComponent: () =>
           import('./features/projects/secrets/project-secrets').then((m) => m.ProjectSecrets),

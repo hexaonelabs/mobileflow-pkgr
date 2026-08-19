@@ -4,26 +4,11 @@ import QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Build, BuildStatus, Project } from '../../../core/projects/project.models';
+import { BuildStatusBadge } from '../../../shared/ui/build-status-badge';
 import { PlatformIcon } from '../../../shared/ui/platform-icon';
 
 const ACTIVE_STATUSES: BuildStatus[] = ['queued', 'running'];
 const POLL_INTERVAL_MS = 4000;
-
-const STATUS_LABELS: Record<BuildStatus, string> = {
-  queued: 'En attente',
-  running: 'En cours',
-  success: 'Succès',
-  failed: 'Échec',
-  cancelled: 'Annulé',
-};
-
-const STATUS_BADGE_CLASSES: Record<BuildStatus, string> = {
-  queued: 'bg-amber-50 text-amber-700',
-  running: 'bg-amber-50 text-amber-700',
-  success: 'bg-green-50 text-green-700',
-  failed: 'bg-red-50 text-red-700',
-  cancelled: 'bg-neutral-100 text-neutral-500',
-};
 
 const MENU_ITEM_CLASS =
   'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-600 disabled:opacity-50';
@@ -32,7 +17,7 @@ const MENU_MAX_HEIGHT = 320;
 
 @Component({
   selector: 'app-project-builds',
-  imports: [RouterLink, PlatformIcon],
+  imports: [RouterLink, PlatformIcon, BuildStatusBadge],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-6">
@@ -85,68 +70,16 @@ const MENU_MAX_HEIGHT = 320;
                 <tbody class="divide-y divide-neutral-100">
                   @for (build of list; track build.id; let i = $index) {
                     <tr class="transition-colors hover:bg-neutral-50/80">
-                      <td class="px-5 py-4 font-semibold text-neutral-900">#{{ list.length - i }}</td>
-                      <td class="px-5 py-4">
-                        <span
-                          class="inline-flex items-center gap-1.5 rounded-full text-xs font-medium"
-                          [class]="statusBadgeClasses[build.status]"
+                      <td class="px-5 py-4 font-semibold text-neutral-900">
+                        <a
+                          class="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                          [routerLink]="['/projects', project.id, 'builds', build.id]"
                         >
-                          @switch (build.status) {
-                            @case ('success') {
-                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
-                            }
-                            @case ('failed') {
-                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
-                            }
-                            @case ('cancelled') {
-                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5H7z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
-                            }
-                            @case ('queued') {
-                              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
-                                  clip-rule="evenodd"
-                                />
-                              </svg>
-                            }
-                            @case ('running') {
-                              <svg
-                                class="h-3.5 w-3.5 animate-spin"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                                aria-hidden="true"
-                              >
-                                <circle class="opacity-25" cx="10" cy="10" r="7" stroke="currentColor" stroke-width="3" />
-                                <path
-                                  d="M17 10a7 7 0 00-7-7"
-                                  stroke="currentColor"
-                                  stroke-width="3"
-                                  stroke-linecap="round"
-                                />
-                              </svg>
-                            }
-                          }
-                          <!-- {{ statusLabels[build.status] }} -->
-                        </span>
+                          #{{ list.length - i }}
+                        </a>
+                      </td>
+                      <td class="px-5 py-4">
+                        <app-build-status-badge [status]="build.status" />
                       </td>
                       <td class="px-5 py-4">
                         <div class="flex items-center gap-2">
@@ -319,8 +252,6 @@ export class ProjectBuilds implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly projectsService = inject(ProjectsService);
 
-  protected readonly statusLabels = STATUS_LABELS;
-  protected readonly statusBadgeClasses = STATUS_BADGE_CLASSES;
   protected readonly project = signal<Project | null>(null);
   protected readonly builds = signal<Build[] | null>(null);
   protected readonly errorMessage = signal<string | null>(null);

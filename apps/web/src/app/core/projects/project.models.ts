@@ -2,6 +2,7 @@ export type Platform = 'android' | 'ios';
 export type Framework = 'capacitor';
 export type Environment = 'staging' | 'production';
 export type BuildStatus = 'queued' | 'running' | 'success' | 'failed' | 'cancelled';
+export type TriggeredBy = 'manual' | 'push';
 
 export interface Project {
   id: string;
@@ -23,6 +24,7 @@ export interface UpdateProjectPayload {
 export interface Build {
   id: string;
   projectId: string;
+  triggeredBy: TriggeredBy;
   environment: Environment;
   platform: Platform;
   branch: string;
@@ -30,10 +32,15 @@ export interface Build {
   envVars: Record<string, string>;
   status: BuildStatus;
   githubRunId: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
   durationSeconds: number | null;
   logsUrl: string | null;
   artifactUrl: string | null;
   artifactStoragePath: string | null;
+  bundleId: string | null;
+  bundleVersion: string | null;
+  createdAt: string | null;
 }
 
 export interface CreateBuildPayload {

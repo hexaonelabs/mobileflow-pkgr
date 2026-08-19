@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import AdmZip from 'adm-zip';
 import bplistParser from 'bplist-parser';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
@@ -15,6 +15,7 @@ import {
   Environment,
   TriggeredBy,
   type BuildDocument,
+  type BuildResponse,
 } from './build.model';
 import type { CreateBuildDto } from './dto/create-build.dto';
 
@@ -136,14 +137,26 @@ export class BuildsService {
     }
 
     const finalDoc = await ref.get();
-    return { id: ref.id, ...(finalDoc.data() as BuildDocument) };
+    return this.toApiBuild(ref.id, finalDoc.data() as BuildDocument);
   }
 
-  async findAllForProject(userId: string, projectId: string) {
+  async findAllForProject(userId: string, projectId: string): Promise<BuildResponse[]> {
     await this.getOwnedProject(userId, projectId);
     const snapshot = await this.builds.where('projectId', '==', projectId).get();
-    const items = snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as BuildDocument) }));
-    return items.sort((a, b) => this.toMillis(b.createdAt) - this.toMillis(a.createdAt));
+    const items = snapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() as BuildDocument }));
+    return items
+      .sort((a, b) => this.toMillis(b.data.createdAt) - this.toMillis(a.data.createdAt))
+      .map(({ id, data }) => this.toApiBuild(id, data));
+  }
+
+  async findOne(userId: string, projectId: string, buildId: string): Promise<BuildResponse> {
+    await this.getOwnedProject(userId, projectId);
+    const doc = await this.builds.doc(buildId).get();
+    const data = doc.data() as BuildDocument | undefined;
+    if (!doc.exists || !data || data.projectId !== projectId) {
+      throw new NotFoundException('Build introuvable.');
+    }
+    return this.toApiBuild(buildId, data);
   }
 
   async getArtifactDownloadUrl(
@@ -180,7 +193,7 @@ export class BuildsService {
       throw new NotFoundException('Build introuvable.');
     }
     if (data.artifactStoragePath) {
-      return { id: buildId, ...data };
+      return this.toApiBuild(buildId, data);
     }
     if (data.environment !== Environment.staging) {
       throw new BadRequestException(
@@ -218,7 +231,7 @@ export class BuildsService {
 
     await ref.update(update);
     const refreshed = await ref.get();
-    return { id: buildId, ...(refreshed.data() as BuildDocument) };
+    return this.toApiBuild(buildId, refreshed.data() as BuildDocument);
   }
 
   private extractIosMetadata(ipaBuffer: Buffer): {
@@ -299,7 +312,7 @@ export class BuildsService {
 
     await ref.update(update);
     const refreshed = await ref.get();
-    return { id: buildId, ...(refreshed.data() as BuildDocument) };
+    return this.toApiBuild(buildId, refreshed.data() as BuildDocument);
   }
 
   private mapRunStatus(status: string | null, conclusion: string | null): BuildStatus {
@@ -322,5 +335,21 @@ export class BuildsService {
     return typeof value === 'object' && value !== null && 'toMillis' in value
       ? value.toMillis()
       : 0;
+  }
+
+  // Un FieldValue.serverTimestamp() non résolu (juste avant écriture) ne s'exporte pas en JSON :
+  // uniquement les Timestamp effectivement lus depuis Firestore sont convertis en chaîne ISO.
+  private toIsoString(value: Timestamp | FieldValue | null): string | null {
+    return value instanceof Timestamp ? value.toDate().toISOString() : null;
+  }
+
+  private toApiBuild(id: string, data: BuildDocument): BuildResponse {
+    return {
+      ...data,
+      id,
+      startedAt: this.toIsoString(data.startedAt),
+      finishedAt: this.toIsoString(data.finishedAt),
+      createdAt: this.toIsoString(data.createdAt),
+    };
   }
 }

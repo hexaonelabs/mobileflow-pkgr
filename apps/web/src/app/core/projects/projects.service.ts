@@ -57,6 +57,12 @@ export class ProjectsService {
     return firstValueFrom(this.http.get<Build[]>(`${this.baseUrl}/${projectId}/builds`));
   }
 
+  getBuild(projectId: string, buildId: string): Promise<Build> {
+    return firstValueFrom(
+      this.http.get<Build>(`${this.baseUrl}/${projectId}/builds/${buildId}`),
+    );
+  }
+
   createBuild(projectId: string, payload: CreateBuildPayload): Promise<Build[]> {
     return firstValueFrom(this.http.post<Build[]>(`${this.baseUrl}/${projectId}/builds`, payload));
   }

@@ -80,6 +80,15 @@ export class ProjectsController {
     return this.buildsService.findAllForProject(req.user.id, id);
   }
 
+  @Get(':id/builds/:buildId')
+  getBuild(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('buildId') buildId: string,
+  ) {
+    return this.buildsService.findOne(req.user.id, id, buildId);
+  }
+
   @Post(':id/builds/:buildId/refresh')
   refreshBuild(
     @Req() req: AuthenticatedRequest,
