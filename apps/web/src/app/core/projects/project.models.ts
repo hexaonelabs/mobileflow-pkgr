@@ -32,6 +32,7 @@ export interface Build {
   githubRunId: number | null;
   durationSeconds: number | null;
   logsUrl: string | null;
+  artifactUrl: string | null;
 }
 
 export interface CreateBuildPayload {

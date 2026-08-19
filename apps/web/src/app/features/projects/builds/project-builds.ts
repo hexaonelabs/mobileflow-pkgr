@@ -56,16 +56,28 @@ const STATUS_LABELS: Record<BuildStatus, string> = {
                           — {{ build.durationSeconds }}s
                         }
                       </p>
-                      @if (build.logsUrl) {
-                        <a
-                          class="text-sm underline"
-                          [href]="build.logsUrl"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Voir le run sur GitHub
-                        </a>
-                      }
+                      <div class="flex flex-wrap gap-3">
+                        @if (build.logsUrl) {
+                          <a
+                            class="text-sm underline"
+                            [href]="build.logsUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Voir le run sur GitHub
+                          </a>
+                        }
+                        @if (build.artifactUrl) {
+                          <a
+                            class="text-sm font-medium text-green-700 underline"
+                            [href]="build.artifactUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Télécharger l'artefact
+                          </a>
+                        }
+                      </div>
                     </div>
                     <button
                       type="button"

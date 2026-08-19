@@ -384,6 +384,35 @@ export class GithubService {
     }
   }
 
+  // Le téléchargement direct de l'API GitHub (archive_download_url) redirige vers une URL
+  // signée valable ~1 minute, donc inutilisable comme lien stocké en base. La page artefact
+  // sur github.com est en revanche une URL stable (avec bouton "Download") tant que l'artefact
+  // n'a pas expiré (rétention par défaut : 90 jours).
+  async findArtifactUrl(
+    userId: string,
+    repoFullName: string,
+    runId: number,
+    artifactName: string,
+  ): Promise<string | null> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const { data } = await octokit.rest.actions.listWorkflowRunArtifacts({
+        owner,
+        repo,
+        run_id: runId,
+        per_page: 100,
+      });
+      const artifact = data.artifacts.find((item) => item.name === artifactName && !item.expired);
+      if (!artifact) {
+        return null;
+      }
+      return `https://github.com/${owner}/${repo}/actions/runs/${runId}/artifacts/${artifact.id}`;
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
   private toHttpException(error: unknown): Error {
     const status = (error as { status?: number } | null)?.status;
     if (status === 404) {

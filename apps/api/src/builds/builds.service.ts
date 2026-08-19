@@ -180,6 +180,14 @@ export class BuildsService {
         update.durationSeconds = Math.max(0, Math.round(durationMs / 1000));
       }
     }
+    if (status === BuildStatus.success && !data.artifactUrl) {
+      update.artifactUrl = await this.githubService.findArtifactUrl(
+        userId,
+        project.githubRepoFullName,
+        runId,
+        `mobileflow-${buildId}-${data.platform}`,
+      );
+    }
 
     await ref.update(update);
     const refreshed = await ref.get();
