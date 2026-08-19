@@ -69,14 +69,11 @@ const MENU_MAX_HEIGHT = 320;
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                   @for (build of list; track build.id; let i = $index) {
-                    <tr class="transition-colors hover:bg-neutral-50/80">
+                    <tr 
+                      class="cursor-pointer transition-colors hover:bg-neutral-50/80 "
+                      [routerLink]="['/projects', project.id, 'builds', build.id]">
                       <td class="px-5 py-4 font-semibold text-neutral-900">
-                        <a
-                          class="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
-                          [routerLink]="['/projects', project.id, 'builds', build.id]"
-                        >
-                          #{{ list.length - i }}
-                        </a>
+                        #{{ list.length - i }}
                       </td>
                       <td class="px-5 py-4">
                         <app-build-status-badge [status]="build.status" />
@@ -108,11 +105,11 @@ const MENU_MAX_HEIGHT = 320;
                       <td class="px-5 py-4 text-right">
                         <button
                           type="button"
-                          class="rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                          class="cursor-pointer rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                           aria-haspopup="menu"
                           [attr.aria-expanded]="openBuild()?.id === build.id"
                           [attr.aria-label]="'Actions for build ' + (list.length - i)"
-                          (click)="toggleMenu(build, $event)"
+                          (click)="$event.preventDefault(); $event.stopPropagation(); toggleMenu(build, $event)"
                           (keydown.escape)="closeMenu()"
                         >
                           <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
