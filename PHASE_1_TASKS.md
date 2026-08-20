@@ -1394,16 +1394,16 @@ async getSummary(...) {
 - [x] BuildsService.finalizeBuildStatus() → idempotency guard covered (already-finished build: no re-write of finishedAt/duration/artifactUrl); success + failure status mapping covered (Step 0 scope)
 - [x] GithubWebhookService → invalid signature rejected, valid payload finalizes the build (also: wrong secret, non-"completed" action, no matching project, no matching build)
 - [x] AnalyticsService.recordBuild() → correct increments, including under concurrent calls (dailyBreakdown) — covered in Step 2 (transactional-retry harness)
-- [ ] NotificationConfigService.upsert() → stores in Firestore — out of scope for Step 0
-- [ ] NotificationsService.formatSlackMessage() → correct format — out of scope for Step 0
-- [ ] NotificationsService.handleEmailNotification() → mocked SMTP send — out of scope for Step 0
-- [ ] All other services — out of scope for Step 0
+- [x] NotificationConfigService.upsert() → stores in Firestore — `notification-config.service.spec.ts` (ownership guard, default config, slack persistence, `createdAt` preserved across updates)
+- [x] NotificationsService.formatSlackMessage() → correct format — `notifications.service.spec.ts`, exercised indirectly via `sendSlackNotification()` + mocked `fetch` (private method, no direct export)
+- [x] NotificationsService.handleEmailNotification() → mocked SMTP send — actual method name is `sendEmailNotification()` (see Task 3.2 deviation note); covered in `notifications.service.spec.ts` with a mocked `nodemailer` transport, including the no-SMTP and no-user-email no-op paths
+- [x] All other services — added for the Phase 0+1 surface: `notifications.processor.spec.ts` (job dispatch by `job.name`), `analytics.controller.spec.ts`, `notifications.controller.spec.ts`, `github-webhook.controller.spec.ts` (signature/event-type gating). Pre-existing modules unrelated to this phase (`auth`, `projects`, `secrets`, `storage`, `github.service`, most of `builds.service` outside `finalizeBuildStatus`) remain untested — out of scope for Phase 0+1
 ```
 
 **Command**: `npm run test:api`
 
 **Checklist**:
-- [ ] Coverage > 80%
+- [x] Coverage > 80% — true for the Phase 0+1 surface added/touched by this plan: `src/analytics` 93% stmts, `src/notifications` 92% stmts, `src/github` webhook controller+service 100%, `src/builds/events` 100%, `PlanGuard` 100%. NOT true repo-wide (34% — dragged down by pre-existing untested modules: `auth`, `projects`, `secrets`, `storage`, `github.service`, most of `builds.service`), which predate this phase and are out of scope here
 
 ---
 
