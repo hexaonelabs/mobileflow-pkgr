@@ -84,9 +84,9 @@ async refreshStatus(userId: string, projectId: string, buildId: string) {
 ```
 
 **Checklist**:
-- [ ] `finalizeBuildStatus()` created, logic identical to the existing one (no behavior regression)
-- [ ] `refreshStatus()` refactored to call it
-- [ ] Existing tests on `refreshStatus()` still pass
+- [x] `finalizeBuildStatus()` created, logic identical to the existing one (no behavior regression)
+- [x] `refreshStatus()` refactored to call it
+- [x] Existing tests on `refreshStatus()` still pass (no pre-existing spec for this file; new coverage added in Task 0.6)
 
 ---
 

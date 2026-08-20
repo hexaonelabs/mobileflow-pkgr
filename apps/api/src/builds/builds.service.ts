@@ -284,6 +284,28 @@ export class BuildsService {
     }
 
     const run = await this.githubService.getWorkflowRun(userId, project.githubRepoFullName, runId);
+    const { build } = await this.finalizeBuildStatus(userId, projectId, buildId, ref, data, run);
+    return build;
+  }
+
+  // Extrait de refreshStatus() : point de finalisation unique, appelable aussi bien depuis le
+  // polling client (refreshStatus) que depuis le webhook GitHub (GithubWebhookService) — c'est
+  // ici, et nulle part ailleurs, que doit se brancher tout ce qui doit se déclencher exactement
+  // une fois quand un build se termine (Analytics, Notifications).
+  async finalizeBuildStatus(
+    userId: string,
+    projectId: string,
+    buildId: string,
+    ref: FirebaseFirestore.DocumentReference,
+    data: BuildDocument,
+    run: {
+      status: string | null;
+      conclusion: string | null;
+      htmlUrl: string;
+      startedAt: string | null;
+      updatedAt: string;
+    },
+  ) {
     const status = this.mapRunStatus(run.status, run.conclusion);
     const update: Partial<BuildDocument> = { status, logsUrl: run.htmlUrl };
 
@@ -294,6 +316,7 @@ export class BuildsService {
       status === BuildStatus.success ||
       status === BuildStatus.failed ||
       status === BuildStatus.cancelled;
+
     if (isFinished && !data.finishedAt) {
       update.finishedAt = FieldValue.serverTimestamp();
       if (run.startedAt) {
@@ -304,15 +327,19 @@ export class BuildsService {
     if (status === BuildStatus.success && !data.artifactUrl) {
       update.artifactUrl = await this.githubService.findArtifactUrl(
         userId,
-        project.githubRepoFullName,
-        runId,
+        (await this.getOwnedProject(userId, projectId)).githubRepoFullName,
+        data.githubRunId!,
         `mobileflow-${buildId}-${data.platform}`,
       );
     }
 
     await ref.update(update);
     const refreshed = await ref.get();
-    return this.toApiBuild(buildId, refreshed.data() as BuildDocument);
+    return {
+      isFinished: isFinished && !data.finishedAt,
+      build: this.toApiBuild(buildId, refreshed.data() as BuildDocument),
+      update,
+    };
   }
 
   private mapRunStatus(status: string | null, conclusion: string | null): BuildStatus {
