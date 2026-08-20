@@ -9,11 +9,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { RequirePlan } from '../auth/decorators/required-plan.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PlanGuard } from '../auth/guards/plan.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { BuildStatus, Environment } from '../builds/build.model';
 import { BuildStatusChangedEvent } from '../builds/events/build-status-changed.event';
 import { Platform } from '../projects/project.model';
+import { Plan } from '../users/user.model';
 import { UpsertNotificationConfigDto } from './dto/upsert-notification-config.dto';
 import { NotificationConfigService } from './notification-config.service';
 import { NotificationsService } from './notifications.service';
@@ -34,6 +37,8 @@ export class NotificationsController {
   }
 
   @Post(':id/notifications/config')
+  @UseGuards(PlanGuard)
+  @RequirePlan(Plan.starter)
   upsertConfig(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
@@ -43,6 +48,8 @@ export class NotificationsController {
   }
 
   @Post(':id/notifications/test')
+  @UseGuards(PlanGuard)
+  @RequirePlan(Plan.starter)
   async sendTest(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     const config = await this.notificationConfigService.getConfig(req.user.id, id);
     if (!config.slack?.enabled) {
