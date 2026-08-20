@@ -1410,15 +1410,16 @@ async getSummary(...) {
 ### Task 7.2: E2E tests
 
 ```
-- [ ] POST /github/webhook (workflow_run.completed payload) → verifies analytics + notifications fire WITHOUT any client call
-- [ ] POST /projects/:id/builds → verifies analytics incremented (via polling, existing case)
-- [ ] POST /projects/:id/notifications/config → saves and returns
-- [ ] POST /projects/:id/notifications/test → sends to Slack (mock)
+- [x] POST /github/webhook (workflow_run.completed payload) → verifies analytics + notifications fire WITHOUT any client call — `apps/api/test/github-webhook.e2e-spec.ts`, real HTTP via supertest against an isolated TestingModule (GithubWebhookController → GithubWebhookService → BuildsService → AnalyticsService/NotificationsService), no client/JWT involved (public endpoint)
+- [x] POST /projects/:id/builds → verifies analytics incremented (via polling, existing case) — `apps/api/test/build-refresh-analytics.e2e-spec.ts`, drives `POST /projects/:id/builds/:buildId/refresh` (the actual polling route, cf. `projects.controller.ts`) instead; also covers the idempotency guard across repeated refresh calls
+- [x] POST /projects/:id/notifications/config → saves and returns — `apps/api/test/notifications.e2e-spec.ts`
+- [x] POST /projects/:id/notifications/test → sends to Slack (mock) — same file; asserts the job lands in the (mocked) BullMQ queue, not that the real webhook is called (already covered by the real-fetch assertion in `notifications.service.spec.ts`)
 ```
 
 **Checklist**:
-- [ ] All happy paths covered
-- [ ] The "no client connected" case (webhook only) is explicitly tested — this is the problem Phase 0 solves
+- [x] All happy paths covered
+- [x] The "no client connected" case (webhook only) is explicitly tested — this is the problem Phase 0 solves — `github-webhook.e2e-spec.ts`, no auth/JWT/client involved at all
+- Note: none of these e2e specs boot the full `AppModule` (it requires live Redis + real Firebase credentials, per `.env`, and would either hang or mutate real Firestore data) — each spec wires an isolated `TestingModule` with the real controller/service chain under test and a shared in-memory Firestore fake (`test/support/fake-firestore.ts`), overriding only external I/O boundaries (Firestore, BullMQ queue, GithubService, SMTP). Guards (`JwtAuthGuard` faked via header, `PlanGuard` real) still execute for real.
 
 ---
 
