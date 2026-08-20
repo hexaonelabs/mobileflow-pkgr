@@ -8,6 +8,7 @@ import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
 import { RunTokensService } from '../internal/run-tokens.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
 import { StorageService } from '../storage/storage.service';
 import {
@@ -19,6 +20,7 @@ import {
   type BuildResponse,
 } from './build.model';
 import type { CreateBuildDto } from './dto/create-build.dto';
+import { BuildStatusChangedEvent } from './events/build-status-changed.event';
 
 const ARTIFACT_DOWNLOAD_URL_TTL_MS = 15 * 60 * 1000;
 
@@ -31,6 +33,7 @@ export class BuildsService {
     private readonly storageService: StorageService,
     private readonly config: ConfigService,
     private readonly analyticsService: AnalyticsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private get builds() {
@@ -332,6 +335,19 @@ export class BuildsService {
         status,
         durationSeconds: update.durationSeconds ?? null,
       });
+
+      await this.notificationsService.onBuildStatusChanged(
+        new BuildStatusChangedEvent(
+          buildId,
+          projectId,
+          userId,
+          data.platform,
+          data.environment,
+          status,
+          update.durationSeconds ?? null,
+          data.status,
+        ),
+      );
     }
     if (status === BuildStatus.success && !data.artifactUrl) {
       update.artifactUrl = await this.githubService.findArtifactUrl(
