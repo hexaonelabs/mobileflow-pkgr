@@ -1254,11 +1254,13 @@ export class SlackConfigFormComponent {
 ```
 
 **Checklist**:
-- [ ] Component created (Reactive Forms, `ChangeDetectionStrategy.OnPush`)
-- [ ] `<label for>` correctly associated with fields (AXE)
-- [ ] Form validation
-- [ ] API calls (4 methods to add to `ProjectsService`: `getAnalyticsSummary`, `getNotificationConfig`, `testNotification`, `updateNotificationConfig` — don't exist yet)
-- [ ] Error/success handling
+- [x] Component created (Reactive Forms, `ChangeDetectionStrategy.OnPush`)
+- [x] `<label for>` correctly associated with fields (AXE) — checkboxes wrap their `<input>` directly (no `for`/`id` needed per WCAG), event group uses `<fieldset>`/`<legend>`
+- [x] Form validation
+- [x] API calls (3 methods added to `ProjectsService`: `getNotificationConfig`, `updateNotificationConfig`, `testNotification` — `getAnalyticsSummary` already existed from Step 4)
+- [x] Error/success handling
+
+> **Implementation note (deviation from the sample above)**: events modeled as a nested `FormGroup` of three booleans (`buildStarted`/`buildSuccess`/`buildFailed`) instead of a `FormArray` with checkbox `[value]` bindings — Angular reactive forms don't natively two-way-bind a `FormArray` to a set of checkboxes the way the sample implies; the boolean-group approach is mapped to/from `NotificationEvent[]` explicitly. Styling follows the Tailwind utility-class convention used by `project-secrets.ts`, not the sample's inline `styles:`. Types (`NotificationConfig`, `SlackNotificationConfig`, `NotificationEvent`, `UpsertNotificationConfigPayload`) added to `project.models.ts` to mirror the backend DTOs (`apps/api/src/notifications/notification-config.model.ts`).
 
 ---
 
@@ -1287,9 +1289,11 @@ export class NotificationsConfigComponent {
 **Route**: `/projects/:id/notifications`
 
 **Checklist**:
-- [ ] Page created
-- [ ] Route added (lazy loading)
-- [ ] SlackConfigFormComponent imported
+- [x] Page created
+- [x] Route added (lazy loading)
+- [x] SlackConfigFormComponent imported
+
+> **Implementation note**: class named `NotificationsConfig` (file `notifications-config.ts`), matching the `Analytics`/`analytics.ts` naming convention used in Step 4 rather than the sample's `NotificationsConfigComponent`. "Notifications" tab added to `project-shell.ts` nav, alongside Overview/Builds/Secrets/Analytics.
 
 ---
 
