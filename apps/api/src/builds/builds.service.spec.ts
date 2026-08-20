@@ -1,6 +1,7 @@
 import { BuildsService } from './builds.service';
 import { BuildStatus, Environment, TriggeredBy, type BuildDocument } from './build.model';
 import { Platform } from '../projects/project.model';
+import type { AnalyticsService } from '../analytics/analytics.service';
 import type { FirestoreService } from '../firestore/firestore.service';
 import type { GithubService } from '../github/github.service';
 
@@ -38,12 +39,14 @@ function createRef(finalData: BuildDocument) {
 
 describe('BuildsService.finalizeBuildStatus', () => {
   let githubService: { findArtifactUrl: jest.Mock };
+  let analyticsService: { recordBuild: jest.Mock };
   let service: BuildsService;
 
   beforeEach(() => {
     githubService = {
       findArtifactUrl: jest.fn().mockResolvedValue('https://github.com/owner/repo/artifact'),
     };
+    analyticsService = { recordBuild: jest.fn().mockResolvedValue(undefined) };
     const firestore = {
       db: {
         collection: jest.fn().mockReturnValue({
@@ -63,6 +66,7 @@ describe('BuildsService.finalizeBuildStatus', () => {
       undefined as never,
       undefined as never,
       undefined as never,
+      analyticsService as unknown as AnalyticsService,
     );
   });
 
@@ -95,6 +99,12 @@ describe('BuildsService.finalizeBuildStatus', () => {
       data.githubRunId,
       'mobileflow-build1-ios',
     );
+    expect(analyticsService.recordBuild).toHaveBeenCalledWith('user1', 'proj1', {
+      platform: Platform.ios,
+      environment: Environment.staging,
+      status: BuildStatus.success,
+      durationSeconds: 60,
+    });
   });
 
   it('is idempotent: does not touch finishedAt/duration/artifactUrl when the build is already finished', async () => {
@@ -126,6 +136,7 @@ describe('BuildsService.finalizeBuildStatus', () => {
     expect(update.durationSeconds).toBeUndefined();
     expect(update.artifactUrl).toBeUndefined();
     expect(githubService.findArtifactUrl).not.toHaveBeenCalled();
+    expect(analyticsService.recordBuild).not.toHaveBeenCalled();
   });
 
   it('maps a failed conclusion to BuildStatus.failed without touching artifactUrl', async () => {
@@ -152,5 +163,11 @@ describe('BuildsService.finalizeBuildStatus', () => {
       expect.objectContaining({ status: BuildStatus.failed }),
     );
     expect(githubService.findArtifactUrl).not.toHaveBeenCalled();
+    expect(analyticsService.recordBuild).toHaveBeenCalledWith('user1', 'proj1', {
+      platform: Platform.ios,
+      environment: Environment.staging,
+      status: BuildStatus.failed,
+      durationSeconds: 120,
+    });
   });
 });

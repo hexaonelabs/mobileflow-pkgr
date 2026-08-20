@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import AdmZip from 'adm-zip';
 import bplistParser from 'bplist-parser';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
@@ -29,6 +30,7 @@ export class BuildsService {
     private readonly runTokensService: RunTokensService,
     private readonly storageService: StorageService,
     private readonly config: ConfigService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   private get builds() {
@@ -323,6 +325,13 @@ export class BuildsService {
         const durationMs = new Date(run.updatedAt).getTime() - new Date(run.startedAt).getTime();
         update.durationSeconds = Math.max(0, Math.round(durationMs / 1000));
       }
+
+      await this.analyticsService.recordBuild(userId, projectId, {
+        platform: data.platform,
+        environment: data.environment,
+        status,
+        durationSeconds: update.durationSeconds ?? null,
+      });
     }
     if (status === BuildStatus.success && !data.artifactUrl) {
       update.artifactUrl = await this.githubService.findArtifactUrl(
