@@ -1349,10 +1349,13 @@ export class PlanGuard implements CanActivate {
 ```
 
 **Checklist**:
-- [ ] Decision made: `UsersService` created, or direct Firestore access in the guard
-- [ ] File created
-- [ ] Plan comparison logic
-- [ ] Clear error message
+- [x] Decision made: neither option — `JwtStrategy` (`apps/api/src/auth/strategies/jwt.strategy.ts`) already does a Firestore lookup on every authenticated request and attaches `plan` to `request.user`. `PlanGuard` reads `request.user.plan` directly (populated by `JwtAuthGuard`, which always runs first), so no `UsersService` and no second Firestore read are needed.
+- [x] File created (`apps/api/src/auth/guards/plan.guard.ts`, plus `apps/api/src/auth/decorators/required-plan.decorator.ts` for the `@RequirePlan()` decorator, since `SetMetadata`/`Reflector` weren't used anywhere else in the codebase yet)
+- [x] Plan comparison logic (`PLAN_LEVELS` ranking, same 4-tier order as the sample)
+- [x] Clear error message (`ForbiddenException` naming the required plan)
+- [x] Unit tests (`plan.guard.spec.ts`): no metadata → allowed, plan above/equal/below required level, missing `request.user` treated as `free`
+
+> **Implementation note (deviation from the sample above)**: no `USERS_COLLECTION`/`UserDocument`/`FirestoreService` dependency in the guard — see the decision above. `AuthenticatedUser.plan` is typed `string` (pre-existing), cast to `Plan` at the read site rather than widening the shared type for this one guard.
 
 ---
 
@@ -1377,9 +1380,9 @@ async getSummary(...) {
 ```
 
 **Checklist**:
-- [ ] Notifications endpoints: `requiredPlan='starter'`
-- [ ] Analytics endpoints: no restriction
-- [ ] No `teamMembersLimit` quota/gating for "team" — removed from the plan (no collaboration concept in the current model)
+- [x] Notifications endpoints: `requiredPlan='starter'` — applied to the two mutating endpoints (`POST :id/notifications/config`, `POST :id/notifications/test`) in `notifications.controller.ts`; `GET :id/notifications/config` stays open (no `PlanGuard`) so the frontend can render an upgrade prompt for free users instead of erroring
+- [x] Analytics endpoints: no restriction — `analytics.controller.ts` left untouched, only `JwtAuthGuard`
+- [x] No `teamMembersLimit` quota/gating for "team" — removed from the plan (no collaboration concept in the current model)
 
 ---
 
