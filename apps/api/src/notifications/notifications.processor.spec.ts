@@ -20,26 +20,39 @@ function createNotificationsService() {
   return {
     sendSlackNotification: jest.fn().mockResolvedValue(undefined),
     sendEmailNotification: jest.fn().mockResolvedValue(undefined),
-  } as unknown as NotificationsService;
+  };
 }
 
 describe('NotificationsProcessor', () => {
   it('dispatches slack jobs to sendSlackNotification', async () => {
     const notificationsService = createNotificationsService();
-    const processor = new NotificationsProcessor(notificationsService);
+    const processor = new NotificationsProcessor(
+      notificationsService as unknown as NotificationsService,
+    );
     const slackConfig = { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [] };
-    const job = { name: SLACK_NOTIFICATION_JOB, data: { config: slackConfig, event: buildEvent } } as Job;
+    const job = {
+      name: SLACK_NOTIFICATION_JOB,
+      data: { config: slackConfig, event: buildEvent },
+    } as Job;
 
     await processor.process(job);
 
-    expect(notificationsService.sendSlackNotification).toHaveBeenCalledWith(slackConfig, buildEvent);
+    expect(notificationsService.sendSlackNotification).toHaveBeenCalledWith(
+      slackConfig,
+      buildEvent,
+    );
     expect(notificationsService.sendEmailNotification).not.toHaveBeenCalled();
   });
 
   it('dispatches email jobs to sendEmailNotification', async () => {
     const notificationsService = createNotificationsService();
-    const processor = new NotificationsProcessor(notificationsService);
-    const job = { name: EMAIL_NOTIFICATION_JOB, data: { userId: 'user1', event: buildEvent } } as Job;
+    const processor = new NotificationsProcessor(
+      notificationsService as unknown as NotificationsService,
+    );
+    const job = {
+      name: EMAIL_NOTIFICATION_JOB,
+      data: { userId: 'user1', event: buildEvent },
+    } as Job;
 
     await processor.process(job);
 
@@ -49,7 +62,9 @@ describe('NotificationsProcessor', () => {
 
   it('ignores unknown job names without throwing', async () => {
     const notificationsService = createNotificationsService();
-    const processor = new NotificationsProcessor(notificationsService);
+    const processor = new NotificationsProcessor(
+      notificationsService as unknown as NotificationsService,
+    );
     const job = { name: 'unknown-job', data: {} } as Job;
 
     await expect(processor.process(job)).resolves.toBeUndefined();

@@ -42,7 +42,9 @@ function createFirestore(options: { projectFound?: boolean } = {}) {
   };
 
   const db = {
-    collection: jest.fn((name: string) => (name === PROJECTS_COLLECTION ? projectsRoot : configsRoot)),
+    collection: jest.fn((name: string) =>
+      name === PROJECTS_COLLECTION ? projectsRoot : configsRoot,
+    ),
   };
 
   return { db: db as unknown as FirestoreService['db'], store };

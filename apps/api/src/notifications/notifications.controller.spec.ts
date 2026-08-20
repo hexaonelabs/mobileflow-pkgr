@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { NotificationsController } from './notifications.controller';
 import type { NotificationConfigService } from './notification-config.service';
 import type { NotificationsService } from './notifications.service';
-import type { NotificationConfigResponse } from './notification-config.model';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 function requestFor(user: AuthenticatedUser) {
@@ -21,8 +20,11 @@ describe('NotificationsController', () => {
     const configService = {
       getConfig: jest.fn().mockResolvedValue({ userId: 'user1', projectId: 'proj1' }),
       upsert: jest.fn(),
-    } as unknown as NotificationConfigService;
-    const controller = new NotificationsController(configService, {} as NotificationsService);
+    };
+    const controller = new NotificationsController(
+      configService as unknown as NotificationConfigService,
+      {} as NotificationsService,
+    );
 
     const result = await controller.getConfig(requestFor(user), 'proj1');
 
@@ -34,8 +36,11 @@ describe('NotificationsController', () => {
     const dto = { slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [] } };
     const configService = {
       upsert: jest.fn().mockResolvedValue({ userId: 'user1', projectId: 'proj1', ...dto }),
-    } as unknown as NotificationConfigService;
-    const controller = new NotificationsController(configService, {} as NotificationsService);
+    };
+    const controller = new NotificationsController(
+      configService as unknown as NotificationConfigService,
+      {} as NotificationsService,
+    );
 
     await controller.upsertConfig(requestFor(user), 'proj1', dto);
 
@@ -45,12 +50,17 @@ describe('NotificationsController', () => {
   describe('sendTest', () => {
     it('throws BadRequestException when slack is not enabled', async () => {
       const configService = {
-        getConfig: jest.fn().mockResolvedValue({ userId: 'user1', projectId: 'proj1' } as NotificationConfigResponse),
-      } as unknown as NotificationConfigService;
-      const notificationsService = { onBuildStatusChanged: jest.fn() } as unknown as NotificationsService;
-      const controller = new NotificationsController(configService, notificationsService);
+        getConfig: jest.fn().mockResolvedValue({ userId: 'user1', projectId: 'proj1' }),
+      };
+      const notificationsService = { onBuildStatusChanged: jest.fn() };
+      const controller = new NotificationsController(
+        configService as unknown as NotificationConfigService,
+        notificationsService as unknown as NotificationsService,
+      );
 
-      await expect(controller.sendTest(requestFor(user), 'proj1')).rejects.toThrow(BadRequestException);
+      await expect(controller.sendTest(requestFor(user), 'proj1')).rejects.toThrow(
+        BadRequestException,
+      );
       expect(notificationsService.onBuildStatusChanged).not.toHaveBeenCalled();
     });
 
@@ -60,12 +70,15 @@ describe('NotificationsController', () => {
           userId: 'user1',
           projectId: 'proj1',
           slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [] },
-        } as NotificationConfigResponse),
-      } as unknown as NotificationConfigService;
+        }),
+      };
       const notificationsService = {
         onBuildStatusChanged: jest.fn().mockResolvedValue(undefined),
-      } as unknown as NotificationsService;
-      const controller = new NotificationsController(configService, notificationsService);
+      };
+      const controller = new NotificationsController(
+        configService as unknown as NotificationConfigService,
+        notificationsService as unknown as NotificationsService,
+      );
 
       const result = await controller.sendTest(requestFor(user), 'proj1');
 

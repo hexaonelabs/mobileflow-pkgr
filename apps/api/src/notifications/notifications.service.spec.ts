@@ -19,7 +19,9 @@ jest.mock('nodemailer', () => ({
   createTransport: (...args: unknown[]) => createTransport(...args),
 }));
 
-function emptyConfig(overrides: Partial<NotificationConfigResponse> = {}): NotificationConfigResponse {
+function emptyConfig(
+  overrides: Partial<NotificationConfigResponse> = {},
+): NotificationConfigResponse {
   return {
     userId: 'user1',
     projectId: 'proj1',
@@ -83,9 +85,20 @@ describe('NotificationsService', () => {
     it('does nothing when the build status has no matching NotificationEvent (e.g. cancelled)', async () => {
       const queue = createQueue();
       const configService = createConfigService(
-        emptyConfig({ slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [NotificationEvent.buildFailed] } }),
+        emptyConfig({
+          slack: {
+            webhookUrl: 'https://hooks.slack.com/x',
+            enabled: true,
+            events: [NotificationEvent.buildFailed],
+          },
+        }),
       );
-      const service = new NotificationsService({} as FirestoreService, queue, configService, noSmtpConfigService());
+      const service = new NotificationsService(
+        {} as FirestoreService,
+        queue,
+        configService,
+        noSmtpConfigService(),
+      );
 
       const cancelledEvent = new BuildStatusChangedEvent(
         'build1',
@@ -105,10 +118,19 @@ describe('NotificationsService', () => {
       const queue = createQueue();
       const configService = createConfigService(
         emptyConfig({
-          slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [NotificationEvent.buildSuccess] },
+          slack: {
+            webhookUrl: 'https://hooks.slack.com/x',
+            enabled: true,
+            events: [NotificationEvent.buildSuccess],
+          },
         }),
       );
-      const service = new NotificationsService({} as FirestoreService, queue, configService, noSmtpConfigService());
+      const service = new NotificationsService(
+        {} as FirestoreService,
+        queue,
+        configService,
+        noSmtpConfigService(),
+      );
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -124,10 +146,19 @@ describe('NotificationsService', () => {
       const queue = createQueue();
       const configService = createConfigService(
         emptyConfig({
-          slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [NotificationEvent.buildFailed] },
+          slack: {
+            webhookUrl: 'https://hooks.slack.com/x',
+            enabled: true,
+            events: [NotificationEvent.buildFailed],
+          },
         }),
       );
-      const service = new NotificationsService({} as FirestoreService, queue, configService, noSmtpConfigService());
+      const service = new NotificationsService(
+        {} as FirestoreService,
+        queue,
+        configService,
+        noSmtpConfigService(),
+      );
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -139,7 +170,12 @@ describe('NotificationsService', () => {
       const configService = createConfigService(
         emptyConfig({ email: { enabled: true, events: [NotificationEvent.buildSuccess] } }),
       );
-      const service = new NotificationsService({} as FirestoreService, queue, configService, noSmtpConfigService());
+      const service = new NotificationsService(
+        {} as FirestoreService,
+        queue,
+        configService,
+        noSmtpConfigService(),
+      );
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -154,11 +190,20 @@ describe('NotificationsService', () => {
       const queue = createQueue();
       const configService = createConfigService(
         emptyConfig({
-          slack: { webhookUrl: 'https://hooks.slack.com/x', enabled: true, events: [NotificationEvent.buildSuccess] },
+          slack: {
+            webhookUrl: 'https://hooks.slack.com/x',
+            enabled: true,
+            events: [NotificationEvent.buildSuccess],
+          },
           email: { enabled: true, events: [NotificationEvent.buildSuccess] },
         }),
       );
-      const service = new NotificationsService({} as FirestoreService, queue, configService, noSmtpConfigService());
+      const service = new NotificationsService(
+        {} as FirestoreService,
+        queue,
+        configService,
+        noSmtpConfigService(),
+      );
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -192,9 +237,9 @@ describe('NotificationsService', () => {
       expect(body.attachments[0].color).toBe('#36a64f');
       const fieldTitles = body.attachments[0].fields.map((f: { title: string }) => f.title);
       expect(fieldTitles).toEqual(['Platform', 'Environment', 'Build ID', 'Duration']);
-      expect(body.attachments[0].fields.find((f: { title: string }) => f.title === 'Duration').value).toBe(
-        '2m 5s',
-      );
+      expect(
+        body.attachments[0].fields.find((f: { title: string }) => f.title === 'Duration').value,
+      ).toBe('2m 5s');
     });
 
     it('omits the Duration field when durationSeconds is null', async () => {
@@ -267,7 +312,11 @@ describe('NotificationsService', () => {
     it('sends an email to the user when SMTP is configured and the user has an email', async () => {
       const userDoc = { data: () => ({ email: 'dev@example.com' }) };
       const firestore = {
-        db: { collection: jest.fn().mockReturnValue({ doc: jest.fn().mockReturnValue({ get: jest.fn().mockResolvedValue(userDoc) }) }) },
+        db: {
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue({ get: jest.fn().mockResolvedValue(userDoc) }),
+          }),
+        },
       } as unknown as FirestoreService;
       const service = new NotificationsService(
         firestore,
@@ -290,7 +339,11 @@ describe('NotificationsService', () => {
     it('does not send when the user has no email on file', async () => {
       const userDoc = { data: () => undefined };
       const firestore = {
-        db: { collection: jest.fn().mockReturnValue({ doc: jest.fn().mockReturnValue({ get: jest.fn().mockResolvedValue(userDoc) }) }) },
+        db: {
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue({ get: jest.fn().mockResolvedValue(userDoc) }),
+          }),
+        },
       } as unknown as FirestoreService;
       const service = new NotificationsService(
         firestore,

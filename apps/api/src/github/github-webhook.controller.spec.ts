@@ -8,7 +8,7 @@ function createWebhookService() {
   return {
     verifySignature: jest.fn(),
     handleWorkflowRunEvent: jest.fn().mockResolvedValue(undefined),
-  } as unknown as GithubWebhookService;
+  };
 }
 
 function requestWith(rawBody: Buffer | undefined, body: unknown = {}) {
@@ -18,7 +18,9 @@ function requestWith(rawBody: Buffer | undefined, body: unknown = {}) {
 describe('GithubWebhookController', () => {
   it('rejects when the signature header is missing', async () => {
     const webhookService = createWebhookService();
-    const controller = new GithubWebhookController(webhookService);
+    const controller = new GithubWebhookController(
+      webhookService as unknown as GithubWebhookService,
+    );
 
     await expect(
       controller.handleWebhook(requestWith(Buffer.from('{}')), undefined, 'workflow_run'),
@@ -28,7 +30,9 @@ describe('GithubWebhookController', () => {
 
   it('rejects when the raw body is missing', async () => {
     const webhookService = createWebhookService();
-    const controller = new GithubWebhookController(webhookService);
+    const controller = new GithubWebhookController(
+      webhookService as unknown as GithubWebhookService,
+    );
 
     await expect(
       controller.handleWebhook(requestWith(undefined), 'sha256=abc', 'workflow_run'),
@@ -38,7 +42,9 @@ describe('GithubWebhookController', () => {
 
   it('verifies the signature then ignores non-workflow_run events', async () => {
     const webhookService = createWebhookService();
-    const controller = new GithubWebhookController(webhookService);
+    const controller = new GithubWebhookController(
+      webhookService as unknown as GithubWebhookService,
+    );
     const rawBody = Buffer.from('{}');
 
     const result = await controller.handleWebhook(requestWith(rawBody), 'sha256=abc', 'push');
@@ -50,7 +56,9 @@ describe('GithubWebhookController', () => {
 
   it('verifies the signature then forwards workflow_run events', async () => {
     const webhookService = createWebhookService();
-    const controller = new GithubWebhookController(webhookService);
+    const controller = new GithubWebhookController(
+      webhookService as unknown as GithubWebhookService,
+    );
     const rawBody = Buffer.from('{"action":"completed"}');
     const payload = { action: 'completed' };
 

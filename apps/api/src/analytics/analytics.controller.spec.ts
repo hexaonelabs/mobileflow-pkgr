@@ -7,7 +7,7 @@ function createAnalyticsService() {
     getSummary: jest.fn().mockResolvedValue({ totalBuilds: 1 }),
     getTrends: jest.fn().mockResolvedValue({ months: [] }),
     getBreakdown: jest.fn().mockResolvedValue({ platform: {}, environment: {} }),
-  } as unknown as AnalyticsService;
+  };
 }
 
 function requestFor(user: AuthenticatedUser) {
@@ -19,7 +19,7 @@ describe('AnalyticsController', () => {
 
   it('getSummary delegates to AnalyticsService.getSummary with the authenticated user id', async () => {
     const analyticsService = createAnalyticsService();
-    const controller = new AnalyticsController(analyticsService);
+    const controller = new AnalyticsController(analyticsService as unknown as AnalyticsService);
 
     const result = await controller.getSummary(requestFor(user), 'proj1');
 
@@ -29,7 +29,7 @@ describe('AnalyticsController', () => {
 
   it('getTrends delegates to AnalyticsService.getTrends', async () => {
     const analyticsService = createAnalyticsService();
-    const controller = new AnalyticsController(analyticsService);
+    const controller = new AnalyticsController(analyticsService as unknown as AnalyticsService);
 
     await controller.getTrends(requestFor(user), 'proj1');
 
@@ -38,7 +38,7 @@ describe('AnalyticsController', () => {
 
   it('getBreakdown delegates to AnalyticsService.getBreakdown', async () => {
     const analyticsService = createAnalyticsService();
-    const controller = new AnalyticsController(analyticsService);
+    const controller = new AnalyticsController(analyticsService as unknown as AnalyticsService);
 
     await controller.getBreakdown(requestFor(user), 'proj1');
 
