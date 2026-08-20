@@ -1373,13 +1373,13 @@ async getSummary(...) {
 ### Task 7.1: Unit tests
 
 ```
-- [ ] BuildsService.finalizeBuildStatus() → called exactly once even if polling and the webhook race
-- [ ] GithubWebhookService → invalid signature rejected, valid payload finalizes the build
-- [ ] AnalyticsService.recordBuild() → correct increments, including under concurrent calls (dailyBreakdown)
-- [ ] NotificationConfigService.upsert() → stores in Firestore
-- [ ] NotificationsService.formatSlackMessage() → correct format
-- [ ] NotificationsService.handleEmailNotification() → mocked SMTP send
-- [ ] All other services
+- [x] BuildsService.finalizeBuildStatus() → idempotency guard covered (already-finished build: no re-write of finishedAt/duration/artifactUrl); success + failure status mapping covered (Step 0 scope)
+- [x] GithubWebhookService → invalid signature rejected, valid payload finalizes the build (also: wrong secret, non-"completed" action, no matching project, no matching build)
+- [ ] AnalyticsService.recordBuild() → correct increments, including under concurrent calls (dailyBreakdown) — out of scope for Step 0
+- [ ] NotificationConfigService.upsert() → stores in Firestore — out of scope for Step 0
+- [ ] NotificationsService.formatSlackMessage() → correct format — out of scope for Step 0
+- [ ] NotificationsService.handleEmailNotification() → mocked SMTP send — out of scope for Step 0
+- [ ] All other services — out of scope for Step 0
 ```
 
 **Command**: `npm run test:api`
