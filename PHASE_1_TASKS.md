@@ -511,13 +511,13 @@ export class AnalyticsService {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] `recordBuild()` uses `firestore.db.runTransaction()` for the `dailyBreakdown` update (no read-modify-write outside a transaction)
-- [ ] getSummary returns the current month
-- [ ] getTrends returns the last 3 months
-- [ ] getBreakdown computes percentages by platform/env
-- [ ] Specific test: two concurrent `recordBuild()` calls the same day → both increments correctly reflected in `dailyBreakdown` (no lost update)
-- [ ] Unit tests
+- [x] File created
+- [x] `recordBuild()` uses `firestore.db.runTransaction()` for the `dailyBreakdown` update (no read-modify-write outside a transaction)
+- [x] getSummary returns the current month
+- [x] getTrends returns the last 3 months
+- [x] getBreakdown computes percentages by platform/env
+- [x] Specific test: two concurrent `recordBuild()` calls the same day → both increments correctly reflected in `dailyBreakdown` (no lost update)
+- [x] Unit tests
 
 ---
 
@@ -560,10 +560,10 @@ export class AnalyticsController {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] 3 endpoints created
-- [ ] Auth guard applied
-- [ ] Project ownership verified (must be explicitly duplicated in `AnalyticsService`, this is NOT shared anywhere else in the code — see the `getOwnedProject` pattern in `BuildsService`)
+- [x] File created
+- [x] 3 endpoints created
+- [x] Auth guard applied
+- [x] Project ownership verified (must be explicitly duplicated in `AnalyticsService`, this is NOT shared anywhere else in the code — see the `getOwnedProject` pattern in `BuildsService`)
 
 ---
 
@@ -587,9 +587,9 @@ export class AnalyticsModule {}
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Service and controller declared
-- [ ] Service exported (for other modules)
+- [x] File created
+- [x] Service and controller declared
+- [x] Service exported (for other modules)
 
 ---
 
@@ -616,9 +616,9 @@ if (isFinished && !data.finishedAt) {
 ```
 
 **Checklist**:
-- [ ] Import AnalyticsService in the BuildsService constructor
-- [ ] Call added inside `finalizeBuildStatus()` (not inside `refreshStatus()`)
-- [ ] Only called when the build is finished (success/failed/cancelled), `!data.finishedAt` guard already in place
+- [x] Import AnalyticsService in the BuildsService constructor
+- [x] Call added inside `finalizeBuildStatus()` (not inside `refreshStatus()`)
+- [x] Only called when the build is finished (success/failed/cancelled), `!data.finishedAt` guard already in place
 
 ---
 
@@ -1375,7 +1375,7 @@ async getSummary(...) {
 ```
 - [x] BuildsService.finalizeBuildStatus() → idempotency guard covered (already-finished build: no re-write of finishedAt/duration/artifactUrl); success + failure status mapping covered (Step 0 scope)
 - [x] GithubWebhookService → invalid signature rejected, valid payload finalizes the build (also: wrong secret, non-"completed" action, no matching project, no matching build)
-- [ ] AnalyticsService.recordBuild() → correct increments, including under concurrent calls (dailyBreakdown) — out of scope for Step 0
+- [x] AnalyticsService.recordBuild() → correct increments, including under concurrent calls (dailyBreakdown) — covered in Step 2 (transactional-retry harness)
 - [ ] NotificationConfigService.upsert() → stores in Firestore — out of scope for Step 0
 - [ ] NotificationsService.formatSlackMessage() → correct format — out of scope for Step 0
 - [ ] NotificationsService.handleEmailNotification() → mocked SMTP send — out of scope for Step 0
