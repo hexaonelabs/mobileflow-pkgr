@@ -26,7 +26,9 @@ export class PlanGuard implements CanActivate {
     const userPlan = (request.user?.plan as Plan) ?? Plan.free;
 
     if (PLAN_LEVELS[userPlan] < PLAN_LEVELS[requiredPlan]) {
-      throw new ForbiddenException(`Cette fonctionnalité nécessite le plan ${requiredPlan} ou supérieur.`);
+      throw new ForbiddenException(
+        `Cette fonctionnalité nécessite le plan ${requiredPlan} ou supérieur.`,
+      );
     }
     return true;
   }

@@ -46,9 +46,10 @@ describe('PlanGuard', () => {
   });
 
   it('uses the metadata key expected by @RequirePlan', () => {
-    const reflector = { get: jest.fn().mockReturnValue(undefined) } as unknown as Reflector;
+    const getSpy = jest.fn().mockReturnValue(undefined);
+    const reflector = { get: getSpy } as unknown as Reflector;
     const guard = new PlanGuard(reflector);
     guard.canActivate(createContext(Plan.free));
-    expect(reflector.get).toHaveBeenCalledWith(REQUIRED_PLAN_KEY, expect.anything());
+    expect(getSpy).toHaveBeenCalledWith(REQUIRED_PLAN_KEY, expect.anything());
   });
 });
