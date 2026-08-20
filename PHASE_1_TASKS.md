@@ -1108,13 +1108,15 @@ export class AnalyticsSummaryComponent {
 **Note**: follows the project's rules — `ChangeDetectionStrategy.OnPush`, native `@for`/`@if` instead of `*ngFor`/`*ngIf`, no explicit `standalone: true` (default in Angular v20+), `effect()` in the constructor rather than `ngOnInit`.
 
 **Checklist**:
-- [ ] Component created
-- [ ] `ChangeDetectionStrategy.OnPush`
-- [ ] Signals for state
-- [ ] Native control flow (`@for`, not `*ngFor`)
-- [ ] API call on init
-- [ ] Duration formatting
-- [ ] Basic styling
+- [x] Component created
+- [x] `ChangeDetectionStrategy.OnPush`
+- [x] Signals for state
+- [x] Native control flow (`@for`, not `*ngFor`)
+- [x] API call on init
+- [x] Duration formatting
+- [x] Basic styling
+
+> **Implementation note (deviation from the sample above)**: uses `input.required<string>()` + `effect()` in the constructor to (re)load on `projectId` change, rather than `OnInit` — matches the signal-based-input convention actually used in this component tree. Styling follows the codebase's Tailwind utility-class convention (matching `project-secrets.ts`/`project-shell.ts`), not the inline `styles:`/CSS-variable sample in this doc, which isn't used anywhere else in `apps/web`. Field/type names follow the real backend DTOs (`AnalyticsSummaryResponse` in `build-analytics.model.ts`), which already existed on this branch's ancestor (`feature/analytics-service`) — no `AnalyticsSummary` interface needed to be invented client-side, it was mapped directly from the response shape.
 
 ---
 
@@ -1125,11 +1127,11 @@ export class AnalyticsSummaryComponent {
 No chart library is currently installed in `apps/web` (verified). Install `chart.js` (lightweight, no Angular wrapper to maintain): `npm install chart.js --workspace apps/web`.
 
 **Checklist**:
-- [ ] `chart.js` added to dependencies
-- [ ] Trends chart built
-- [ ] Last 30 days visible
-- [ ] Success rate as a percentage
-- [ ] Check the impact on bundle size (lazy-load the chart component with the analytics route)
+- [x] `chart.js` added to dependencies
+- [x] Trends chart built
+- [ ] Last 30 days visible — not achievable as specified: `GET /projects/:id/analytics/breakdown` and `/summary` both `Omit` `dailyBreakdown`, and no endpoint exposes it (see `AnalyticsSummaryResponse`/`AnalyticsBreakdownResponse` in `apps/api/src/analytics/build-analytics.model.ts`). Only `getTrends()` (last 3 **months**) is public. Chart renders monthly build volume + success rate instead of a 30-day daily view. Exposing `dailyBreakdown` would require a new backend endpoint — flagged as a follow-up, out of scope for this frontend-only branch.
+- [x] Success rate as a percentage
+- [x] Check the impact on bundle size (lazy-load the chart component with the analytics route) — chart.js is only pulled in via the lazy-loaded `analytics` route, not the main bundle
 
 ---
 
@@ -1142,9 +1144,9 @@ Combine the two components above.
 **Route**: `/projects/:id/analytics`
 
 **Checklist**:
-- [ ] Page created
-- [ ] Route added in `project-shell.ts`, lazy-loaded like the existing routes (`builds`, `secrets`)
-- [ ] Components imported
+- [x] Page created
+- [x] Route added in `project-shell.ts`, lazy-loaded like the existing routes (`builds`, `secrets`)
+- [x] Components imported
 
 ---
 
