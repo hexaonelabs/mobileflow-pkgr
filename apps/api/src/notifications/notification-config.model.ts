@@ -37,15 +37,6 @@ export interface NotificationConfigDocument {
   updatedAt: Timestamp | FieldValue;
 }
 
-// DTOs
-export interface UpsertNotificationConfigDto {
-  slack?: {
-    webhookUrl: string;
-    enabled: boolean;
-    events: NotificationEvent[];
-  };
-}
-
 export interface NotificationConfigResponse extends Omit<NotificationConfigDocument, 'createdAt' | 'updatedAt'> {
   createdAt: string | null;
   updatedAt: string | null;
