@@ -1424,12 +1424,6 @@ async getSummary(...) {
 
 ### Task 7.3: Frontend verification
 
-```
-- [ ] Analytics page loads and displays the numbers
-- [ ] Notifications config form validates
-- [ ] Slack config test button works
-```
-
 **Checklist**:
 - [ ] No console errors
 - [ ] Responsive UI
