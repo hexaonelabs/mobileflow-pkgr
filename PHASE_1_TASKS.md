@@ -331,9 +331,9 @@ export interface AnalyticsBreakdownResponse {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Correct TypeScript types
-- [ ] Import Firebase/Firestore types
+- [x] File created
+- [x] Correct TypeScript types
+- [x] Import Firebase/Firestore types
 
 ---
 
@@ -389,9 +389,9 @@ export interface NotificationConfigResponse extends Omit<NotificationConfigDocum
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] DTOs for the API
-- [ ] Event types
+- [x] File created
+- [x] DTOs for the API
+- [x] Event types
 
 ---
 
@@ -417,8 +417,8 @@ export class BuildStatusChangedEvent {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Correct types
+- [x] File created
+- [x] Correct types
 
 ---
 
