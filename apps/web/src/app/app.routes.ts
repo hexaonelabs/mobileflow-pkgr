@@ -62,6 +62,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/projects/analytics/analytics').then((m) => m.Analytics),
       },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/projects/notifications/notifications-config').then(
+            (m) => m.NotificationsConfig,
+          ),
+      },
     ],
   },
   {
