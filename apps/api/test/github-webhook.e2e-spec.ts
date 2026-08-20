@@ -48,7 +48,7 @@ function fakeConfigService(): ConfigService {
 describe('POST /github/webhook (e2e)', () => {
   let app: INestApplication<App>;
   let db: FakeFirestoreDb;
-  let queue: { add: jest.Mock };
+  let queue: { add: jest.Mock<Promise<void>, [string, unknown, unknown]> };
 
   beforeEach(async () => {
     db = new FakeFirestoreDb();
@@ -89,7 +89,12 @@ describe('POST /github/webhook (e2e)', () => {
       updatedAt: null,
     });
 
-    queue = { add: jest.fn().mockResolvedValue(undefined) };
+    queue = {
+      add: jest.fn().mockResolvedValue(undefined) as jest.Mock<
+        Promise<void>,
+        [string, unknown, unknown]
+      >,
+    };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [GithubWebhookController],
@@ -161,7 +166,7 @@ describe('POST /github/webhook (e2e)', () => {
     expect(queue.add).toHaveBeenCalledWith(
       'slack-notification',
       expect.objectContaining({
-        event: expect.objectContaining({ buildId: 'build1', status: BuildStatus.failed }),
+        event: expect.objectContaining({ buildId: 'build1', status: BuildStatus.failed }) as object,
       }),
       expect.anything(),
     );

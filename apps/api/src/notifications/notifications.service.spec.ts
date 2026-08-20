@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import type { Queue } from 'bullmq';
+import type { Transporter } from 'nodemailer';
 import {
   EMAIL_NOTIFICATION_JOB,
   NotificationsService,
@@ -13,10 +13,12 @@ import { Platform } from '../projects/project.model';
 import type { FirestoreService } from '../firestore/firestore.service';
 
 const sendMail = jest.fn().mockResolvedValue(undefined);
-const createTransport = jest.fn().mockReturnValue({ sendMail });
+const createTransport = jest
+  .fn<Transporter, unknown[]>()
+  .mockReturnValue({ sendMail } as unknown as Transporter);
 
 jest.mock('nodemailer', () => ({
-  createTransport: (...args: unknown[]) => createTransport(...args),
+  createTransport: (...args: unknown[]): Transporter => createTransport(...args),
 }));
 
 function emptyConfig(
@@ -32,11 +34,11 @@ function emptyConfig(
 }
 
 function createConfigService(config: NotificationConfigResponse) {
-  return { getConfig: jest.fn().mockResolvedValue(config) } as unknown as NotificationConfigService;
+  return { getConfig: jest.fn().mockResolvedValue(config) };
 }
 
 function createQueue() {
-  return { add: jest.fn().mockResolvedValue(undefined) } as unknown as Queue;
+  return { add: jest.fn().mockResolvedValue(undefined) };
 }
 
 function createSmtpConfigService(overrides: Record<string, string> = {}): ConfigService {
@@ -63,6 +65,20 @@ function noSmtpConfigService(): ConfigService {
       throw new Error('missing config');
     }),
   } as unknown as ConfigService;
+}
+
+function buildService(
+  queue: ReturnType<typeof createQueue>,
+  configService: ReturnType<typeof createConfigService>,
+  smtpConfig: ConfigService,
+  firestore: FirestoreService = {} as FirestoreService,
+): NotificationsService {
+  return new NotificationsService(
+    firestore,
+    queue as unknown as ConstructorParameters<typeof NotificationsService>[1],
+    configService as unknown as NotificationConfigService,
+    smtpConfig,
+  );
 }
 
 const buildEvent = new BuildStatusChangedEvent(
@@ -93,12 +109,7 @@ describe('NotificationsService', () => {
           },
         }),
       );
-      const service = new NotificationsService(
-        {} as FirestoreService,
-        queue,
-        configService,
-        noSmtpConfigService(),
-      );
+      const service = buildService(queue, configService, noSmtpConfigService());
 
       const cancelledEvent = new BuildStatusChangedEvent(
         'build1',
@@ -125,12 +136,7 @@ describe('NotificationsService', () => {
           },
         }),
       );
-      const service = new NotificationsService(
-        {} as FirestoreService,
-        queue,
-        configService,
-        noSmtpConfigService(),
-      );
+      const service = buildService(queue, configService, noSmtpConfigService());
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -153,12 +159,7 @@ describe('NotificationsService', () => {
           },
         }),
       );
-      const service = new NotificationsService(
-        {} as FirestoreService,
-        queue,
-        configService,
-        noSmtpConfigService(),
-      );
+      const service = buildService(queue, configService, noSmtpConfigService());
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -170,12 +171,7 @@ describe('NotificationsService', () => {
       const configService = createConfigService(
         emptyConfig({ email: { enabled: true, events: [NotificationEvent.buildSuccess] } }),
       );
-      const service = new NotificationsService(
-        {} as FirestoreService,
-        queue,
-        configService,
-        noSmtpConfigService(),
-      );
+      const service = buildService(queue, configService, noSmtpConfigService());
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -198,12 +194,7 @@ describe('NotificationsService', () => {
           email: { enabled: true, events: [NotificationEvent.buildSuccess] },
         }),
       );
-      const service = new NotificationsService(
-        {} as FirestoreService,
-        queue,
-        configService,
-        noSmtpConfigService(),
-      );
+      const service = buildService(queue, configService, noSmtpConfigService());
 
       await service.onBuildStatusChanged(buildEvent);
 
@@ -215,8 +206,7 @@ describe('NotificationsService', () => {
     it('posts the formatted message to the webhook URL', async () => {
       const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 });
       (global as { fetch?: unknown }).fetch = fetchMock;
-      const service = new NotificationsService(
-        {} as FirestoreService,
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         noSmtpConfigService(),
@@ -228,25 +218,28 @@ describe('NotificationsService', () => {
       );
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [url, options] = fetchMock.mock.calls[0];
+      const [url, options] = fetchMock.mock.calls[0] as [string, { method: string; body: string }];
       expect(url).toBe('https://hooks.slack.com/x');
       expect(options.method).toBe('POST');
 
-      const body = JSON.parse(options.body);
+      const body = JSON.parse(options.body) as {
+        attachments: Array<{
+          title: string;
+          color: string;
+          fields: Array<{ title: string; value: string }>;
+        }>;
+      };
       expect(body.attachments[0].title).toBe('✅ Build success');
       expect(body.attachments[0].color).toBe('#36a64f');
-      const fieldTitles = body.attachments[0].fields.map((f: { title: string }) => f.title);
+      const fieldTitles = body.attachments[0].fields.map((f) => f.title);
       expect(fieldTitles).toEqual(['Platform', 'Environment', 'Build ID', 'Duration']);
-      expect(
-        body.attachments[0].fields.find((f: { title: string }) => f.title === 'Duration').value,
-      ).toBe('2m 5s');
+      expect(body.attachments[0].fields.find((f) => f.title === 'Duration')?.value).toBe('2m 5s');
     });
 
     it('omits the Duration field when durationSeconds is null', async () => {
       const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 });
       (global as { fetch?: unknown }).fetch = fetchMock;
-      const service = new NotificationsService(
-        {} as FirestoreService,
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         noSmtpConfigService(),
@@ -266,19 +259,20 @@ describe('NotificationsService', () => {
         eventWithoutDuration,
       );
 
-      const [, options] = fetchMock.mock.calls[0];
-      const body = JSON.parse(options.body);
+      const [, options] = fetchMock.mock.calls[0] as [string, { body: string }];
+      const body = JSON.parse(options.body) as {
+        attachments: Array<{ title: string; color: string; fields: Array<{ title: string }> }>;
+      };
       expect(body.attachments[0].color).toBe('#d9393d');
       expect(body.attachments[0].title).toBe('❌ Build failed');
-      const fieldTitles = body.attachments[0].fields.map((f: { title: string }) => f.title);
+      const fieldTitles = body.attachments[0].fields.map((f) => f.title);
       expect(fieldTitles).toEqual(['Platform', 'Environment', 'Build ID']);
     });
 
     it('throws when the webhook responds with a non-ok status', async () => {
       const fetchMock = jest.fn().mockResolvedValue({ ok: false, status: 500 });
       (global as { fetch?: unknown }).fetch = fetchMock;
-      const service = new NotificationsService(
-        {} as FirestoreService,
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         noSmtpConfigService(),
@@ -295,17 +289,18 @@ describe('NotificationsService', () => {
 
   describe('sendEmailNotification', () => {
     it('is a no-op when SMTP is not configured', async () => {
-      const firestore = { db: { collection: jest.fn() } } as unknown as FirestoreService;
-      const service = new NotificationsService(
-        firestore,
+      const collection = jest.fn();
+      const firestore = { db: { collection } } as unknown as FirestoreService;
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         noSmtpConfigService(),
+        firestore,
       );
 
       await service.sendEmailNotification('user1', buildEvent);
 
-      expect(firestore.db.collection).not.toHaveBeenCalled();
+      expect(collection).not.toHaveBeenCalled();
       expect(sendMail).not.toHaveBeenCalled();
     });
 
@@ -318,11 +313,11 @@ describe('NotificationsService', () => {
           }),
         },
       } as unknown as FirestoreService;
-      const service = new NotificationsService(
-        firestore,
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         createSmtpConfigService(),
+        firestore,
       );
 
       await service.sendEmailNotification('user1', buildEvent);
@@ -331,7 +326,7 @@ describe('NotificationsService', () => {
         expect.objectContaining({
           from: 'noreply@example.com',
           to: 'dev@example.com',
-          subject: expect.stringContaining('success'),
+          subject: expect.stringContaining('success') as string,
         }),
       );
     });
@@ -345,11 +340,11 @@ describe('NotificationsService', () => {
           }),
         },
       } as unknown as FirestoreService;
-      const service = new NotificationsService(
-        firestore,
+      const service = buildService(
         createQueue(),
         createConfigService(emptyConfig()),
         createSmtpConfigService(),
+        firestore,
       );
 
       await service.sendEmailNotification('user1', buildEvent);
