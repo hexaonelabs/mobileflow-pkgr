@@ -229,9 +229,9 @@ export class GithubWebhookService {
 - Point the URL to `https://<api-domain>/github/webhook`
 
 **Checklist**:
-- [ ] `workflow_run` event enabled on the GitHub App
-- [ ] `GITHUB_WEBHOOK_SECRET` configured locally (`.env`) and in prod
-- [ ] Manual test: trigger a real build, verify the webhook is received in the logs
+- [ ] `workflow_run` event enabled on the GitHub App **(manual step, GitHub App settings — see instructions added to `.env.example`)**
+- [ ] `GITHUB_WEBHOOK_SECRET` configured locally (`.env`) and in prod **(manual step — requires the value to match what's entered in the GitHub App's "Webhook secret" field; documented in `.env.example`, not something to script)**
+- [ ] Manual test: trigger a real build, verify the webhook is received in the logs **(manual step, after the above two are done)**
 
 ---
 
