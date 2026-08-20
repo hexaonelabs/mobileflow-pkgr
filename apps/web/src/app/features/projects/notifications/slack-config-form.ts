@@ -174,8 +174,8 @@ export class SlackConfigFormComponent {
         slack: { webhookUrl, enabled, events: this.toEventList(events) },
       });
       this.successMessage.set('Configuration saved.');
-    } catch {
-      this.errorMessage.set('Unable to save this configuration.');
+    } catch (err) {
+      this.errorMessage.set(this.extractErrorMessage(err, 'Unable to save this configuration.'));
     } finally {
       this.loading.set(false);
     }
@@ -190,7 +190,7 @@ export class SlackConfigFormComponent {
       await this.projectsService.testNotification(this.projectId());
       this.successMessage.set('Test message sent!');
     } catch (err) {
-      this.errorMessage.set(this.extractErrorMessage(err));
+      this.errorMessage.set(this.extractErrorMessage(err, 'Unable to send the test message.'));
     } finally {
       this.testing.set(false);
     }
@@ -204,11 +204,11 @@ export class SlackConfigFormComponent {
     return list;
   }
 
-  private extractErrorMessage(err: unknown): string {
+  private extractErrorMessage(err: unknown, fallback: string): string {
     if (err instanceof HttpErrorResponse) {
       const message = (err.error as { message?: string } | undefined)?.message;
       if (message) return message;
     }
-    return 'Unable to send the test message.';
+    return fallback;
   }
 }
