@@ -3,6 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type {
+  AnalyticsBreakdown,
+  AnalyticsSummary,
+  AnalyticsTrends,
   Build,
   CreateBuildPayload,
   CreateProjectPayload,
@@ -100,6 +103,24 @@ export class ProjectsService {
   removeSecret(projectId: string, secretId: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(`${this.baseUrl}/${projectId}/secrets/${secretId}`),
+    );
+  }
+
+  getAnalyticsSummary(projectId: string): Promise<AnalyticsSummary> {
+    return firstValueFrom(
+      this.http.get<AnalyticsSummary>(`${this.baseUrl}/${projectId}/analytics/summary`),
+    );
+  }
+
+  getAnalyticsTrends(projectId: string): Promise<AnalyticsTrends> {
+    return firstValueFrom(
+      this.http.get<AnalyticsTrends>(`${this.baseUrl}/${projectId}/analytics/trends`),
+    );
+  }
+
+  getAnalyticsBreakdown(projectId: string): Promise<AnalyticsBreakdown> {
+    return firstValueFrom(
+      this.http.get<AnalyticsBreakdown>(`${this.baseUrl}/${projectId}/analytics/breakdown`),
     );
   }
 }

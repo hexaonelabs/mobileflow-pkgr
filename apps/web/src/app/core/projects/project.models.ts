@@ -79,3 +79,45 @@ export interface CreateSecretPayload {
   alias?: string;
   keyPassword?: string;
 }
+
+interface PlatformOrEnvironmentStats {
+  total: number;
+  successful: number;
+}
+
+export interface AnalyticsSummary {
+  userId: string;
+  projectId: string;
+  year: number;
+  month: number;
+  totalBuilds: number;
+  totalSuccessful: number;
+  totalFailed: number;
+  totalCancelled: number;
+  byPlatform: Record<Platform, PlatformOrEnvironmentStats>;
+  byEnvironment: Record<Environment, PlatformOrEnvironmentStats>;
+  avgDurationSeconds: number;
+  successRate: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface AnalyticsTrends {
+  months: Array<{
+    year: number;
+    month: number;
+    total: number;
+    successful: number;
+    successRate: number;
+  }>;
+}
+
+interface AnalyticsRate {
+  count: number;
+  rate: number;
+}
+
+export interface AnalyticsBreakdown {
+  platform: Record<Platform, AnalyticsRate>;
+  environment: Record<Environment, AnalyticsRate>;
+}
