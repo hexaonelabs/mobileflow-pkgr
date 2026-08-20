@@ -9,6 +9,7 @@ import { FirestoreModule } from './firestore/firestore.module';
 import { GithubModule } from './github/github.module';
 import { GithubWebhookModule } from './github/github-webhook.module';
 import { InternalModule } from './internal/internal.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './projects/projects.module';
 import { QueueModule } from './queue/queue.module';
 import { SecretsModule } from './secrets/secrets.module';
@@ -24,6 +25,7 @@ import { SecretsModule } from './secrets/secrets.module';
     BuildsModule,
     GithubWebhookModule,
     AnalyticsModule,
+    NotificationsModule,
     SecretsModule,
     InternalModule,
   ],
