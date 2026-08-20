@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { BuildsModule } from './builds/builds.module';
 import { FirestoreModule } from './firestore/firestore.module';
 import { GithubModule } from './github/github.module';
+import { GithubWebhookModule } from './github/github-webhook.module';
 import { InternalModule } from './internal/internal.module';
 import { ProjectsModule } from './projects/projects.module';
 import { QueueModule } from './queue/queue.module';
@@ -20,6 +21,7 @@ import { SecretsModule } from './secrets/secrets.module';
     GithubModule,
     ProjectsModule,
     BuildsModule,
+    GithubWebhookModule,
     SecretsModule,
     InternalModule,
   ],

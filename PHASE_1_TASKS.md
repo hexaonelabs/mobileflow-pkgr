@@ -250,8 +250,8 @@ export class GithubWebhookService {
 **Circular dependency warning**: `GithubWebhookService` depends on `BuildsService`, and `BuildsModule` already imports `GithubModule` (for `GithubService`). Use `forwardRef()` on both sides, or extract `GithubWebhookController`/`Service` into a separate module that imports `BuildsModule` without `BuildsModule` needing to import it back.
 
 **Checklist**:
-- [ ] No circular dependency at startup (`nest start` runs cleanly)
-- [ ] Module declared in `app.module.ts`
+- [x] No circular dependency at startup (`nest start` runs cleanly — verified: "Nest application successfully started" with `GithubWebhookModule dependencies initialized`)
+- [x] Module declared in `app.module.ts`
 
 ---
 
