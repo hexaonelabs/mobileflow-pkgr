@@ -10,11 +10,13 @@ import type {
   CreateBuildPayload,
   CreateProjectPayload,
   CreateSecretPayload,
+  NotificationConfig,
   Project,
   RepoReadiness,
   Secret,
   SetupTriggerResult,
   UpdateProjectPayload,
+  UpsertNotificationConfigPayload,
 } from './project.models';
 
 @Injectable({ providedIn: 'root' })
@@ -121,6 +123,30 @@ export class ProjectsService {
   getAnalyticsBreakdown(projectId: string): Promise<AnalyticsBreakdown> {
     return firstValueFrom(
       this.http.get<AnalyticsBreakdown>(`${this.baseUrl}/${projectId}/analytics/breakdown`),
+    );
+  }
+
+  getNotificationConfig(projectId: string): Promise<NotificationConfig> {
+    return firstValueFrom(
+      this.http.get<NotificationConfig>(`${this.baseUrl}/${projectId}/notifications/config`),
+    );
+  }
+
+  updateNotificationConfig(
+    projectId: string,
+    payload: UpsertNotificationConfigPayload,
+  ): Promise<NotificationConfig> {
+    return firstValueFrom(
+      this.http.post<NotificationConfig>(
+        `${this.baseUrl}/${projectId}/notifications/config`,
+        payload,
+      ),
+    );
+  }
+
+  testNotification(projectId: string): Promise<{ message: string }> {
+    return firstValueFrom(
+      this.http.post<{ message: string }>(`${this.baseUrl}/${projectId}/notifications/test`, {}),
     );
   }
 }

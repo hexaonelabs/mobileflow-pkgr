@@ -121,3 +121,36 @@ export interface AnalyticsBreakdown {
   platform: Record<Platform, AnalyticsRate>;
   environment: Record<Environment, AnalyticsRate>;
 }
+
+export type NotificationEvent = 'build.started' | 'build.success' | 'build.failed';
+
+export interface SlackNotificationConfig {
+  webhookUrl: string;
+  enabled: boolean;
+  events: NotificationEvent[];
+}
+
+export interface DiscordNotificationConfig {
+  webhookUrl: string;
+  enabled: boolean;
+  events: NotificationEvent[];
+}
+
+export interface EmailNotificationConfig {
+  enabled: boolean;
+  events: Exclude<NotificationEvent, 'build.started'>[];
+}
+
+export interface NotificationConfig {
+  userId: string;
+  projectId: string;
+  slack?: SlackNotificationConfig;
+  discord?: DiscordNotificationConfig;
+  email?: EmailNotificationConfig;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface UpsertNotificationConfigPayload {
+  slack?: SlackNotificationConfig;
+}
