@@ -656,9 +656,9 @@ export class NotificationConfigService {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Full CRUD
-- [ ] Project ownership verification (explicitly duplicated, same as for Analytics)
+- [x] File created
+- [x] Full CRUD
+- [x] Project ownership verification (explicitly duplicated, same as for Analytics)
 
 ---
 
@@ -779,14 +779,21 @@ export class NotificationsService implements OnModuleInit {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Queue fully set up
-- [ ] Job handlers registered
-- [ ] `nodemailer` added to dependencies (`npm install nodemailer @types/nodemailer`)
-- [ ] Env variables `SMTP_HOST/PORT/USER/PASSWORD/FROM` documented in `.env.example`
-- [ ] Slack message formatting
-- [ ] Error handling + retry
-- [ ] **Don't block on SMTP hosting** (Infomaniak VPS vs Firebase Function) — separate decision, the code should work with any SMTP server as long as the env variables are set
+- [x] File created
+- [x] Queue fully set up
+- [x] Job handlers registered
+- [x] `nodemailer` added to dependencies (`npm install nodemailer @types/nodemailer`)
+- [x] Env variables `SMTP_HOST/PORT/USER/PASSWORD/FROM` documented in `.env.example`
+- [x] Slack message formatting
+- [x] Error handling + retry
+- [x] **Don't block on SMTP hosting** (Infomaniak VPS vs Firebase Function) — separate decision, the code should work with any SMTP server as long as the env variables are set
+
+> **Implementation notes (deviations from the sample above)**:
+> - `@nestjs/bullmq` (the package actually installed, v11) has no `@Process()` decorator or `.process()` method — those belong to the older `@nestjs/bull`. Job handling is a separate `NotificationsProcessor` (`notifications.processor.ts`) extending `WorkerHost`, dispatching on `job.name`.
+> - Outbound Slack webhook call uses native `fetch` (with `AbortController` timeout) instead of `axios`, which isn't a dependency of this repo — avoids adding one for a single POST call.
+> - The SMTP transporter is built lazily and degrades to a no-op (with a warning) if `SMTP_HOST/USER/PASSWORD` aren't set, instead of `getOrThrow`-ing in the constructor — otherwise the API would fail to boot in any environment without SMTP configured, which contradicts "don't block on SMTP hosting" above.
+> - `config.slack.events.includes(\`build.${event.status}\`)` doesn't type-check against `NotificationEvent` (only 3 members, doesn't cover `cancelled`/`running`/`queued`) — replaced with an explicit `toNotificationEvent()` mapping; builds finishing as `cancelled` currently trigger no notification (no matching `NotificationEvent` case exists for it).
+> - Retry is explicit BullMQ job options (`attempts: 3`, exponential backoff) passed at `queue.add()` time, not implicit.
 
 ---
 
@@ -847,9 +854,9 @@ export class NotificationsController {
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] 3 endpoints: GET, POST config, POST test
-- [ ] Auth guard
+- [x] File created
+- [x] 3 endpoints: GET, POST config, POST test
+- [x] Auth guard
 
 ---
 
@@ -880,10 +887,12 @@ export class NotificationsModule {}
 ```
 
 **Checklist**:
-- [ ] File created
-- [ ] Queue registered
-- [ ] Services and controller declared
+- [x] File created
+- [x] Queue registered
+- [x] Services and controller declared
 - [ ] Confirm Redis is running in the deployment environment (`REDIS_URL`), not just locally
+
+> Not importing `FirestoreModule` here: it's `@Global()` (see `firestore.module.ts`), already the convention followed by `AnalyticsModule`. The last checklist item is a deployment-environment check, out of scope for a code change — flagged for whoever handles the deploy.
 
 ---
 
@@ -912,9 +921,9 @@ if (isFinished && !data.finishedAt) {
 ```
 
 **Checklist**:
-- [ ] Import NotificationsService and BuildStatusChangedEvent
-- [ ] Call added inside `finalizeBuildStatus()` (not inside `refreshStatus()`)
-- [ ] Event created with all parameters
+- [x] Import NotificationsService and BuildStatusChangedEvent
+- [x] Call added inside `finalizeBuildStatus()` (not inside `refreshStatus()`)
+- [x] Event created with all parameters
 
 ---
 
@@ -940,9 +949,9 @@ export class AppModule {}
 ```
 
 **Checklist**:
-- [ ] Imports added
-- [ ] Order: after QueueModule (dependency)
-- [ ] No circular dependency at startup (see Task 0.5)
+- [x] Imports added
+- [x] Order: after QueueModule (dependency)
+- [x] No circular dependency at startup (see Task 0.5) — verified with `npm run build`
 
 ---
 
