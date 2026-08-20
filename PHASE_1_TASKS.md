@@ -214,11 +214,11 @@ export class GithubWebhookService {
 ```
 
 **Checklist**:
-- [ ] HMAC verification with `timingSafeEqual` (no naive string comparison)
-- [ ] Project resolution by `githubRepoFullName`
-- [ ] Build resolution by matching `run.name` (reuses the rule from `github.service.ts:359`)
-- [ ] Call to `finalizeBuildStatus()` (must be made `public` or exposed via a dedicated method on `BuildsService`)
-- [ ] Tests: valid `workflow_run.completed` payload → build finalized; invalid signature → rejected
+- [x] HMAC verification with `timingSafeEqual` (no naive string comparison)
+- [x] Project resolution by `githubRepoFullName`
+- [x] Build resolution by matching `run.name` (reuses the rule from `github.service.ts:359`)
+- [x] Call to `finalizeBuildStatus()` (made `public` on `BuildsService`, Task 0.1)
+- [x] Tests: valid `workflow_run.completed` payload → build finalized; invalid signature → rejected (Task 0.6)
 
 ---
 

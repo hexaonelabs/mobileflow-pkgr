@@ -1,6 +1,7 @@
-import { BadRequestException, Controller, Headers, Post, RawBodyRequest, Req } from '@nestjs/common';
+import { BadRequestException, Controller, Headers, Post, Req } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
-import { GithubWebhookService } from './github-webhook.service';
+import { GithubWebhookService, type WorkflowRunWebhookPayload } from './github-webhook.service';
 
 // Endpoint public (pas de JwtAuthGuard) : authentifié par la signature HMAC GitHub
 // (x-hub-signature-256), pas par un token utilisateur — cf. GithubWebhookService.verifySignature.
@@ -22,7 +23,7 @@ export class GithubWebhookController {
     if (event !== 'workflow_run') {
       return { ignored: true };
     }
-    await this.webhookService.handleWorkflowRunEvent(req.body);
+    await this.webhookService.handleWorkflowRunEvent(req.body as WorkflowRunWebhookPayload);
     return { ok: true };
   }
 }
