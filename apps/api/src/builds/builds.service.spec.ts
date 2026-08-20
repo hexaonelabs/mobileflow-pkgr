@@ -38,33 +38,50 @@ function createRef(finalData: BuildDocument) {
   };
 }
 
+// Simule les transactions Firestore avec une isolation sérialisable : les appels
+// concurrents à runTransaction() sont mis en file (comme le ferait réellement Firestore
+// pour deux transactions qui touchent le même document), de sorte que la seconde
+// transaction voit toujours l'état déjà validé par la première.
+function createFirestoreWithTransaction(initialData: BuildDocument) {
+  let current = { ...initialData };
+  let lock: Promise<unknown> = Promise.resolve();
+  const runTransaction = jest.fn((fn: (tx: { get: jest.Mock; update: jest.Mock }) => unknown) => {
+    const run = lock.then(async () => {
+      const tx = {
+        get: jest.fn().mockResolvedValue({ data: () => current }),
+        update: jest.fn((_ref: unknown, patch: Partial<BuildDocument>) => {
+          current = { ...current, ...patch };
+        }),
+      };
+      return fn(tx);
+    });
+    lock = run.catch(() => undefined);
+    return run;
+  });
+
+  return {
+    db: {
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            data: () => ({ userId: 'user1', githubRepoFullName: 'owner/repo' }),
+          }),
+        }),
+      }),
+      runTransaction,
+    },
+  } as unknown as FirestoreService;
+}
+
 describe('BuildsService.finalizeBuildStatus', () => {
   let githubService: { findArtifactUrl: jest.Mock };
   let analyticsService: { recordBuild: jest.Mock };
   let notificationsService: { onBuildStatusChanged: jest.Mock };
-  let service: BuildsService;
 
-  beforeEach(() => {
-    githubService = {
-      findArtifactUrl: jest.fn().mockResolvedValue('https://github.com/owner/repo/artifact'),
-    };
-    analyticsService = { recordBuild: jest.fn().mockResolvedValue(undefined) };
-    notificationsService = { onBuildStatusChanged: jest.fn().mockResolvedValue(undefined) };
-    const firestore = {
-      db: {
-        collection: jest.fn().mockReturnValue({
-          doc: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({
-              exists: true,
-              data: () => ({ userId: 'user1', githubRepoFullName: 'owner/repo' }),
-            }),
-          }),
-        }),
-      },
-    } as unknown as FirestoreService;
-
-    service = new BuildsService(
-      firestore,
+  function createService(freshFirestoreState: BuildDocument): BuildsService {
+    return new BuildsService(
+      createFirestoreWithTransaction(freshFirestoreState),
       githubService as unknown as GithubService,
       undefined as never,
       undefined as never,
@@ -72,11 +89,20 @@ describe('BuildsService.finalizeBuildStatus', () => {
       analyticsService as unknown as AnalyticsService,
       notificationsService as unknown as NotificationsService,
     );
+  }
+
+  beforeEach(() => {
+    githubService = {
+      findArtifactUrl: jest.fn().mockResolvedValue('https://github.com/owner/repo/artifact'),
+    };
+    analyticsService = { recordBuild: jest.fn().mockResolvedValue(undefined) };
+    notificationsService = { onBuildStatusChanged: jest.fn().mockResolvedValue(undefined) };
   });
 
   it('finalizes a successful run: sets finishedAt/duration and resolves the artifact URL', async () => {
     const data = buildDocument();
     const ref = createRef(buildDocument({ status: BuildStatus.success }));
+    const service = createService(data);
 
     const result = await service.finalizeBuildStatus(
       'user1',
@@ -94,9 +120,10 @@ describe('BuildsService.finalizeBuildStatus', () => {
     );
 
     expect(result.isFinished).toBe(true);
-    expect(ref.update).toHaveBeenCalledWith(
-      expect.objectContaining({ status: BuildStatus.success, durationSeconds: 60 }),
-    );
+    // finishedAt/durationSeconds are now committed atomically inside the Firestore
+    // transaction (see createFirestoreWithTransaction), not via the outer ref.update().
+    expect(ref.update).toHaveBeenCalledWith(expect.objectContaining({ status: BuildStatus.success }));
+    expect(ref.update.mock.calls[0][0].durationSeconds).toBeUndefined();
     expect(githubService.findArtifactUrl).toHaveBeenCalledWith(
       'user1',
       'owner/repo',
@@ -127,6 +154,7 @@ describe('BuildsService.finalizeBuildStatus', () => {
       artifactUrl: 'already-set',
     });
     const ref = createRef(data);
+    const service = createService(data);
 
     const result = await service.finalizeBuildStatus(
       'user1',
@@ -156,6 +184,7 @@ describe('BuildsService.finalizeBuildStatus', () => {
   it('maps a failed conclusion to BuildStatus.failed without touching artifactUrl', async () => {
     const data = buildDocument();
     const ref = createRef(buildDocument({ status: BuildStatus.failed }));
+    const service = createService(data);
 
     const result = await service.finalizeBuildStatus(
       'user1',
@@ -192,5 +221,30 @@ describe('BuildsService.finalizeBuildStatus', () => {
         durationSeconds: 120,
       }),
     );
+  });
+
+  it('regression: concurrent calls (GitHub webhook + client polling) for the same build only fire Analytics/Notifications once', async () => {
+    // Both "callers" hold the same stale, already-read `data` snapshot — exactly what
+    // happens when the webhook and the client poll fetch the build doc a few
+    // milliseconds apart, before either has written finishedAt.
+    const staleData = buildDocument();
+    const ref = createRef(buildDocument({ status: BuildStatus.failed }));
+    const service = createService(staleData);
+    const run = {
+      status: 'completed',
+      conclusion: 'failure',
+      htmlUrl: 'https://github.com/owner/repo/actions/runs/1',
+      startedAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:02:00.000Z',
+    };
+
+    const [first, second] = await Promise.all([
+      service.finalizeBuildStatus('user1', 'proj1', 'build1', ref as never, staleData, run),
+      service.finalizeBuildStatus('user1', 'proj1', 'build1', ref as never, staleData, run),
+    ]);
+
+    expect([first.isFinished, second.isFinished].filter(Boolean)).toHaveLength(1);
+    expect(analyticsService.recordBuild).toHaveBeenCalledTimes(1);
+    expect(notificationsService.onBuildStatusChanged).toHaveBeenCalledTimes(1);
   });
 });

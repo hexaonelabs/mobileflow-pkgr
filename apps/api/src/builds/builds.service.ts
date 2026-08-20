@@ -322,32 +322,58 @@ export class BuildsService {
       status === BuildStatus.failed ||
       status === BuildStatus.cancelled;
 
-    if (isFinished && !data.finishedAt) {
-      update.finishedAt = FieldValue.serverTimestamp();
-      if (run.startedAt) {
-        const durationMs = new Date(run.updatedAt).getTime() - new Date(run.startedAt).getTime();
-        update.durationSeconds = Math.max(0, Math.round(durationMs / 1000));
-      }
+    // Le webhook GitHub et le polling client (setInterval de build-detail.ts) peuvent
+    // tous deux appeler finalizeBuildStatus() pour le même build à quelques millisecondes
+    // d'écart, chacun avec son propre `data` déjà lu — donc potentiellement obsolète.
+    // Vérifier `!data.finishedAt` sur ce `data` figé n'est PAS atomique : les deux
+    // appels peuvent passer le garde-fou et déclencher Analytics/Notifications deux fois
+    // pour un seul build. La transaction relit l'état réel de Firestore et ne laisse
+    // qu'un seul appelant "gagner" la finalisation.
+    let didFinalize = false;
+    if (isFinished) {
+      const durationSeconds = run.startedAt
+        ? Math.max(
+            0,
+            Math.round(
+              (new Date(run.updatedAt).getTime() - new Date(run.startedAt).getTime()) / 1000,
+            ),
+          )
+        : null;
 
-      await this.analyticsService.recordBuild(userId, projectId, {
-        platform: data.platform,
-        environment: data.environment,
-        status,
-        durationSeconds: update.durationSeconds ?? null,
+      didFinalize = await this.firestore.db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const current = snap.data() as BuildDocument;
+        if (current.finishedAt) {
+          return false;
+        }
+        tx.update(ref, {
+          finishedAt: FieldValue.serverTimestamp(),
+          ...(durationSeconds !== null ? { durationSeconds } : {}),
+        });
+        return true;
       });
 
-      await this.notificationsService.onBuildStatusChanged(
-        new BuildStatusChangedEvent(
-          buildId,
-          projectId,
-          userId,
-          data.platform,
-          data.environment,
+      if (didFinalize) {
+        await this.analyticsService.recordBuild(userId, projectId, {
+          platform: data.platform,
+          environment: data.environment,
           status,
-          update.durationSeconds ?? null,
-          data.status,
-        ),
-      );
+          durationSeconds,
+        });
+
+        await this.notificationsService.onBuildStatusChanged(
+          new BuildStatusChangedEvent(
+            buildId,
+            projectId,
+            userId,
+            data.platform,
+            data.environment,
+            status,
+            durationSeconds,
+            data.status,
+          ),
+        );
+      }
     }
     if (status === BuildStatus.success && !data.artifactUrl) {
       update.artifactUrl = await this.githubService.findArtifactUrl(
@@ -361,7 +387,7 @@ export class BuildsService {
     await ref.update(update);
     const refreshed = await ref.get();
     return {
-      isFinished: isFinished && !data.finishedAt,
+      isFinished: didFinalize,
       build: this.toApiBuild(buildId, refreshed.data() as BuildDocument),
       update,
     };
