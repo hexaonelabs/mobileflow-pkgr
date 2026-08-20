@@ -126,10 +126,10 @@ export class GithubWebhookController {
 **Note**: requires `rawBody: true` in `NestFactory.create()` (`main.ts`) to be able to verify the HMAC signature against the raw body — otherwise a body that's already been JSON-parsed won't match the signature.
 
 **Checklist**:
-- [ ] Public endpoint `POST /github/webhook` created
-- [ ] `rawBody` enabled in `main.ts` if not already
-- [ ] Rejects if signature is missing/invalid (400/401)
-- [ ] Ignores events other than `workflow_run`
+- [x] Public endpoint `POST /github/webhook` created
+- [x] `rawBody` enabled in `main.ts` if not already
+- [x] Rejects if signature is missing/invalid (400/401) (missing → 400 here; invalid → 401 in `GithubWebhookService.verifySignature`, Task 0.3)
+- [x] Ignores events other than `workflow_run`
 
 ---
 
