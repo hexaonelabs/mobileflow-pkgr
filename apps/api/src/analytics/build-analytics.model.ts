@@ -45,8 +45,10 @@ export interface BuildAnalyticsDocument {
 }
 
 // DTOs pour les réponses API
-export interface AnalyticsSummaryResponse
-  extends Omit<BuildAnalyticsDocument, 'createdAt' | 'updatedAt' | 'dailyBreakdown'> {
+export interface AnalyticsSummaryResponse extends Omit<
+  BuildAnalyticsDocument,
+  'createdAt' | 'updatedAt' | 'dailyBreakdown'
+> {
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -63,5 +65,8 @@ export interface AnalyticsTrendsResponse {
 
 export interface AnalyticsBreakdownResponse {
   platform: { ios: { count: number; rate: number }; android: { count: number; rate: number } };
-  environment: { staging: { count: number; rate: number }; production: { count: number; rate: number } };
+  environment: {
+    staging: { count: number; rate: number };
+    production: { count: number; rate: number };
+  };
 }

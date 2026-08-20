@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { ArrayUnique, IsArray, IsBoolean, IsEnum, IsOptional, IsUrl, ValidateNested } from 'class-validator';
+import {
+  ArrayUnique,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
 import { NotificationEvent } from '../notification-config.model';
 
 class SlackConfigDto {

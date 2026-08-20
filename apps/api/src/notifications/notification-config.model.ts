@@ -10,7 +10,10 @@ export const NotificationEvent = {
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent];
 
 // L'email n'est déclenché que pour les événements importants (pas build.started).
-export type EmailNotificationEvent = Exclude<NotificationEvent, typeof NotificationEvent.buildStarted>;
+export type EmailNotificationEvent = Exclude<
+  NotificationEvent,
+  typeof NotificationEvent.buildStarted
+>;
 
 export interface NotificationConfigDocument {
   userId: string;
@@ -37,7 +40,10 @@ export interface NotificationConfigDocument {
   updatedAt: Timestamp | FieldValue;
 }
 
-export interface NotificationConfigResponse extends Omit<NotificationConfigDocument, 'createdAt' | 'updatedAt'> {
+export interface NotificationConfigResponse extends Omit<
+  NotificationConfigDocument,
+  'createdAt' | 'updatedAt'
+> {
   createdAt: string | null;
   updatedAt: string | null;
 }
