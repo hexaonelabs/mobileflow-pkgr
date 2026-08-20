@@ -60,6 +60,13 @@ const TAB_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 hover:
           >
             Secrets
           </a>
+          <a
+            [routerLink]="['/projects', projectId(), 'analytics']"
+            routerLinkActive="${TAB_ACTIVE_CLASS}"
+            class="${TAB_CLASS}"
+          >
+            Analytics
+          </a>
         </nav>
       </aside>
 
