@@ -20,7 +20,7 @@ export class InternalSecretsController {
     if (!token) {
       throw new UnauthorizedException('Token manquant.');
     }
-    const { projectId, userId, platform } = await this.runTokens.consumeToken(token);
-    return this.secretsService.getDecryptedForPlatform(userId, projectId, platform);
+    const { projectId, userId, platform, environment } = await this.runTokens.consumeToken(token);
+    return this.secretsService.getDecryptedForPlatform(userId, projectId, platform, environment);
   }
 }

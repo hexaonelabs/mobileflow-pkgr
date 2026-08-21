@@ -1,4 +1,5 @@
 import type { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import type { Environment } from '../builds/build.model';
 import type { Platform } from '../projects/project.model';
 
 export const RUN_TOKENS_COLLECTION = 'runSecretsTokens';
@@ -9,6 +10,7 @@ export interface RunTokenDocument {
   projectId: string;
   userId: string;
   platform: Platform;
+  environment: Environment;
   expiresAt: Timestamp;
   createdAt: Timestamp | FieldValue;
 }

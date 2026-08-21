@@ -61,6 +61,7 @@ export type SecretType = 'ios_certificate' | 'ios_provisioning_profile' | 'andro
 export interface Secret {
   id: string;
   type: SecretType;
+  environment: Environment | null;
   fileName: string;
   createdAt: string;
 }
@@ -81,6 +82,7 @@ export interface CreateSecretPayload {
   type: SecretType;
   fileName: string;
   fileBase64: string;
+  environment?: Environment;
   password?: string;
   alias?: string;
   keyPassword?: string;

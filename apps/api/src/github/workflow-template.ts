@@ -3,7 +3,9 @@ export const MOBILEFLOW_WORKFLOW_FILENAME = 'mobileflow.yml';
 
 // Android : staging = compilation réelle non signée (gradlew assembleDebug) ; production =
 // compilation + signature réelles (gradlew assembleRelease, puis zipalign/apksigner).
-// iOS : compilation + signature réelles (Ad Hoc), toujours.
+// iOS : compilation + signature réelles, toujours — staging exporte Ad Hoc, production exporte
+// App Store (même certificat de distribution, provisioning profile et méthode d'export
+// différents — cf. IOS_SIGNING_ENVIRONMENTS_PLAN.md).
 // Dans tous les cas où une signature est requise, le certificat/keystore ne sont jamais
 // committés dans le repo : ils sont récupérés à l'exécution via un token de run à courte durée
 // de vie (cf. apps/api/src/internal/) appelant l'endpoint interne GET /internal/secrets.
@@ -169,9 +171,13 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \\
             IPHONEOS_DEPLOYMENT_TARGET=16.0 \\
             archive
-      - name: Export IPA (Ad Hoc)
+      - name: Export IPA
         run: |
-          printf '<?xml version="1.0" encoding="UTF-8"?>\\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n<plist version="1.0">\\n<dict>\\n  <key>method</key>\\n  <string>ad-hoc</string>\\n  <key>teamID</key>\\n  <string>%s</string>\\n  <key>signingStyle</key>\\n  <string>manual</string>\\n  <key>provisioningProfiles</key>\\n  <dict>\\n    <key>%s</key>\\n    <string>%s</string>\\n  </dict>\\n</dict>\\n</plist>\\n' "$TEAM_ID" "$BUNDLE_ID" "$PROFILE_NAME" > "$RUNNER_TEMP/exportOptions.plist"
+          EXPORT_METHOD="ad-hoc"
+          if [ "\${{ inputs.environment }}" = "production" ]; then
+            EXPORT_METHOD="app-store"
+          fi
+          printf '<?xml version="1.0" encoding="UTF-8"?>\\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\\n<plist version="1.0">\\n<dict>\\n  <key>method</key>\\n  <string>%s</string>\\n  <key>teamID</key>\\n  <string>%s</string>\\n  <key>signingStyle</key>\\n  <string>manual</string>\\n  <key>provisioningProfiles</key>\\n  <dict>\\n    <key>%s</key>\\n    <string>%s</string>\\n  </dict>\\n</dict>\\n</plist>\\n' "$EXPORT_METHOD" "$TEAM_ID" "$BUNDLE_ID" "$PROFILE_NAME" > "$RUNNER_TEMP/exportOptions.plist"
           xcodebuild -exportArchive \\
             -archivePath "$RUNNER_TEMP/App.xcarchive" \\
             -exportOptionsPlist "$RUNNER_TEMP/exportOptions.plist" \\

@@ -120,8 +120,9 @@ export class BuildsService {
     };
     // Les secrets de signature (certificat/provisioning profile iOS, keystore Android) ne sont
     // jamais committés dans le repo : le run les récupère à l'exécution via un token de run à
-    // courte durée de vie (cf. src/internal/). iOS signe systématiquement (Ad Hoc) ; Android ne
-    // signe qu'en production — le staging reste un `assembleDebug` non signé, sans appel réseau.
+    // courte durée de vie (cf. src/internal/). iOS signe systématiquement (Ad Hoc en staging,
+    // App Store en production — cf. IOS_SIGNING_ENVIRONMENTS_PLAN.md) ; Android ne signe qu'en
+    // production — le staging reste un `assembleDebug` non signé, sans appel réseau.
     const needsSigningSecrets =
       platform === Platform.ios ||
       (platform === Platform.android && dto.environment === Environment.production);
@@ -131,6 +132,7 @@ export class BuildsService {
         projectId,
         userId,
         platform,
+        environment: dto.environment,
       });
       inputs.secrets_token = secretsToken;
       inputs.api_url = this.config.getOrThrow<string>('API_URL');

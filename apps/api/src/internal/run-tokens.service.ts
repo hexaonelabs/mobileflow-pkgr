@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import type { Environment } from '../builds/build.model';
 import { FirestoreService } from '../firestore/firestore.service';
 import type { Platform } from '../projects/project.model';
 import { RUN_TOKENS_COLLECTION, type RunTokenDocument } from './run-token.model';
@@ -20,6 +21,7 @@ export class RunTokensService {
     projectId: string;
     userId: string;
     platform: Platform;
+    environment: Environment;
   }): Promise<string> {
     const token = randomBytes(32).toString('hex');
     const doc: RunTokenDocument = {

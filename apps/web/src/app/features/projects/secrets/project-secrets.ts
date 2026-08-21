@@ -16,7 +16,12 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
-import type { Project, Secret, SecretType } from '../../../core/projects/project.models';
+import type {
+  Environment,
+  Project,
+  Secret,
+  SecretType,
+} from '../../../core/projects/project.models';
 
 function aliasRequiredForAndroidValidator(control: AbstractControl): ValidationErrors | null {
   const { type, alias } = control.value as { type: SecretType; alias: string };
@@ -29,10 +34,22 @@ function passwordRequiredValidator(control: AbstractControl): ValidationErrors |
   return type !== 'ios_provisioning_profile' && !password.trim() ? { passwordRequired: true } : null;
 }
 
+function environmentRequiredForProvisioningProfileValidator(
+  control: AbstractControl,
+): ValidationErrors | null {
+  const { type, environment } = control.value as { type: SecretType; environment: string };
+  return type === 'ios_provisioning_profile' && !environment ? { environmentRequired: true } : null;
+}
+
 const SECRET_TYPE_LABELS: Record<SecretType, string> = {
   ios_certificate: 'iOS Certificate (.p12)',
   ios_provisioning_profile: 'iOS Provisioning Profile (.mobileprovision)',
   android_keystore: 'Android Keystore',
+};
+
+const ENVIRONMENT_LABELS: Record<Environment, string> = {
+  staging: 'Staging (Ad Hoc)',
+  production: 'Production (App Store)',
 };
 
 @Component({
@@ -70,7 +87,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
                   <li class="flex items-center justify-between gap-4 px-5 py-4">
                     <div class="min-w-0">
                       <p class="truncate text-sm font-medium text-neutral-900">
-                        {{ secretTypeLabels[secret.type] }}
+                        {{ secretLabel(secret) }}
                       </p>
                       <p class="truncate text-xs text-neutral-500">{{ secret.fileName }}</p>
                     </div>
@@ -78,7 +95,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
                       type="button"
                       class="shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                       (click)="removeSecret(secret)"
-                      [attr.aria-label]="'Delete ' + secretTypeLabels[secret.type]"
+                      [attr.aria-label]="'Delete ' + secretLabel(secret)"
                     >
                       Delete
                     </button>
@@ -123,6 +140,25 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
                 <p class="text-sm text-red-600" role="alert">A file is required.</p>
               }
             </div>
+
+            @if (selectedType() === 'ios_provisioning_profile') {
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-neutral-900" for="environment">Environment</label>
+                <select
+                  id="environment"
+                  formControlName="environment"
+                  class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
+                  [attr.aria-invalid]="isEnvironmentInvalid()"
+                >
+                  <option value="" disabled>Select an environment</option>
+                  <option value="staging">Staging (Ad Hoc)</option>
+                  <option value="production">Production (App Store)</option>
+                </select>
+                @if (isEnvironmentInvalid()) {
+                  <p class="text-sm text-red-600" role="alert">Environment is required.</p>
+                }
+              </div>
+            }
 
             @if (selectedType() !== 'ios_provisioning_profile') {
               <div class="flex flex-col gap-1">
@@ -208,11 +244,18 @@ export class ProjectSecrets implements OnInit {
   protected readonly form = this.fb.nonNullable.group(
     {
       type: this.fb.nonNullable.control<SecretType>('ios_certificate', Validators.required),
+      environment: this.fb.nonNullable.control<Environment | ''>(''),
       password: [''],
       alias: [''],
       keyPassword: [''],
     },
-    { validators: [aliasRequiredForAndroidValidator, passwordRequiredValidator] },
+    {
+      validators: [
+        aliasRequiredForAndroidValidator,
+        passwordRequiredValidator,
+        environmentRequiredForProvisioningProfileValidator,
+      ],
+    },
   );
 
   private projectId = '';
@@ -259,6 +302,18 @@ export class ProjectSecrets implements OnInit {
     return this.form.hasError('aliasRequired') && this.form.controls.alias.touched;
   }
 
+  protected isEnvironmentInvalid(): boolean {
+    return this.form.hasError('environmentRequired') && this.form.controls.environment.touched;
+  }
+
+  protected secretLabel(secret: Secret): string {
+    const base = this.secretTypeLabels[secret.type];
+    if (secret.type !== 'ios_provisioning_profile' || !secret.environment) {
+      return base;
+    }
+    return `${base} — ${ENVIRONMENT_LABELS[secret.environment]}`;
+  }
+
   protected async onFileChange(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -292,19 +347,26 @@ export class ProjectSecrets implements OnInit {
 
     this.submitting.set(true);
     this.submitError.set(null);
-    const { type, password, alias, keyPassword } = this.form.getRawValue();
+    const { type, environment, password, alias, keyPassword } = this.form.getRawValue();
 
     try {
       const created = await this.projectsService.createSecret(this.projectId, {
         type,
         fileName: file.name,
         fileBase64: file.base64,
+        environment: type === 'ios_provisioning_profile' ? (environment as Environment) : undefined,
         password: type === 'ios_provisioning_profile' ? undefined : password,
         alias: type === 'android_keystore' ? alias : undefined,
         keyPassword: keyPassword.trim() ? keyPassword : undefined,
       });
-      this.secrets.update((list) => [created, ...(list ?? []).filter((s) => s.type !== type)]);
-      this.form.reset({ type, password: '', alias: '', keyPassword: '' });
+      this.secrets.update((list) => [
+        created,
+        ...(list ?? []).filter(
+          (s) =>
+            s.type !== type || (type === 'ios_provisioning_profile' && s.environment !== created.environment),
+        ),
+      ]);
+      this.form.reset({ type, environment: '', password: '', alias: '', keyPassword: '' });
       this.selectedFile.set(null);
       this.submitted.set(false);
       const inputEl = this.fileInputRef()?.nativeElement;

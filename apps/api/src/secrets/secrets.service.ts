@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
+import type { Environment } from '../builds/build.model';
 import { EncryptionService } from '../crypto/encryption.service';
 import { FirestoreService } from '../firestore/firestore.service';
 import { PROJECTS_COLLECTION, Platform, type ProjectDocument } from '../projects/project.model';
@@ -9,6 +10,7 @@ import { SECRETS_COLLECTION, SecretType, type SecretDocument } from './secret.mo
 export interface SecretSummary {
   id: string;
   type: SecretDocument['type'];
+  environment: SecretDocument['environment'];
   fileName: string;
   createdAt: SecretDocument['createdAt'];
 }
@@ -48,11 +50,15 @@ export class SecretsService {
 
   async create(userId: string, projectId: string, dto: CreateSecretDto): Promise<SecretSummary> {
     await this.getOwnedProject(userId, projectId);
+    const environment = dto.environment ?? null;
 
-    // Un seul secret actif par type et par projet : un nouvel upload remplace le précédent.
+    // Un seul secret actif par (type, environment) et par projet : un nouvel upload remplace
+    // le précédent. `environment` reste `null` des deux côtés pour ios_certificate/android_keystore,
+    // donc leur comportement (un seul slot par projet) est inchangé.
     const existing = await this.secrets
       .where('projectId', '==', projectId)
       .where('type', '==', dto.type)
+      .where('environment', '==', environment)
       .get();
     await Promise.all(existing.docs.map((doc) => doc.ref.delete()));
 
@@ -69,6 +75,7 @@ export class SecretsService {
       projectId,
       userId,
       type: dto.type,
+      environment,
       fileName: dto.fileName,
       ciphertext,
       iv,
@@ -76,7 +83,13 @@ export class SecretsService {
       createdAt: now,
     };
     const ref = await this.secrets.add(doc);
-    return { id: ref.id, type: doc.type, fileName: doc.fileName, createdAt: doc.createdAt };
+    return {
+      id: ref.id,
+      type: doc.type,
+      environment: doc.environment,
+      fileName: doc.fileName,
+      createdAt: doc.createdAt,
+    };
   }
 
   async findAllForProject(userId: string, projectId: string): Promise<SecretSummary[]> {
@@ -85,7 +98,13 @@ export class SecretsService {
     return snapshot.docs
       .map((doc) => {
         const data = doc.data() as SecretDocument;
-        return { id: doc.id, type: data.type, fileName: data.fileName, createdAt: data.createdAt };
+        return {
+          id: doc.id,
+          type: data.type,
+          environment: data.environment,
+          fileName: data.fileName,
+          createdAt: data.createdAt,
+        };
       })
       .sort((a, b) => this.toMillis(b.createdAt) - this.toMillis(a.createdAt));
   }
@@ -107,11 +126,15 @@ export class SecretsService {
     userId: string,
     projectId: string,
     platform: Platform,
+    environment: Environment,
   ): Promise<BuildSecretsPayload> {
     const snapshot = await this.secrets.where('projectId', '==', projectId).get();
-    const byType = new Map(
-      snapshot.docs.map((doc) => [doc.data().type as SecretType, doc.data() as SecretDocument]),
-    );
+    const docs = snapshot.docs.map((doc) => doc.data() as SecretDocument);
+
+    // ios_provisioning_profile a un doc distinct par environment (cf. create()) ; les autres
+    // types n'ont qu'un seul slot par projet (environment: null), donc environment-agnostiques.
+    const findOne = (type: SecretType, scopedToEnvironment: boolean): SecretDocument | undefined =>
+      docs.find((doc) => doc.type === type && (!scopedToEnvironment || doc.environment === environment));
 
     const decrypt = (doc: SecretDocument | undefined): DecryptedSecretPayload | null => {
       if (!doc) {
@@ -127,15 +150,15 @@ export class SecretsService {
 
     if (platform === Platform.android) {
       return {
-        androidKeystore: decrypt(byType.get(SecretType.android_keystore)),
+        androidKeystore: decrypt(findOne(SecretType.android_keystore, false)),
         iosCertificate: null,
         iosProvisioningProfile: null,
       };
     }
     return {
       androidKeystore: null,
-      iosCertificate: decrypt(byType.get(SecretType.ios_certificate)),
-      iosProvisioningProfile: decrypt(byType.get(SecretType.ios_provisioning_profile)),
+      iosCertificate: decrypt(findOne(SecretType.ios_certificate, false)),
+      iosProvisioningProfile: decrypt(findOne(SecretType.ios_provisioning_profile, true)),
     };
   }
 
