@@ -1,7 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { FieldValue } from 'firebase-admin/firestore';
+import { BillingService } from '../billing/billing.service';
 import { FirestoreService } from '../firestore/firestore.service';
 import { AuthProvider, Plan, USERS_COLLECTION, type UserDocument } from '../users/user.model';
 import type { RegisterDto } from './dto/register.dto';
@@ -12,9 +13,12 @@ const SALT_ROUNDS = 12;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly firestore: FirestoreService,
     private readonly jwtService: JwtService,
+    private readonly billingService: BillingService,
   ) {}
 
   private get users() {
@@ -38,6 +42,7 @@ export class AuthService {
       updatedAt: now,
     };
     const docRef = await this.users.add(doc);
+    await this.provisionBillingBestEffort(docRef.id, dto.email);
     return this.issueSession({
       id: docRef.id,
       email: dto.email,
@@ -84,6 +89,7 @@ export class AuthService {
       updatedAt: now,
     };
     const docRef = await this.users.add(doc);
+    await this.provisionBillingBestEffort(docRef.id, email);
     return { id: docRef.id, email, plan: Plan.free, githubInstallationId: null };
   }
 
@@ -93,5 +99,20 @@ export class AuthService {
       accessToken: this.jwtService.sign(payload),
       user,
     };
+  }
+
+  // Le Customer + Subscription Stripe (plan free à 0€) sont créés dès l'inscription pour
+  // qu'un seul pipeline webhook gère tous les changements de plan par la suite. Un échec ici
+  // ne doit pas bloquer l'inscription : BillingService.requireBilling() rattrape le
+  // provisioning manquant au premier appel checkout/portal.
+  private async provisionBillingBestEffort(userId: string, email: string): Promise<void> {
+    try {
+      await this.billingService.provisionCustomer(userId, email);
+    } catch (error) {
+      this.logger.warn(
+        `Échec du provisioning Stripe pour l'utilisateur ${userId} (${email}), sera rattrapé au premier accès billing.`,
+        error instanceof Error ? error.stack : error,
+      );
+    }
   }
 }

@@ -21,6 +21,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/projects/list/projects-list').then((m) => m.ProjectsList),
       },
+      {
+        path: 'billing',
+        loadComponent: () => import('./features/billing/billing').then((m) => m.Billing),
+      },
+      {
+        path: 'billing/success',
+        loadComponent: () =>
+          import('./features/billing/billing-success').then((m) => m.BillingSuccess),
+      },
+      {
+        path: 'billing/cancel',
+        loadComponent: () =>
+          import('./features/billing/billing-cancel').then((m) => m.BillingCancel),
+      },
     ],
   },
   {

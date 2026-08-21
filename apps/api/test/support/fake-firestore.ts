@@ -14,6 +14,15 @@ interface StoredDoc {
   data: DocData;
 }
 
+// Firestore résout `where('a.b', ...)` par rapport au champ imbriqué `a.b`, pas à une clé
+// littérale `"a.b"` sur le document — cette fake doit se comporter pareil.
+function getByPath(data: DocData, path: string): unknown {
+  return path.split('.').reduce<unknown>((value, key) => {
+    if (value === null || typeof value !== 'object') return undefined;
+    return (value as DocData)[key];
+  }, data);
+}
+
 function matches(value: unknown, op: Filter[1], target: unknown): boolean {
   if (op === '==') return value === target;
   return Array.isArray(target) && target.includes(value);
@@ -57,7 +66,7 @@ export class FakeFirestoreDb {
 
     const runQuery = (limit?: number) => {
       const entries = [...store().entries()].filter(([, entry]) =>
-        filters.every(([field, op, value]) => matches(entry.data[field], op, value)),
+        filters.every(([field, op, value]) => matches(getByPath(entry.data, field), op, value)),
       );
       const limited = limit ? entries.slice(0, limit) : entries;
       return {

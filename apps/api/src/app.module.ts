@@ -4,6 +4,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { BillingModule } from './billing/billing.module';
 import { BuildsModule } from './builds/builds.module';
 import { FirestoreModule } from './firestore/firestore.module';
 import { GithubModule } from './github/github.module';
@@ -28,6 +29,7 @@ import { SecretsModule } from './secrets/secrets.module';
     NotificationsModule,
     SecretsModule,
     InternalModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
