@@ -13,3 +13,9 @@ export interface GithubRepo {
   defaultBranch: string;
   private: boolean;
 }
+
+export interface GithubActionsQuota {
+  available: boolean;
+  includedMinutes?: number;
+  totalMinutesUsed?: number;
+}

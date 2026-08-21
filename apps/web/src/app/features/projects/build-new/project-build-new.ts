@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
+import type { GithubActionsQuota } from '../../../core/github/github.models';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Environment, Platform, Project } from '../../../core/projects/project.models';
 import { PlatformIcon } from '../../../shared/ui/platform-icon';
@@ -65,6 +66,11 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
                   >Upgrade to Starter</a
                 >
                 to publish to the app stores.
+              </p>
+            }
+            @if (quota()?.available) {
+              <p class="mt-1 text-sm text-neutral-500">
+                GitHub Actions usage: {{ quota()!.totalMinutesUsed }} / {{ quota()!.includedMinutes }} minutes this period.
               </p>
             }
           </div>
@@ -186,6 +192,7 @@ export class ProjectBuildNew implements OnInit {
   protected readonly project = signal<Project | null>(null);
   protected readonly branches = signal<string[]>([]);
   protected readonly branchesLoading = signal(false);
+  protected readonly quota = signal<GithubActionsQuota | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly submitError = signal<string | null>(null);
   protected readonly submitting = signal(false);
@@ -213,11 +220,24 @@ export class ProjectBuildNew implements OnInit {
       const project = await this.projectsService.get(id);
       this.project.set(project);
       this.branchesLoading.set(true);
-      this.branches.set(await this.githubService.listBranches(project.githubRepoFullName));
+      await Promise.all([
+        this.githubService.listBranches(project.githubRepoFullName).then((branches) => {
+          this.branches.set(branches);
+        }),
+        this.loadQuota(project.githubRepoFullName),
+      ]);
     } catch {
       this.errorMessage.set('Unable to load project.');
     } finally {
       this.branchesLoading.set(false);
+    }
+  }
+
+  private async loadQuota(repoFullName: string): Promise<void> {
+    try {
+      this.quota.set(await this.githubService.getActionsQuota(repoFullName));
+    } catch {
+      this.quota.set({ available: false });
     }
   }
 

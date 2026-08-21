@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type { GithubInstallUrlResponse, GithubRepo } from './github.models';
+import type { GithubActionsQuota, GithubInstallUrlResponse, GithubRepo } from './github.models';
 
 @Injectable({ providedIn: 'root' })
 export class GithubService {
@@ -24,6 +24,14 @@ export class GithubService {
   listBranches(repoFullName: string): Promise<string[]> {
     return firstValueFrom(
       this.http.get<string[]>(`${this.baseUrl}/repos/${encodeURIComponent(repoFullName)}/branches`),
+    );
+  }
+
+  getActionsQuota(repoFullName: string): Promise<GithubActionsQuota> {
+    return firstValueFrom(
+      this.http.get<GithubActionsQuota>(
+        `${this.baseUrl}/repos/${encodeURIComponent(repoFullName)}/actions-quota`,
+      ),
     );
   }
 }

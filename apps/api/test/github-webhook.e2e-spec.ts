@@ -186,8 +186,39 @@ describe('POST /github/webhook (e2e)', () => {
     expect(queue.add).not.toHaveBeenCalled();
   });
 
-  it('ignores non-workflow_run events without finalizing anything', async () => {
+  it('ignores events other than workflow_run/push without finalizing anything', async () => {
     const body = JSON.stringify({ action: 'completed' });
+
+    const response = await request(app.getHttpServer())
+      .post('/github/webhook')
+      .set('x-hub-signature-256', sign(body))
+      .set('x-github-event', 'issues')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ ignored: true });
+    expect(db.getRaw('builds', 'build1')?.status).toBe(BuildStatus.running);
+  });
+
+  // GithubService est mocké en `{}` dans ce module de test (comme pour le test workflow_run
+  // ci-dessus) : cette assertion couvre le câblage webhook → handlePushEvent → réponse HTTP,
+  // pas la création effective du build (déjà couverte finement, avec un GithubService/BuildsService
+  // mockés au niveau attendu, par github-webhook.service.spec.ts).
+  it('accepts a push event for a project with autoTriggerBranch set without crashing the request', async () => {
+    db.seed('projects', 'proj2', {
+      userId: 'user2',
+      githubRepoFullName: 'owner/repo2',
+      autoTriggerBranch: 'main',
+    });
+    db.seed('users', 'user2', { plan: 'free' });
+
+    const payload = {
+      ref: 'refs/heads/main',
+      deleted: false,
+      repository: { full_name: 'owner/repo2' },
+    };
+    const body = JSON.stringify(payload);
 
     const response = await request(app.getHttpServer())
       .post('/github/webhook')
@@ -197,7 +228,25 @@ describe('POST /github/webhook (e2e)', () => {
       .send(body);
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual({ ignored: true });
-    expect(db.getRaw('builds', 'build1')?.status).toBe(BuildStatus.running);
+    expect(response.body).toEqual({ ok: true });
+  });
+
+  it('ignores a push event when no project has auto-trigger enabled for that repo+branch', async () => {
+    const payload = {
+      ref: 'refs/heads/develop',
+      deleted: false,
+      repository: { full_name: 'owner/repo' },
+    };
+    const body = JSON.stringify(payload);
+
+    const response = await request(app.getHttpServer())
+      .post('/github/webhook')
+      .set('x-hub-signature-256', sign(body))
+      .set('x-github-event', 'push')
+      .set('Content-Type', 'application/json')
+      .send(body);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ ok: true });
   });
 });

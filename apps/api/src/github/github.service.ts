@@ -466,22 +466,22 @@ export class GithubService {
   }
 
   /**
-   * L'API de quota Actions (billing) nécessite des permissions non accessibles
-   * via un token d'installation GitHub App pour un compte personnel — best-effort,
-   * dégrade proprement si indisponible (cf. tasks.md Phase 2, point ouvert).
+   * FR-7 (PHASE_2_TASKS.md Step 2) : le résultat du spike Task 2.1 est que l'API de quota
+   * Actions (billing, `GET /users/{username}/settings/billing/actions` ou son équivalent
+   * `/orgs/{org}/...`) exige un token utilisateur OAuth ou un PAT avec un scope de billing —
+   * un token d'installation GitHub App ne l'a jamais, quel que soit le compte. Demander un
+   * scope OAuth supplémentaire ou un rôle billing-manager d'org est un changement d'architecture
+   * plus large que cette phase (cf. tasks.md Phase 2, point ouvert) : on dégrade honnêtement en
+   * `available: false` plutôt que d'appeler `actions/cache/usage`, qui répondrait `available: true`
+   * avec de l'usage de cache (en octets) sans rapport avec des minutes de build — pire qu'un
+   * `false` explicite, cf. discussion PHASE_2_TASKS.md Task 2.2b.
    */
-  async getActionsQuota(userId: string, repoFullName: string) {
-    const { owner, repo } = this.splitRepo(repoFullName);
-    const octokit = await this.getInstallationOctokit(userId);
-    try {
-      const { data } = await octokit.request('GET /repos/{owner}/{repo}/actions/cache/usage', {
-        owner,
-        repo,
-      });
-      return { available: true, ...data };
-    } catch {
-      return { available: false as const };
-    }
+  // Signature conservée (userId/repoFullName inutilisés) pour ne pas casser l'appelant
+  // (GithubController) ni un éventuel retour en arrière vers Task 2.2a.
+  getActionsQuota(userId: string, repoFullName: string): Promise<{ available: false }> {
+    void userId;
+    void repoFullName;
+    return Promise.resolve({ available: false });
   }
 
   private splitRepo(repoFullName: string): { owner: string; repo: string } {

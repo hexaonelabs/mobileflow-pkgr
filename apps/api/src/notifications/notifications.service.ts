@@ -118,9 +118,10 @@ export class NotificationsService {
     });
   }
 
-  // L'hébergement du compte SMTP (VPS Infomaniak vs Firebase Function) n'est pas encore
-  // tranché (PHASE_1_TASKS.md, Task 3.2) : en local, personne n'a forcément ces variables —
-  // on dégrade en no-op plutôt que d'empêcher l'API de démarrer.
+  // Hébergement décidé (PHASE_2_TASKS.md Step 0) : VPS Infomaniak existant, pas de Firebase
+  // Function — conserve la résidence des données en EU et évite une dépendance croisée
+  // supplémentaire. En local, personne n'a forcément ces variables — on dégrade en no-op
+  // plutôt que d'empêcher l'API de démarrer.
   private createMailer(): nodemailer.Transporter | null {
     const host = this.config.get<string>('SMTP_HOST');
     const user = this.config.get<string>('SMTP_USER');

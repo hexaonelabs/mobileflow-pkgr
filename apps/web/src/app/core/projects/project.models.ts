@@ -10,6 +10,7 @@ export interface Project {
   name: string;
   githubRepoFullName: string;
   framework: Framework;
+  autoTriggerBranch: string | null;
 }
 
 export interface CreateProjectPayload {
@@ -19,6 +20,7 @@ export interface CreateProjectPayload {
 
 export interface UpdateProjectPayload {
   name?: string;
+  autoTriggerBranch?: string | null;
 }
 
 export interface ProjectsQuota {

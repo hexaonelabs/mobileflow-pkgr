@@ -32,13 +32,15 @@ Not a code task. `NotificationsService` (`apps/api/src/notifications/notificatio
 - Options: existing Infomaniak VPS (already provisioned per code comment) vs a Firebase Function/Extension.
 - Constraint: EU data residency already acted in `prd.md` §3.4 — factor this into the choice.
 
+**Decision (2026-08-21)**: Infomaniak VPS. It's EU-hosted (satisfies §3.4 without extra work), it's where the API itself already runs (no new cross-cloud dependency), and a Firebase Function/Extension would still need to relay through an external SMTP/API provider — it doesn't remove the dependency, just adds an abstraction layer `NotificationsService` doesn't need (it already reads plain SMTP env vars).
+
 **Checklist**:
-- [ ] Decision made and written down (update the comment in `notifications.service.ts:121-123` to reflect the decision instead of "not decided yet")
+- [x] Decision made and written down (comment in `notifications.service.ts:121-124` updated; `.env.example` updated to match)
 
 ### Task 0.2: Provision and configure
-- [ ] Create the sending mailbox/account (e.g. `notifications@mobileflow.app`) on the chosen host
-- [ ] Set `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`SMTP_FROM` in `apps/api/.env` (dev) and in the production environment config
-- [ ] Send one real test email through the existing flow (`POST /projects/:id/notifications/test` with `email.enabled: true`, or trigger a real build to completion) and confirm delivery/inbox placement (check SPF/DKIM if the sending domain is new)
+- [x] Sending mailbox/account created on the chosen host and credentials set in `apps/api/.env` (dev) — done manually by the user
+- [ ] Production environment config still to be set at deploy time
+- [ ] Send one real test email through the existing flow (`POST /projects/:id/notifications/test` with `email.enabled: true`, or trigger a real build to completion) and confirm delivery/inbox placement (check SPF/DKIM if the sending domain is new) — not yet confirmed
 
 ---
 
@@ -63,9 +65,9 @@ export interface ProjectDocument {
 Update `ProjectsService.create()` to default new projects to `autoTriggerBranch: null` (auto-trigger is opt-in).
 
 **Checklist**:
-- [ ] Field added to `ProjectDocument`
-- [ ] `ProjectsService.create()` sets `autoTriggerBranch: null` by default
-- [ ] `toApiProject()` (or equivalent response mapper, check `projects.service.ts`) includes the field so the frontend can read it
+- [x] Field added to `ProjectDocument`
+- [x] `ProjectsService.create()` sets `autoTriggerBranch: null` by default
+- [x] No dedicated `toApiProject()` mapper exists — `findAllForUser`/`findOneOwned` spread the raw Firestore doc, so the field is already included in every API response as-is
 
 ---
 
@@ -90,8 +92,8 @@ export class UpdateProjectDto {
 ```
 
 **Checklist**:
-- [ ] `autoTriggerBranch` added as optional field
-- [ ] Verify `ProjectsService.update()`'s `{ ...dto, updatedAt: ... }` spread correctly writes `null` (Firestore `update()` accepts `null` as a value fine — just confirm no `class-validator`/`class-transformer` strips it)
+- [x] `autoTriggerBranch` added as optional field
+- [x] Verified: `ValidationPipe({ whitelist: true, transform: true })` (main.ts) keeps `autoTriggerBranch` since it's decorated (`@IsOptional`), and `@IsOptional` short-circuits validation for both `null` and `undefined` — `null` reaches `ProjectsService.update()`'s spread untouched
 
 ---
 
@@ -126,8 +128,8 @@ async handleWebhook(
 ```
 
 **Checklist**:
-- [ ] `push` branch added alongside `workflow_run`, signature verification unchanged (already event-agnostic)
-- [ ] Still returns `{ ignored: true }` for any other event type
+- [x] `push` branch added alongside `workflow_run`, signature verification unchanged (already event-agnostic)
+- [x] Still returns `{ ignored: true }` for any other event type
 
 ---
 
@@ -182,12 +184,12 @@ async handlePushEvent(payload: PushWebhookPayload): Promise<void> {
 - **`resolvePlan(userId)` needs a Firestore read on `USERS_COLLECTION`** (there's no `UsersService` in this codebase — see the same note in `PHASE_1_TASKS.md` Task 6.1, `PlanGuard` resolved this by reading `request.user.plan` off the JWT, which isn't available here since this is a webhook, not an authenticated request). Read `UserDocument.plan` directly via `this.firestore.db.collection(USERS_COLLECTION).doc(project.userId).get()`, default to `Plan.free` if missing — mirrors the pattern already used in `handleWorkflowRunEvent` conceptually (direct Firestore reads, no service indirection) and in `PlanGuard`.
 
 **Checklist**:
-- [ ] `PushWebhookPayload` type added
-- [ ] Branch deletions ignored
-- [ ] Firestore query matches on `githubRepoFullName` AND `autoTriggerBranch` (composite — confirm no Firestore composite index is required; if Firestore complains at runtime, add the index rather than fetching all repo matches and filtering in memory, to keep this consistent with the collection's existing query patterns)
-- [ ] Multiple projects for the same push (edge case, e.g. same repo linked twice — shouldn't happen given the uniqueness check in `ProjectsService.create()`, but don't crash if it does) handled via `Promise.all`
-- [ ] Reuses `BuildsService.create()` (not a parallel/duplicated dispatch path) — same secrets-token issuance, same workflow install-if-missing, same history entry as a manual build
-- [ ] A `ForbiddenException` from `BuildsService.create()` (e.g. free plan) doesn't crash the webhook handler for other matched projects — wrap each `create()` call so one failure doesn't reject `Promise.all` for the others (`Promise.allSettled`, log the failure)
+- [x] `PushWebhookPayload` type added
+- [x] Branch deletions ignored
+- [x] Firestore query matches on `githubRepoFullName` AND `autoTriggerBranch` — no composite index needed, two-equality-filter queries are auto-indexed by Firestore's single-field indexes (only inequality/orderBy combos need an explicit composite index); confirm against real Firestore during Task 1.9's manual test
+- [x] Multiple projects for the same push handled — via `Promise.allSettled` (stronger than the suggested `Promise.all`, see next bullet)
+- [x] Reuses `BuildsService.create()` (not a parallel/duplicated dispatch path) — same secrets-token issuance, same workflow install-if-missing, same history entry as a manual build
+- [x] A `ForbiddenException` from `BuildsService.create()` doesn't crash the webhook handler for other matched projects — implemented with `Promise.allSettled` + `logger.warn` on each rejection
 
 ---
 
@@ -213,9 +215,9 @@ await Promise.all(
 ```
 
 **Checklist**:
-- [ ] Stale `queued`/`running` builds on the same project+branch are marked `cancelled` before the new one is created
-- [ ] This does **not** attempt to cancel the underlying GitHub Actions run itself (out of scope — the GitHub run for the superseded build keeps executing on GitHub's side, it's just no longer tracked/surfaced as the "current" build in MobileFlow's history). Note this limitation in the task's completion notes.
-- [ ] Unit test: two `handlePushEvent` calls in a row for the same project+branch → first build ends up `cancelled`, second is `queued`
+- [x] Stale `queued`/`running` builds on the same project+branch are marked `cancelled` before the new one is created (`GithubWebhookService.cancelStaleBuilds`)
+- [x] This does **not** attempt to cancel the underlying GitHub Actions run itself (out of scope — the GitHub run for the superseded build keeps executing on GitHub's side, it's just no longer tracked/surfaced as the "current" build in MobileFlow's history). Documented in the method's code comment.
+- [x] Unit test added (`github-webhook.service.spec.ts`): asserts the stale build's `ref.update({ status: cancelled, ... })` is invoked, and via `invocationCallOrder` that it happens strictly before `BuildsService.create()`
 
 ---
 
@@ -228,10 +230,10 @@ await Promise.all(
 - Follow existing conventions: `OnPush`, reactive forms, `role="alert"` for errors, matching the visual style of the adjacent "Workflow de build" section
 
 **Checklist**:
-- [ ] `Project` model (`apps/web/src/app/core/projects/project.models.ts`) includes `autoTriggerBranch: string | null`
-- [ ] `ProjectsService` exposes a method to update it
-- [ ] UI section added to `/projects/:id`, save/clear both work
-- [ ] AXE: label correctly associated (`for`/`id`), error state uses `role="alert"`
+- [x] `Project` model (`apps/web/src/app/core/projects/project.models.ts`) includes `autoTriggerBranch: string | null`
+- [x] `ProjectsService.update()` already existed generically (`PATCH /projects/:id`) and now carries `autoTriggerBranch` via the extended `UpdateProjectPayload` type — no new method needed
+- [x] UI section added to `/projects/:id` (`project-detail.ts`, "Auto-trigger on push"), save/clear both work (empty string → `null`)
+- [x] AXE: `for="auto-trigger-branch"`/`id="auto-trigger-branch"` matched, error state uses `role="alert"`
 
 ---
 
@@ -240,22 +242,22 @@ await Promise.all(
 The GitHub App (`mobileflow-pkgr`) currently has the `workflow_run` webhook event enabled (done manually per `PHASE_1_TASKS.md` Task 0.4). It also needs the **`Push`** event enabled for this feature to receive anything.
 
 **Checklist**:
-- [ ] `Push` event enabled in the GitHub App settings (same place `workflow_run` was enabled)
-- [ ] Confirm existing `GITHUB_WEBHOOK_SECRET` covers `push` too (it's a single secret per App, not per event — should already work, but verify signature validation succeeds on a real `push` payload)
+- [x] `Push` event enabled in the GitHub App settings (same place `workflow_run` was enabled) — done manually by the user
+- [x] Confirmed: `GITHUB_WEBHOOK_SECRET` covers `push` too, signature validation succeeds on a real `push` payload — confirmed by the user (webhook fired end-to-end)
 
 ---
 
 ### Task 1.8: Tests
 
-- [ ] `GithubWebhookService.handlePushEvent` unit tests: matches project by repo+branch, ignores when no `autoTriggerBranch` set, ignores branch deletions, cancels stale `queued`/`running` builds first, calls `BuildsService.create()` with `environment: staging` and both platforms, one project's `ForbiddenException` doesn't block others
-- [ ] `GithubWebhookController` e2e test extended (`apps/api/test/github-webhook.e2e-spec.ts`, follow the existing `workflow_run` test pattern): valid `push` payload → `BuildsService.create()` invoked; `deleted: true` → ignored; no matching project → `{ ignored: true }`-equivalent no-op
+- [x] `GithubWebhookService.handlePushEvent` unit tests added (`github-webhook.service.spec.ts`, `describe('handlePushEvent', ...)`): matches project by repo+branch, ignores when no project matches (no `autoTriggerBranch`), ignores branch deletions, cancels stale builds first (ordering asserted), calls `BuildsService.create()` with `environment: staging` + both platforms, defaults plan to `free` when the user doc is missing, one project's `ForbiddenException` doesn't block the other
+- [x] `GithubWebhookController` unit test extended (push forwarding + non-workflow_run/push events ignored) and e2e spec extended (`github-webhook.e2e-spec.ts`): valid `push` payload for a project with `autoTriggerBranch` set → `{ ok: true }`; no matching project → `{ ok: true }` (webhook-level no-op, not the controller's `{ ignored: true }`, which is reserved for event types other than `workflow_run`/`push`)
 
 ---
 
 ### Task 1.9: Verification
 
-- [ ] `npm run build`/lint/test green for `apps/api` and `apps/web`
-- [ ] Manual test if feasible: enable auto-trigger on a real project (e.g. `pwademo`), push a commit to the configured branch, confirm a `Build` appears in the history without any manual action — requires Task 1.7 done first (GitHub App `push` event enabled) and the API reachable by GitHub (same public-URL prerequisite already documented for the existing webhook, `tasks.md` T5.27's "Limitation structurelle")
+- [x] `npm run build`/lint/test green for `apps/api` (96 unit + 19 e2e tests) and `apps/web` (`ng build` succeeds)
+- [x] Manual test confirmed by the user: webhook fired end-to-end on a real push (2026-08-21)
 
 ---
 
@@ -279,7 +281,7 @@ try {
 ```
 
 **Checklist**:
-- [ ] Result of the spike documented in this file (replace this checklist item with the actual finding: reachable / not reachable, and the HTTP status if not)
+- [x] Result of the spike documented: **not reachable**. No live GitHub App installation/credentials were available in this environment to run the throwaway request above, so the finding is based on GitHub's documented API behavior rather than an observed HTTP status: the Actions billing endpoints (`GET /users/{username}/settings/billing/actions`, `GET /orgs/{org}/settings/billing/actions`) require a user-to-server OAuth token or a PAT with billing access — GitHub App installation tokens (server-to-server, what `getInstallationOctokit()` produces) are not accepted for these endpoints regardless of account type. This matches the risk already flagged in `tasks.md` Phase 2 and the pre-existing code comment on `getActionsQuota()`. Proceeding with Task 2.2b (not 2.2a). If this assumption turns out wrong against a real installation, re-run the spike script and switch to 2.2a.
 
 ---
 
@@ -311,19 +313,19 @@ async getActionsQuota(userId: string, repoFullName: string) {
 
 Note: `owner` here should be the **account** the billing applies to, not necessarily the repo owner if the installation spans an org differently than expected — verify against the spike's actual response shape (org accounts use `GET /orgs/{org}/settings/billing/actions` instead, same response shape).
 
-**Checklist**:
-- [ ] `getActionsQuota()` updated to call the billing endpoint
-- [ ] Return shape carries `includedMinutes`/`totalMinutesUsed` (or whatever the real payload fields are per the spike) instead of the cache-usage shape
-- [ ] Unit test updated/added: mock both the success shape and a 403 (degrades to `{ available: false }`)
-- [ ] Proceed to Task 2.3
+**Checklist** (not applicable — Task 2.1 concluded not reachable, 2.2b taken instead):
+- [ ] N/A
+- [ ] N/A
+- [ ] N/A
+- [ ] N/A
 
 ### Task 2.2b — If the billing endpoint is NOT reachable
 
 Do not attempt further workarounds in this phase (e.g. requesting a user OAuth token with a billing scope, or an org billing-manager role — both are bigger architectural changes than this phase's scope). Leave `getActionsQuota()` as-is (or explicitly hardcode `{ available: false }` if you'd rather not call a misleading endpoint at all — recommended, since `actions/cache/usage` returning `available: true` with irrelevant data is worse than an honest `false`).
 
 **Checklist**:
-- [ ] If keeping the call: confirm it never returns `available: true` with data that could be mistaken for a minutes quota (rename the field it returns, e.g. `cacheUsageBytes`, so nothing downstream can misinterpret it) — or just remove the call and hardcode `{ available: false }`
-- [ ] Skip to Task 2.4 (frontend degrades to the "quota unavailable" banner directly, Task 2.3 does not apply)
+- [x] Call removed; `getActionsQuota()` now hardcodes `{ available: false }` (`apps/api/src/github/github.service.ts`) — no misleading `actions/cache/usage` data returned
+- [x] Skip to Task 2.4 (frontend degrades to the "quota unavailable" banner directly, Task 2.3 does not apply)
 
 ---
 
@@ -365,11 +367,11 @@ Template addition, near the existing free-plan/production warning (`project-buil
 
 This is a **warning**, not a hard block — do not disable the submit button on quota exhaustion (GitHub accounts can have paid minutes beyond the included allowance, so "quota exceeded" doesn't necessarily mean the build will fail, unlike the free-plan/production case which is a hard MobileFlow-side rule).
 
-**Checklist**:
-- [ ] Quota loaded in parallel with branches, not blocking form usability if it fails
-- [ ] Warning shown when `totalMinutesUsed >= includedMinutes`, informational display otherwise
-- [ ] Submit button NOT disabled by quota state (only by the existing free-plan/production rule)
-- [ ] AXE: warning uses `role="alert"`, informational line doesn't (avoid spamming screen readers on every load)
+**Checklist** (not applicable — 2.2b taken, see Task 2.4 instead):
+- [ ] N/A
+- [ ] N/A
+- [ ] N/A
+- [ ] N/A
 
 ---
 
@@ -384,22 +386,23 @@ Same file, simpler version — just the "unavailable" branch from Task 2.3's tem
 ```
 
 **Checklist**:
-- [ ] Banner shown, no crash if `getActionsQuota()` throws (wrap in try/catch, same pattern as branch loading in the existing `ngOnInit()`)
-- [ ] Document in this file's notes that DoD #11 is only partially satisfied (UI acknowledges the limitation rather than showing a number) — this is expected given the constraint discovered in Task 2.1, not a bug to chase further in this phase
+- [x] Loaded in try/catch (`loadQuota()`), degrades to `{ available: false }` on any failure, loaded in parallel with branches via `Promise.all` in `ngOnInit()`
+- [x] **Revised after user feedback (2026-08-22)**: an "unavailable" message was initially shown, but the user found a permanent, always-on "unavailable" notice more noise than signal (it's not actionable, and it will always be there under the current `available: false` decision). Changed to show **nothing** when unavailable, and to display the real minutes (`totalMinutesUsed`/`includedMinutes`) if `available` is ever `true` in the future (e.g. if Option A/B from the follow-up discussion gets implemented later). `GithubActionsQuota` (frontend model) already carries the optional `includedMinutes`/`totalMinutesUsed` fields so no further frontend change is needed if the backend starts returning them.
+- [x] DoD #11 is only partially satisfied today: no quota UI is visible at all under the current `available: false` decision — this is the user's explicit preference over showing a permanent "unavailable" banner. Not a bug.
 
 ---
 
 ### Task 2.5: Tests
 
-- [ ] `GithubService.getActionsQuota` unit test updated to match whichever path (2.2a/2.2b) was taken
-- [ ] `project-build-new.ts` component test: quota warning renders when `totalMinutesUsed >= includedMinutes` (if 2.2a) or the unavailable banner renders (if 2.2b), submit button never disabled by quota alone
+- [x] `GithubService.getActionsQuota` unit test added (`github.service.spec.ts`): asserts `{ available: false }` with no API call
+- [ ] `project-build-new.ts` component test: **not added** — this component/route has no existing `.spec.ts` test file or testing convention to extend (checked: no component-level Angular tests exist anywhere under `apps/web/src/app/features/projects/`); introducing a first-of-its-kind test harness for this one component was judged out of scope for this phase. Manually verifiable instead per Task 2.6.
 
 ---
 
 ### Task 2.6: Verification
 
-- [ ] `npm run build`/lint/test green for `apps/api` and `apps/web`
-- [ ] Manual check in preview: `/projects/:id/builds/new` shows the quota line/banner without breaking the existing free-plan/production warning or the branch/platform form
+- [x] `npm run build`/lint/test green for `apps/api` and `apps/web` (`ng build` succeeds)
+- [x] Manual check confirmed by the user (2026-08-22): initially the "unavailable" banner wasn't visible due to a stale `ng serve` browser bundle (fixed by a page refresh, no code issue) — then, per user feedback, the banner was removed entirely in favor of showing nothing when unavailable (see Task 2.4 above)
 
 ---
 

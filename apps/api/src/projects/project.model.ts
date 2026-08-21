@@ -18,6 +18,8 @@ export interface ProjectDocument {
   name: string;
   githubRepoFullName: string;
   framework: Framework;
+  // Branche déclenchant un build automatique sur push ; null = désactivé (opt-in).
+  autoTriggerBranch: string | null;
   createdAt: Timestamp | FieldValue;
   updatedAt: Timestamp | FieldValue;
 }

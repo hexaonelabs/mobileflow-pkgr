@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type {
@@ -9,7 +10,7 @@ import type {
 
 @Component({
   selector: 'app-project-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-6">
@@ -203,6 +204,46 @@ import type {
           }
         </section>
 
+        <section aria-labelledby="auto-trigger-heading" class="rounded-2xl border border-neutral-200 bg-white p-6">
+          <h3 id="auto-trigger-heading" class="text-sm font-semibold text-neutral-900">Auto-trigger on push</h3>
+          <p class="mt-1 text-sm text-neutral-600">
+            Automatically start a staging build (Android + iOS) whenever a commit is pushed to the
+            branch below. Leave empty to disable.
+          </p>
+
+          <form
+            class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end"
+            [formGroup]="autoTriggerForm"
+            (ngSubmit)="saveAutoTrigger()"
+            novalidate
+          >
+            <div class="flex flex-1 flex-col gap-1">
+              <label class="text-sm font-medium text-neutral-900" for="auto-trigger-branch">Branch</label>
+              <input
+                id="auto-trigger-branch"
+                type="text"
+                placeholder="e.g. main (empty = disabled)"
+                class="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
+                formControlName="autoTriggerBranch"
+              />
+            </div>
+            <button
+              type="submit"
+              class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+              [disabled]="autoTriggerSaving()"
+            >
+              {{ autoTriggerSaving() ? 'Saving…' : 'Save' }}
+            </button>
+          </form>
+
+          @if (autoTriggerSaved()) {
+            <p class="mt-3 text-sm text-green-700">Auto-trigger setting saved.</p>
+          }
+          @if (autoTriggerError()) {
+            <p role="alert" class="mt-3 text-sm text-red-600">{{ autoTriggerError() }}</p>
+          }
+        </section>
+
         <button
           type="button"
           class="self-start rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
@@ -220,6 +261,7 @@ export class ProjectDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly projectsService = inject(ProjectsService);
+  private readonly fb = inject(FormBuilder);
 
   protected readonly project = signal<Project | null>(null);
   protected readonly readiness = signal<RepoReadiness | null>(null);
@@ -234,6 +276,11 @@ export class ProjectDetail implements OnInit {
   protected readonly resetting = signal(false);
   protected readonly resetDone = signal(false);
   protected readonly resetError = signal<string | null>(null);
+
+  protected readonly autoTriggerForm = this.fb.nonNullable.group({ autoTriggerBranch: [''] });
+  protected readonly autoTriggerSaving = signal(false);
+  protected readonly autoTriggerSaved = signal(false);
+  protected readonly autoTriggerError = signal<string | null>(null);
 
   protected readonly isFullyReady = computed(() => {
     const readiness = this.readiness();
@@ -266,7 +313,9 @@ export class ProjectDetail implements OnInit {
       return;
     }
     try {
-      this.project.set(await this.projectsService.get(id));
+      const project = await this.projectsService.get(id);
+      this.project.set(project);
+      this.autoTriggerForm.patchValue({ autoTriggerBranch: project.autoTriggerBranch ?? '' });
     } catch {
       this.errorMessage.set('Unable to load project.');
       return;
@@ -310,6 +359,30 @@ export class ProjectDetail implements OnInit {
       this.resetError.set('Unable to reset workflow.');
     } finally {
       this.resetting.set(false);
+    }
+  }
+
+  protected async saveAutoTrigger(): Promise<void> {
+    const project = this.project();
+    if (!project) {
+      return;
+    }
+    this.autoTriggerSaving.set(true);
+    this.autoTriggerError.set(null);
+    this.autoTriggerSaved.set(false);
+    const branch = this.autoTriggerForm.getRawValue().autoTriggerBranch.trim();
+    try {
+      const updated = await this.projectsService.update(project.id, {
+        name: project.name,
+        autoTriggerBranch: branch || null,
+      });
+      this.project.set(updated);
+      this.autoTriggerForm.patchValue({ autoTriggerBranch: updated.autoTriggerBranch ?? '' });
+      this.autoTriggerSaved.set(true);
+    } catch {
+      this.autoTriggerError.set('Unable to save the auto-trigger setting.');
+    } finally {
+      this.autoTriggerSaving.set(false);
     }
   }
 

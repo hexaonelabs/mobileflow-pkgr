@@ -8,6 +8,7 @@ function createWebhookService() {
   return {
     verifySignature: jest.fn(),
     handleWorkflowRunEvent: jest.fn().mockResolvedValue(undefined),
+    handlePushEvent: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -40,17 +41,18 @@ describe('GithubWebhookController', () => {
     expect(webhookService.verifySignature).not.toHaveBeenCalled();
   });
 
-  it('verifies the signature then ignores non-workflow_run events', async () => {
+  it('verifies the signature then ignores events other than workflow_run/push', async () => {
     const webhookService = createWebhookService();
     const controller = new GithubWebhookController(
       webhookService as unknown as GithubWebhookService,
     );
     const rawBody = Buffer.from('{}');
 
-    const result = await controller.handleWebhook(requestWith(rawBody), 'sha256=abc', 'push');
+    const result = await controller.handleWebhook(requestWith(rawBody), 'sha256=abc', 'issues');
 
     expect(webhookService.verifySignature).toHaveBeenCalledWith(rawBody, 'sha256=abc');
     expect(webhookService.handleWorkflowRunEvent).not.toHaveBeenCalled();
+    expect(webhookService.handlePushEvent).not.toHaveBeenCalled();
     expect(result).toEqual({ ignored: true });
   });
 
@@ -70,6 +72,29 @@ describe('GithubWebhookController', () => {
 
     expect(webhookService.verifySignature).toHaveBeenCalledWith(rawBody, 'sha256=abc');
     expect(webhookService.handleWorkflowRunEvent).toHaveBeenCalledWith(payload);
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('verifies the signature then forwards push events', async () => {
+    const webhookService = createWebhookService();
+    const controller = new GithubWebhookController(
+      webhookService as unknown as GithubWebhookService,
+    );
+    const rawBody = Buffer.from('{"ref":"refs/heads/main"}');
+    const payload = {
+      ref: 'refs/heads/main',
+      deleted: false,
+      repository: { full_name: 'owner/repo' },
+    };
+
+    const result = await controller.handleWebhook(
+      requestWith(rawBody, payload),
+      'sha256=abc',
+      'push',
+    );
+
+    expect(webhookService.verifySignature).toHaveBeenCalledWith(rawBody, 'sha256=abc');
+    expect(webhookService.handlePushEvent).toHaveBeenCalledWith(payload);
     expect(result).toEqual({ ok: true });
   });
 });

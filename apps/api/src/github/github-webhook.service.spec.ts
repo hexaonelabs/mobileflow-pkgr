@@ -1,11 +1,16 @@
 import { createHmac } from 'node:crypto';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GithubWebhookService, type WorkflowRunWebhookPayload } from './github-webhook.service';
+import {
+  GithubWebhookService,
+  type PushWebhookPayload,
+  type WorkflowRunWebhookPayload,
+} from './github-webhook.service';
 import { BuildStatus, TriggeredBy, Environment, type BuildDocument } from '../builds/build.model';
 import type { BuildsService } from '../builds/builds.service';
 import type { FirestoreService } from '../firestore/firestore.service';
 import { Platform } from '../projects/project.model';
+import { Plan } from '../users/user.model';
 
 const SECRET = 'test-secret';
 
@@ -33,12 +38,15 @@ function buildPayload(
 
 describe('GithubWebhookService', () => {
   let config: ConfigService;
-  let buildsService: { finalizeBuildStatus: jest.Mock };
+  let buildsService: { finalizeBuildStatus: jest.Mock; create: jest.Mock };
   let service: GithubWebhookService;
 
   beforeEach(() => {
     config = { getOrThrow: jest.fn().mockReturnValue(SECRET) } as unknown as ConfigService;
-    buildsService = { finalizeBuildStatus: jest.fn().mockResolvedValue(undefined) };
+    buildsService = {
+      finalizeBuildStatus: jest.fn().mockResolvedValue(undefined),
+      create: jest.fn().mockResolvedValue([]),
+    };
   });
 
   describe('verifySignature', () => {
@@ -173,6 +181,190 @@ describe('GithubWebhookService', () => {
       await service.handleWorkflowRunEvent(buildPayload());
 
       expect(buildsService.finalizeBuildStatus).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handlePushEvent', () => {
+    function pushPayload(overrides: Partial<PushWebhookPayload> = {}): PushWebhookPayload {
+      return {
+        ref: 'refs/heads/main',
+        deleted: false,
+        repository: { full_name: 'owner/repo' },
+        ...overrides,
+      };
+    }
+
+    interface StaleBuild {
+      id: string;
+      ref: { update: jest.Mock };
+    }
+
+    // Fake volontairement minimal (comme createFirestore() ci-dessus pour handleWorkflowRunEvent) :
+    // where()/get() ignorent les critères de filtre réels et retournent directement les listes
+    // passées en options — c'est le comportement de handlePushEvent lui-même qui est sous test,
+    // pas la traduction des filtres Firestore (déjà couverte par les tests e2e FakeFirestoreDb).
+    function createFirestoreForPush(
+      options: {
+        projects?: Array<{ id: string; data: Record<string, unknown> }>;
+        staleBuilds?: StaleBuild[];
+        users?: Record<string, { plan?: Plan }>;
+      } = {},
+    ) {
+      const { projects = [], staleBuilds = [], users = {} } = options;
+
+      const projectsQuery = {
+        where: jest.fn().mockReturnThis(),
+        get: jest.fn().mockResolvedValue({
+          empty: projects.length === 0,
+          docs: projects.map((p) => ({ id: p.id, data: () => p.data })),
+        }),
+      };
+      const buildsQuery = {
+        where: jest.fn().mockReturnThis(),
+        get: jest.fn().mockResolvedValue({
+          empty: staleBuilds.length === 0,
+          docs: staleBuilds.map((b) => ({ id: b.id, data: () => ({}), ref: b.ref })),
+        }),
+      };
+      const usersCollection = {
+        doc: jest.fn((userId: string) => ({
+          get: jest.fn().mockResolvedValue({
+            exists: userId in users,
+            data: () => users[userId],
+          }),
+        })),
+      };
+
+      return {
+        db: {
+          collection: jest.fn((name: string) => {
+            if (name === 'projects') return projectsQuery;
+            if (name === 'builds') return buildsQuery;
+            if (name === 'users') return usersCollection;
+            throw new Error(`unexpected collection ${name}`);
+          }),
+        },
+      } as unknown as FirestoreService;
+    }
+
+    function staleBuild(id: string): StaleBuild {
+      return { id, ref: { update: jest.fn().mockResolvedValue(undefined) } };
+    }
+
+    it('ignores branch deletions without querying Firestore', async () => {
+      const collectionSpy = jest.fn();
+      const firestore = { db: { collection: collectionSpy } } as unknown as FirestoreService;
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await service.handlePushEvent(pushPayload({ deleted: true }));
+
+      expect(collectionSpy).not.toHaveBeenCalled();
+      expect(buildsService.create).not.toHaveBeenCalled();
+    });
+
+    it('no-ops when no project matches the repo+autoTriggerBranch query', async () => {
+      const firestore = createFirestoreForPush({ projects: [] });
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await service.handlePushEvent(pushPayload());
+
+      expect(buildsService.create).not.toHaveBeenCalled();
+    });
+
+    it('resolves the branch from "refs/heads/<branch>" and creates a staging build for both platforms', async () => {
+      const firestore = createFirestoreForPush({
+        projects: [{ id: 'proj1', data: { userId: 'user1', githubRepoFullName: 'owner/repo' } }],
+        users: { user1: { plan: Plan.free } },
+      });
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await service.handlePushEvent(pushPayload({ ref: 'refs/heads/develop' }));
+
+      expect(buildsService.create).toHaveBeenCalledWith('user1', 'proj1', Plan.free, {
+        environment: Environment.staging,
+        branch: 'develop',
+        platforms: [Platform.android, Platform.ios],
+      });
+    });
+
+    it('defaults the plan to free when the user document is missing', async () => {
+      const firestore = createFirestoreForPush({
+        projects: [
+          { id: 'proj1', data: { userId: 'user-unknown', githubRepoFullName: 'owner/repo' } },
+        ],
+        users: {},
+      });
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await service.handlePushEvent(pushPayload());
+
+      expect(buildsService.create).toHaveBeenCalledWith(
+        'user-unknown',
+        'proj1',
+        Plan.free,
+        expect.anything(),
+      );
+    });
+
+    it('cancels stale queued/running builds for the same project+branch before creating the new one', async () => {
+      const oldBuild = staleBuild('build-old');
+      const firestore = createFirestoreForPush({
+        projects: [{ id: 'proj1', data: { userId: 'user1', githubRepoFullName: 'owner/repo' } }],
+        staleBuilds: [oldBuild],
+        users: { user1: { plan: Plan.free } },
+      });
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await service.handlePushEvent(pushPayload());
+
+      expect(oldBuild.ref.update).toHaveBeenCalledWith(
+        expect.objectContaining({ status: BuildStatus.cancelled }),
+      );
+      const updateOrder = oldBuild.ref.update.mock.invocationCallOrder[0];
+      const createOrder = buildsService.create.mock.invocationCallOrder[0];
+      expect(updateOrder).toBeLessThan(createOrder);
+    });
+
+    it("does not let one project's ForbiddenException block the others", async () => {
+      const firestore = createFirestoreForPush({
+        projects: [
+          { id: 'proj1', data: { userId: 'user1', githubRepoFullName: 'owner/repo' } },
+          { id: 'proj2', data: { userId: 'user2', githubRepoFullName: 'owner/repo' } },
+        ],
+        users: { user1: { plan: Plan.free }, user2: { plan: Plan.free } },
+      });
+      buildsService.create
+        .mockRejectedValueOnce(new ForbiddenException('plan gratuit'))
+        .mockResolvedValueOnce([]);
+      service = new GithubWebhookService(
+        firestore,
+        buildsService as unknown as BuildsService,
+        config,
+      );
+
+      await expect(service.handlePushEvent(pushPayload())).resolves.toBeUndefined();
+
+      expect(buildsService.create).toHaveBeenCalledTimes(2);
     });
   });
 });

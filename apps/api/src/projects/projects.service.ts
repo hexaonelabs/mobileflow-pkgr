@@ -65,6 +65,7 @@ export class ProjectsService {
       name: dto.name?.trim() || dto.githubRepoFullName.split('/')[1] || dto.githubRepoFullName,
       githubRepoFullName: dto.githubRepoFullName,
       framework: Framework.capacitor,
+      autoTriggerBranch: null,
       createdAt: now,
       updatedAt: now,
     };
