@@ -44,6 +44,11 @@ export interface BuildDocument {
   // déposé par le run — une URL signée fraîche est mintée à la demande (cf. StorageService),
   // jamais stockée telle quelle car elle expire.
   artifactStoragePath: string | null;
+  // Ancre de rétention (PHASE 2) : posé au moment où l'artefact est effectivement déposé sur
+  // Firebase Storage, pas à la création du build — l'hébergement est à la demande (cf.
+  // ensureHostedArtifact), un build peut donc exister des semaines avant d'être hébergé.
+  // Remis à null quand ArtifactRetentionService purge l'artefact expiré.
+  artifactUploadedAt: Timestamp | FieldValue | null;
   // Renseignés uniquement pour iOS, à partir du provisioning profile / de l'archive Xcode —
   // utilisés dans le manifest.plist d'installation OTA (itms-services).
   bundleId: string | null;
@@ -55,10 +60,11 @@ export interface BuildDocument {
 // (Timestamp ne se sérialise pas proprement en JSON tel quel) — cf. BuildsService.toApiBuild.
 export interface BuildResponse extends Omit<
   BuildDocument,
-  'startedAt' | 'finishedAt' | 'createdAt'
+  'startedAt' | 'finishedAt' | 'createdAt' | 'artifactUploadedAt'
 > {
   id: string;
   startedAt: string | null;
   finishedAt: string | null;
   createdAt: string | null;
+  artifactUploadedAt: string | null;
 }

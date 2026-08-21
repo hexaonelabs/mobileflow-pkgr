@@ -43,6 +43,7 @@ export interface Build {
   logsUrl: string | null;
   artifactUrl: string | null;
   artifactStoragePath: string | null;
+  artifactUploadedAt: string | null;
   bundleId: string | null;
   bundleVersion: string | null;
   createdAt: string | null;

@@ -26,6 +26,7 @@ function buildDocument(overrides: Partial<BuildDocument> = {}): BuildDocument {
     artifactUrl: null,
     logsUrl: null,
     artifactStoragePath: null,
+    artifactUploadedAt: null,
     bundleId: null,
     bundleVersion: null,
     createdAt: null as never,

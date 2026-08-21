@@ -8,7 +8,7 @@
 
 export type DocData = Record<string, unknown>;
 
-type Filter = [field: string, op: '==' | 'in', value: unknown];
+type Filter = [field: string, op: '==' | '!=' | 'in', value: unknown];
 
 interface StoredDoc {
   data: DocData;
@@ -25,6 +25,7 @@ function getByPath(data: DocData, path: string): unknown {
 
 function matches(value: unknown, op: Filter[1], target: unknown): boolean {
   if (op === '==') return value === target;
+  if (op === '!=') return value !== target;
   return Array.isArray(target) && target.includes(value);
 }
 

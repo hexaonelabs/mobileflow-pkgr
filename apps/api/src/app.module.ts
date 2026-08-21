@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ArtifactRetentionModule } from './artifact-retention/artifact-retention.module';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
 import { BuildsModule } from './builds/builds.module';
@@ -27,6 +28,7 @@ import { SecretsModule } from './secrets/secrets.module';
     GithubWebhookModule,
     AnalyticsModule,
     NotificationsModule,
+    ArtifactRetentionModule,
     SecretsModule,
     InternalModule,
     BillingModule,

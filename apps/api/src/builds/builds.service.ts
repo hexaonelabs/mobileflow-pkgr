@@ -106,6 +106,7 @@ export class BuildsService {
       artifactUrl: null,
       logsUrl: null,
       artifactStoragePath: null,
+      artifactUploadedAt: null,
       bundleId: null,
       bundleVersion: null,
       createdAt: now,
@@ -244,6 +245,7 @@ export class BuildsService {
     const storagePath = `builds/${projectId}/${buildId}/app.${extension}`;
     await this.storageService.uploadBuffer(storagePath, fileBuffer, 'application/octet-stream');
     update.artifactStoragePath = storagePath;
+    update.artifactUploadedAt = FieldValue.serverTimestamp();
 
     await ref.update(update);
     const refreshed = await ref.get();
@@ -439,6 +441,7 @@ export class BuildsService {
       startedAt: this.toIsoString(data.startedAt),
       finishedAt: this.toIsoString(data.finishedAt),
       createdAt: this.toIsoString(data.createdAt),
+      artifactUploadedAt: this.toIsoString(data.artifactUploadedAt),
     };
   }
 }

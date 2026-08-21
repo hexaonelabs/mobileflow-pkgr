@@ -341,26 +341,28 @@ Rather than build scheduling, the conversion lever we actually shipped: `BuildsS
 
 ### 2.1 Data model changes
 
-- `apps/api/src/quotas/plan-quotas.model.ts` (`PlanQuotasDocument`): add `artifactRetentionDays: number | null` per plan — `free: 7, starter: 30, pro: 90` (mirrors the original pricing promise), `null` = unlimited.
-- `apps/api/src/builds/build.model.ts` (`BuildDocument`): add `artifactUploadedAt: Timestamp | null`. This is the retention anchor — **not** `createdAt`, since hosting is lazy/on-demand (a build can exist for weeks before anyone clicks "Install"). Set it in `ensureHostedArtifact()` alongside `artifactStoragePath`.
+- [x] `apps/api/src/quotas/plan-quotas.model.ts` (`PlanQuotasDocument`): add `artifactRetentionDays: number | null` per plan — `free: 7, starter: 30, pro: 90`, `enterprise: null` (mirrors the unlimited-projects treatment already given to enterprise), `null` = unlimited.
+- [x] `apps/api/src/builds/build.model.ts` (`BuildDocument`): add `artifactUploadedAt: Timestamp | FieldValue | null`. Retention anchor — **not** `createdAt`, since hosting is lazy/on-demand. Set in `ensureHostedArtifact()` alongside `artifactStoragePath`, cleared alongside it on purge.
 
 ### 2.2 Backend
 
-- `StorageService` (`apps/api/src/storage/storage.service.ts`): add `deleteFile(path: string): Promise<void>` — doesn't exist today (only `uploadBuffer`/`getSignedDownloadUrl`).
-- New `ArtifactRetentionService.purgeExpiredArtifacts()`: for each build with `artifactStoragePath != null`, look up the owning user's current plan (evaluated live, same philosophy as `ProjectsService.getQuotaUsage` — not locked in at upload time, so a downgrade shortens retention going forward), compute the cutoff from `artifactUploadedAt`, delete the Storage file + clear `artifactStoragePath`/`artifactUploadedAt` on expiry.
-- **Scheduling**: prefer a **BullMQ repeatable job** over `@nestjs/schedule`. Redis/BullMQ is already wired up for notifications; a plain `@Cron()` would fire once per running API instance if the API is ever scaled horizontally, causing redundant delete attempts. BullMQ repeatable jobs are deduplicated across instances.
-- No new user-facing endpoint is required for the deletion itself — it's a background sweep. Worth exposing "expires in N days" wherever the artifact/install link is shown, computed client-side from `artifactUploadedAt + retentionDays`.
+- [x] `StorageService.deleteFile(path: string): Promise<void>` — uses `{ ignoreNotFound: true }` so a re-run of the sweep against an already-deleted file doesn't throw.
+- [x] `ArtifactRetentionModule` (`apps/api/src/artifact-retention/`) → `ArtifactRetentionService.purgeExpiredArtifacts()`: queries builds with `artifactStoragePath != null`, resolves each owner's plan live (direct Firestore read on `users/{userId}`, cached per sweep run to avoid refetching per build), deletes the Storage file + clears `artifactStoragePath`/`artifactUploadedAt` on expiry. Expiry check factored into a pure `isArtifactExpired(retentionDays, artifactUploadedAt, now)` method.
+- [x] **Scheduling**: `ArtifactRetentionModule` registers a BullMQ queue and, in `onModuleInit()`, calls `queue.upsertJobScheduler(...)` with a daily cron (`0 3 * * *`) — deduplicated by `jobSchedulerId` across API instances, per the original plan.
+- [x] No new user-facing endpoint — background sweep only, wired into `app.module.ts`.
 
 ### 2.3 Frontend
 
-- `build-detail`: show "Available until <date>" once hosted; if already purged, replace the "Install" button with a clear message instead of a broken link. Re-clicking "Install" can safely re-trigger `ensureHostedArtifact()` (already idempotent), but it now also needs to handle the case where the underlying GitHub Actions artifact itself has since expired (build fails with a clear error instead of a silent failure).
+- [x] `build-detail`: shows "Available until \<date\>" under the download button once hosted, computed client-side from `artifactUploadedAt` + a static per-plan retention map (`authService.currentUser()?.plan`, same pattern as the existing `isFreePlan` gate) — mirrors `DEFAULT_PLAN_QUOTAS` but is purely informational, the real cutoff is enforced server-side.
+- [x] "Replace Install with a clear message" turned out to already be the existing behavior for free: once purged, `artifactStoragePath` is cleared, so the template's existing `@if (!build.artifactStoragePath)` branch already reverts to a working "Install" button — not a broken link, no extra state needed.
+- [x] GitHub Actions artifact expired on GitHub's side: already surfaced pre-Phase-2 via `GithubService.downloadRunArtifactZip()` → `NotFoundException('Artefact GitHub introuvable ou expiré.')`, which `installBuild()`'s catch block already turns into a visible `errorMessage`. No change needed.
 
 ### 2.4 Tests
 
-- Unit: the "is this build's artifact expired" pure function (plan × `artifactUploadedAt` × now)
-- Unit: `purgeExpiredArtifacts()` against a mixed set of builds/plans/ages (mock `StorageService`/Firestore)
-- Unit: `StorageService.deleteFile()` (mocked GCS call)
-- E2E: run the sweep, assert the Storage delete + Firestore update happened only for the expired build, not the fresh one
+- [x] Unit: the "is this build's artifact expired" pure function (plan × `artifactUploadedAt` × now) — `artifact-retention.service.spec.ts`
+- [x] Unit: `purgeExpiredArtifacts()` against a mixed set of builds/plans/ages (mock `StorageService`/Firestore) — `artifact-retention.service.spec.ts`
+- [x] Unit: `StorageService.deleteFile()` (mocked `firebase-admin/storage`) — `storage.service.spec.ts`
+- [x] E2E: run the sweep, assert the Storage delete + Firestore update happened only for the expired build, not the fresh one — `test/artifact-retention.e2e-spec.ts` (also required extending `FakeFirestoreDb`'s `where()` with a `!=` operator, not needed by Phase 0/1)
 
 ---
 
@@ -463,7 +465,7 @@ Rather than build scheduling, the conversion lever we actually shipped: `BuildsS
 - [ ] Frontend: show "Premium feature" lock if the user is on Free — done for the production-build gate (`project-build-new.ts`) only; notifications/analytics endpoints are still blocked API-side with no UI lock (per note #3 below, intentional for now)
 
 ### Phase 2
-- [ ] See the detailed Phase 2 checklist above (2.1-2.4)
+- [x] See the detailed Phase 2 checklist above (2.1-2.4)
 
 ### Phase 3
 - [ ] Depends on Phase 1/2, similar steps

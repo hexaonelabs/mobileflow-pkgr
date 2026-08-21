@@ -28,4 +28,10 @@ export class StorageService {
   async uploadBuffer(path: string, buffer: Buffer, contentType: string): Promise<void> {
     await this.bucket.file(path).save(buffer, { metadata: { contentType } });
   }
+
+  // ignoreNotFound : purge idempotente (PHASE 2 — ArtifactRetentionService), un fichier déjà
+  // supprimé ne doit pas faire échouer le sweep.
+  async deleteFile(path: string): Promise<void> {
+    await this.bucket.file(path).delete({ ignoreNotFound: true });
+  }
 }

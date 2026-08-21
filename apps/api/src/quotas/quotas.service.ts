@@ -12,16 +12,25 @@ import {
 export class QuotasService {
   constructor(private readonly firestore: FirestoreService) {}
 
+  async getProjectsLimit(plan: Plan): Promise<number | null> {
+    const quotas = await this.getQuotas();
+    return quotas[plan]?.projectsLimit ?? null;
+  }
+
+  async getArtifactRetentionDays(plan: Plan): Promise<number | null> {
+    const quotas = await this.getQuotas();
+    return quotas[plan]?.artifactRetentionDays ?? null;
+  }
+
   // Auto-seed au premier appel plutôt qu'une étape manuelle de config Firestore — même idiome
   // que BillingService.requireBilling() qui rattrape un état manquant à la volée.
-  async getProjectsLimit(plan: Plan): Promise<number | null> {
+  private async getQuotas(): Promise<PlanQuotasDocument> {
     const ref = this.firestore.db.collection(PLAN_QUOTAS_COLLECTION).doc(PLAN_QUOTAS_DOC_ID);
     const doc = await ref.get();
     if (!doc.exists) {
       await ref.set(DEFAULT_PLAN_QUOTAS);
-      return DEFAULT_PLAN_QUOTAS[plan].projectsLimit;
+      return DEFAULT_PLAN_QUOTAS;
     }
-    const data = doc.data() as PlanQuotasDocument;
-    return data[plan]?.projectsLimit ?? null;
+    return doc.data() as PlanQuotasDocument;
   }
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal }
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import QRCode from 'qrcode';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ProjectsService } from '../../../../core/projects/projects.service';
 import type { Build, BuildStatus, Project, TriggeredBy } from '../../../../core/projects/project.models';
 import { BuildStatusBadge } from '../../../../shared/ui/build-status-badge';
@@ -9,6 +10,18 @@ import { PlatformIcon } from '../../../../shared/ui/platform-icon';
 
 const ACTIVE_STATUSES: BuildStatus[] = ['queued', 'running'];
 const POLL_INTERVAL_MS = 4000;
+
+// Miroir de DEFAULT_PLAN_QUOTAS côté API (apps/api/src/quotas/plan-quotas.model.ts) : la
+// rétention réelle appliquée par ArtifactRetentionService vit côté serveur (peut être ajustée
+// sans redéploiement du front via Firestore), cette carte ne sert qu'à afficher une date
+// d'expiration indicative — jamais à bloquer une action.
+const ARTIFACT_RETENTION_DAYS_BY_PLAN: Record<string, number | null> = {
+  free: 7,
+  starter: 30,
+  pro: 90,
+  enterprise: null,
+};
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const TRIGGERED_BY_LABELS: Record<TriggeredBy, string> = {
   manual: 'Triggered manually',
@@ -151,6 +164,9 @@ const ACTION_BUTTON_CLASS =
                         <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="downloading()" (click)="downloadArtifact(build.id)">
                           {{ downloading() ? 'Preparing link…' : 'Download (hosted by MobileFlow)' }}
                         </button>
+                        @if (artifactExpiresAt(build); as expiresAt) {
+                          <p class="text-xs text-neutral-500">Available until {{ formatDate(expiresAt) }}</p>
+                        }
                         @if (build.platform === 'ios') {
                           <a class="${ACTION_BUTTON_CLASS}" [href]="itmsServicesUrl(build.id)">Install on iPhone</a>
                           <button type="button" class="${ACTION_BUTTON_CLASS}" (click)="toggleQr(build.id)">
@@ -185,6 +201,7 @@ const ACTION_BUTTON_CLASS =
 export class BuildDetail implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly projectsService = inject(ProjectsService);
+  private readonly authService = inject(AuthService);
 
   protected readonly triggeredByLabels = TRIGGERED_BY_LABELS;
   protected readonly project = signal<Project | null>(null);
@@ -276,6 +293,18 @@ export class BuildDetail implements OnInit, OnDestroy {
     } catch {
       this.errorMessage.set('Unable to generate QR code.');
     }
+  }
+
+  protected artifactExpiresAt(build: Build): string | null {
+    if (!build.artifactUploadedAt) {
+      return null;
+    }
+    const retentionDays =
+      ARTIFACT_RETENTION_DAYS_BY_PLAN[this.authService.currentUser()?.plan ?? 'free'] ?? null;
+    if (retentionDays === null) {
+      return null;
+    }
+    return new Date(new Date(build.artifactUploadedAt).getTime() + retentionDays * MS_PER_DAY).toISOString();
   }
 
   protected showArtifacts(build: Build): boolean {
