@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import {
   AbstractControl,
@@ -252,10 +253,18 @@ export class ProjectBuildNew implements OnInit {
     try {
       await this.projectsService.createBuild(project.id, { environment, branch, platforms, envVars });
       await this.router.navigate(['/projects', project.id, 'builds']);
-    } catch {
-      this.submitError.set('Unable to start this build.');
+    } catch (err) {
+      this.submitError.set(this.extractErrorMessage(err, 'Unable to start this build.'));
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  private extractErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      const message = (err.error as { message?: string } | undefined)?.message;
+      if (message) return message;
+    }
+    return fallback;
   }
 }

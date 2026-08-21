@@ -79,7 +79,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() dto: CreateBuildDto,
   ) {
-    return this.buildsService.create(req.user.id, id, dto);
+    return this.buildsService.create(req.user.id, id, req.user.plan as Plan, dto);
   }
 
   @Get(':id/builds')

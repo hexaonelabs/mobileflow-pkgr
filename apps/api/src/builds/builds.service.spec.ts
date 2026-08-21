@@ -1,6 +1,8 @@
+import { ForbiddenException } from '@nestjs/common';
 import { BuildsService } from './builds.service';
 import { BuildStatus, Environment, TriggeredBy, type BuildDocument } from './build.model';
 import { Platform } from '../projects/project.model';
+import { Plan } from '../users/user.model';
 import type { AnalyticsService } from '../analytics/analytics.service';
 import type { FirestoreService } from '../firestore/firestore.service';
 import type { GithubService } from '../github/github.service';
@@ -246,5 +248,76 @@ describe('BuildsService.finalizeBuildStatus', () => {
     expect([first.isFinished, second.isFinished].filter(Boolean)).toHaveLength(1);
     expect(analyticsService.recordBuild).toHaveBeenCalledTimes(1);
     expect(notificationsService.onBuildStatusChanged).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('BuildsService.create - production plan gating', () => {
+  function createFirestoreForOwnedProject(): FirestoreService {
+    return {
+      db: {
+        collection: jest.fn().mockReturnValue({
+          doc: jest.fn().mockReturnValue({
+            get: jest.fn().mockResolvedValue({
+              exists: true,
+              data: () => ({ userId: 'user1', githubRepoFullName: 'owner/repo' }),
+            }),
+          }),
+        }),
+      },
+    } as unknown as FirestoreService;
+  }
+
+  function createService(githubService: { getBranchHeadSha: jest.Mock }): BuildsService {
+    return new BuildsService(
+      createFirestoreForOwnedProject(),
+      githubService as unknown as GithubService,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+    );
+  }
+
+  it('rejects a production build for a free-plan user without ever calling GitHub', async () => {
+    const githubService = { getBranchHeadSha: jest.fn() };
+    const service = createService(githubService);
+
+    await expect(
+      service.create('user1', 'proj1', Plan.free, {
+        environment: Environment.production,
+        platforms: [Platform.android],
+        branch: 'main',
+      }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(githubService.getBranchHeadSha).not.toHaveBeenCalled();
+  });
+
+  it('lets a paid-plan user past the gate for a production build', async () => {
+    const sentinel = new Error('past the plan gate');
+    const githubService = { getBranchHeadSha: jest.fn().mockRejectedValue(sentinel) };
+    const service = createService(githubService);
+
+    await expect(
+      service.create('user1', 'proj1', Plan.starter, {
+        environment: Environment.production,
+        platforms: [Platform.android],
+        branch: 'main',
+      }),
+    ).rejects.toBe(sentinel);
+  });
+
+  it('lets a free-plan user past the gate for a staging build', async () => {
+    const sentinel = new Error('past the plan gate');
+    const githubService = { getBranchHeadSha: jest.fn().mockRejectedValue(sentinel) };
+    const service = createService(githubService);
+
+    await expect(
+      service.create('user1', 'proj1', Plan.free, {
+        environment: Environment.staging,
+        platforms: [Platform.android],
+        branch: 'main',
+      }),
+    ).rejects.toBe(sentinel);
   });
 });

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import AdmZip from 'adm-zip';
 import bplistParser from 'bplist-parser';
@@ -11,6 +16,7 @@ import { RunTokensService } from '../internal/run-tokens.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
 import { StorageService } from '../storage/storage.service';
+import { Plan } from '../users/user.model';
 import {
   BUILDS_COLLECTION,
   BuildStatus,
@@ -49,8 +55,13 @@ export class BuildsService {
     return data;
   }
 
-  async create(userId: string, projectId: string, dto: CreateBuildDto) {
+  async create(userId: string, projectId: string, plan: Plan, dto: CreateBuildDto) {
     const project = await this.getOwnedProject(userId, projectId);
+    if (dto.environment === Environment.production && plan === Plan.free) {
+      throw new ForbiddenException(
+        'Les builds de production nécessitent un plan payant (Starter ou supérieur). Passez à un plan supérieur pour publier sur les stores.',
+      );
+    }
     const commitSha = await this.githubService.getBranchHeadSha(
       userId,
       project.githubRepoFullName,
