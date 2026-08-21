@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type { Environment, Platform, Project } from '../../../core/projects/project.models';
@@ -57,6 +58,15 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
               <option value="staging">Staging</option>
               <option value="production">Production</option>
             </select>
+            @if (isFreePlan() && isProductionSelected()) {
+              <p class="mt-1 text-sm text-amber-700" role="alert">
+                Production builds aren't included in the Free plan.
+                <a routerLink="/billing" class="font-medium underline hover:text-amber-800"
+                  >Upgrade to Starter</a
+                >
+                to publish to the app stores.
+              </p>
+            }
           </div>
 
           <div class="flex flex-col gap-1">
@@ -152,7 +162,7 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           <button
             type="submit"
             class="rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
-            [disabled]="form.invalid || submitting()"
+            [disabled]="form.invalid || submitting() || (isFreePlan() && isProductionSelected())"
           >
             {{ submitting() ? 'Launching…' : 'Start build' }}
           </button>
@@ -166,9 +176,12 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
 export class ProjectBuildNew implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly githubService = inject(GithubService);
   private readonly projectsService = inject(ProjectsService);
   private readonly fb = inject(FormBuilder);
+
+  protected readonly isFreePlan = computed(() => this.authService.currentUser()?.plan === 'free');
 
   protected readonly project = signal<Project | null>(null);
   protected readonly branches = signal<string[]>([]);
@@ -211,6 +224,10 @@ export class ProjectBuildNew implements OnInit {
   protected isBranchInvalid(): boolean {
     const control = this.form.controls.branch;
     return control.invalid && control.touched;
+  }
+
+  protected isProductionSelected(): boolean {
+    return this.form.controls.environment.value === 'production';
   }
 
   protected addEnvVarRow(): void {
