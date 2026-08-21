@@ -135,7 +135,7 @@ describe('BillingService', () => {
         status: SubscriptionStatus.active,
         currentPeriodEnd: {} as never,
       },
-    } as UserDocument);
+    } as unknown as UserDocument);
     mockStripeClient.checkout.sessions.create.mockResolvedValue({
       url: 'https://checkout.stripe.test/x',
     });
@@ -186,7 +186,7 @@ describe('BillingService', () => {
         status: SubscriptionStatus.active,
         currentPeriodEnd: {} as never,
       },
-    } as UserDocument);
+    } as unknown as UserDocument);
     mockStripeClient.billingPortal.sessions.create.mockResolvedValue({
       url: 'https://portal.stripe.test/x',
     });

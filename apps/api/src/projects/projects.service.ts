@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,8 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_SETUP_WORKFLOW_FILENAME } from '../github/setup-workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
+import { QuotasService } from '../quotas/quotas.service';
+import type { Plan } from '../users/user.model';
 import type { CreateProjectDto } from './dto/create-project.dto';
 import type { TriggerSetupDto } from './dto/trigger-setup.dto';
 import type { UpdateProjectDto } from './dto/update-project.dto';
@@ -18,13 +21,27 @@ export class ProjectsService {
   constructor(
     private readonly firestore: FirestoreService,
     private readonly githubService: GithubService,
+    private readonly quotasService: QuotasService,
   ) {}
 
   private get projects() {
     return this.firestore.db.collection(PROJECTS_COLLECTION);
   }
 
-  async create(userId: string, dto: CreateProjectDto) {
+  async getQuotaUsage(userId: string, plan: Plan): Promise<{ used: number; limit: number | null }> {
+    const limit = await this.quotasService.getProjectsLimit(plan);
+    const used = (await this.projects.where('userId', '==', userId).get()).size;
+    return { used, limit };
+  }
+
+  async create(userId: string, plan: Plan, dto: CreateProjectDto) {
+    const { used, limit } = await this.getQuotaUsage(userId, plan);
+    if (limit !== null && used >= limit) {
+      throw new ForbiddenException(
+        `Limite de ${limit} projet(s) atteinte pour le plan ${plan}. Passez à un plan supérieur pour en activer plus.`,
+      );
+    }
+
     const repos = await this.githubService.listRepos(userId);
     const repo = repos.find((r) => r.fullName === dto.githubRepoFullName);
     if (!repo) {

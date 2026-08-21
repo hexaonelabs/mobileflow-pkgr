@@ -121,7 +121,7 @@ describe('POST /stripe/webhook (e2e)', () => {
       subscription({
         id: 'sub_starter',
         items: { data: [{ price: { id: STARTER_PRICE }, current_period_end: 1_900_000_000 }] },
-      } as Partial<Stripe.Subscription>),
+      } as Partial<Stripe.Subscription> & { id: string }),
     );
     mockStripeClient.subscriptions.cancel.mockResolvedValue({});
 

@@ -1,10 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
 import type { GithubRepo, GithubRequestedPermission } from '../../../core/github/github.models';
 import { ProjectsService } from '../../../core/projects/projects.service';
-import type { Project } from '../../../core/projects/project.models';
+import type { Project, ProjectsQuota } from '../../../core/projects/project.models';
 
 @Component({
   selector: 'app-github-connect',
@@ -15,6 +16,26 @@ import type { Project } from '../../../core/projects/project.models';
       <h1 class="text-2xl font-bold tracking-tight text-neutral-900">GitHub</h1>
 
       @if (isConnected()) {
+        @if (quota(); as q) {
+          @if (q.limit !== null) {
+            <div
+              class="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm"
+              [class]="
+                atLimit()
+                  ? 'border-amber-200 bg-amber-50 text-amber-800'
+                  : 'border-neutral-200 bg-white text-neutral-600'
+              "
+            >
+              <span>{{ q.used }} / {{ q.limit }} projects used</span>
+              @if (atLimit()) {
+                <a routerLink="/billing" class="font-medium underline hover:text-amber-900">
+                  Limit reached — upgrade to activate more projects
+                </a>
+              }
+            </div>
+          }
+        }
+
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
           <div class="border-b border-neutral-200 px-5 py-4">
             <p class="text-sm font-semibold text-neutral-900">Accessible Repositories</p>
@@ -46,7 +67,8 @@ import type { Project } from '../../../core/projects/project.models';
                       <button
                         type="button"
                         class="shrink-0 rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
-                        [disabled]="activating() === repo.fullName"
+                        [disabled]="activating() === repo.fullName || atLimit()"
+                        [attr.title]="atLimit() ? 'Project limit reached for your plan' : null"
                         (click)="activate(repo)"
                       >
                         {{ activating() === repo.fullName ? 'Activating…' : 'Enable' }}
@@ -121,10 +143,16 @@ export class GithubConnect implements OnInit {
   protected readonly reposError = signal<string | null>(null);
   protected readonly projects = signal<Project[]>([]);
   protected readonly activating = signal<string | null>(null);
+  protected readonly quota = signal<ProjectsQuota | null>(null);
 
   protected readonly projectIdByRepo = computed(
     () => new Map(this.projects().map((project) => [project.githubRepoFullName, project.id])),
   );
+
+  protected readonly atLimit = computed(() => {
+    const q = this.quota();
+    return q !== null && q.limit !== null && q.used >= q.limit;
+  });
 
   async ngOnInit(): Promise<void> {
     try {
@@ -137,12 +165,14 @@ export class GithubConnect implements OnInit {
 
     if (this.isConnected()) {
       try {
-        const [repos, projects] = await Promise.all([
+        const [repos, projects, quota] = await Promise.all([
           this.githubService.listRepos(),
           this.projectsService.list(),
+          this.projectsService.getQuota(),
         ]);
         this.repos.set(repos);
         this.projects.set(projects);
+        this.quota.set(quota);
       } catch {
         this.reposError.set('Unable to load repository list.');
       }
@@ -161,10 +191,21 @@ export class GithubConnect implements OnInit {
     try {
       const project = await this.projectsService.create({ githubRepoFullName: repo.fullName });
       this.projects.update((list) => [...list, project]);
-    } catch {
-      this.reposError.set(`Impossible d'activer ${repo.fullName}.`);
+      this.quota.update((q) => (q ? { ...q, used: q.used + 1 } : q));
+    } catch (err) {
+      this.reposError.set(
+        this.extractErrorMessage(err, `Impossible d'activer ${repo.fullName}.`),
+      );
     } finally {
       this.activating.set(null);
     }
+  }
+
+  private extractErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      const message = (err.error as { message?: string } | undefined)?.message;
+      if (message) return message;
+    }
+    return fallback;
   }
 }

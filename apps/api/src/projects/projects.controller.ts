@@ -6,6 +6,7 @@ import { BuildsService } from '../builds/builds.service';
 import { CreateBuildDto } from '../builds/dto/create-build.dto';
 import { CreateSecretDto } from '../secrets/dto/create-secret.dto';
 import { SecretsService } from '../secrets/secrets.service';
+import type { Plan } from '../users/user.model';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { TriggerSetupDto } from './dto/trigger-setup.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -24,12 +25,18 @@ export class ProjectsController {
 
   @Post()
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateProjectDto) {
-    return this.projectsService.create(req.user.id, dto);
+    return this.projectsService.create(req.user.id, req.user.plan as Plan, dto);
   }
 
   @Get()
   findAll(@Req() req: AuthenticatedRequest) {
     return this.projectsService.findAllForUser(req.user.id);
+  }
+
+  // Déclaré avant @Get(':id') pour éviter que NestJS/Express matche :id avec "quota".
+  @Get('quota')
+  getQuota(@Req() req: AuthenticatedRequest) {
+    return this.projectsService.getQuotaUsage(req.user.id, req.user.plan as Plan);
   }
 
   @Get(':id')

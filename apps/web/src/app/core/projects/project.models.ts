@@ -21,6 +21,11 @@ export interface UpdateProjectPayload {
   name?: string;
 }
 
+export interface ProjectsQuota {
+  used: number;
+  limit: number | null;
+}
+
 export interface Build {
   id: string;
   projectId: string;

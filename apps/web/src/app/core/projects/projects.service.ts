@@ -12,6 +12,7 @@ import type {
   CreateSecretPayload,
   NotificationConfig,
   Project,
+  ProjectsQuota,
   RepoReadiness,
   Secret,
   SetupTriggerResult,
@@ -30,6 +31,10 @@ export class ProjectsService {
 
   list(): Promise<Project[]> {
     return firstValueFrom(this.http.get<Project[]>(this.baseUrl));
+  }
+
+  getQuota(): Promise<ProjectsQuota> {
+    return firstValueFrom(this.http.get<ProjectsQuota>(`${this.baseUrl}/quota`));
   }
 
   get(id: string): Promise<Project> {
