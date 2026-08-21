@@ -4,7 +4,7 @@
 
 **Goal**: Build premium features that create enough value for users to pay voluntarily, without preventing technical workarounds.
 
-**Strategy**: Features that accumulate value inside the MobileFlow system (analytics, notifications, scheduling) rather than features that are easy to work around (OTA, hosting).
+**Strategy**: Features that accumulate value inside the MobileFlow system (analytics, notifications, artifact retention) rather than features that are easy to work around (OTA, hosting). Production builds themselves are also gated server-side (see "Production build gating" below) — unlike a UI-only restriction, this one can't be bypassed by triggering the GitHub Actions workflow directly, because the signing secrets are only ever released through the same plan check.
 
 **Timeline**: 1 prerequisite phase (webhook) + 3 phases, ~4-5 weeks + 1-2 days total for the solid foundation.
 
@@ -19,10 +19,12 @@
 | 0 | GitHub webhook (build status reliability) | 1-2d | ⭐⭐⭐⭐ | prerequisite |
 | 1 | Light analytics | 3-4d | ⭐⭐⭐ | 💰💰💰 |
 | 1 | Slack notifications | 2-3d | ⭐⭐⭐ | 💰💰💰 |
-| 2 | Artifact versioning | 2d | ⭐⭐ | 💰💰 |
-| 2 | Build scheduling (cron) | 4-5d | ⭐⭐⭐⭐ | 💰💰💰 |
+| 1.5 | Production build gating (free plan) | 1d | ⭐⭐⭐⭐ | 💰💰💰 |
+| 2 | Artifact retention (time-boxed, auto-delete) | 3-4d | ⭐⭐⭐ | 💰💰 |
 | 3 | Webhooks/TestFlight | 3-4d | ⭐⭐⭐ | 💰💰 |
 | 3 | Build matrix/batching | 4-5d | ⭐⭐ | 💰 |
+
+> 🚫 **Build scheduling (cron) removed from the plan.** It was gated behind a UI check only — a build triggered by workflow_dispatch runs through the user's own GitHub Actions, so it added no monetization value that production build gating doesn't already provide, at a much higher relative effort (4-5d) for a "convenience" feature most solo/small-team users can live without. Revisit later as a standalone feature if there's demand, not as a monetization lever.
 
 > 🚫 **Team collaboration removed from the plan.** The current model (`ProjectDocument.userId: string`) has no notion of members/roles/invitations, and ownership is checked in a hardcoded (duplicated) way in every service. Selling "team members" tiers before this model exists would be a promise the product can't keep. To be redesigned as its own dedicated project when the time comes (outside this freemium plan).
 
@@ -30,28 +32,28 @@
 
 ## 🗄️ Data models
 
-### 1. UserPlan (already exists, to extend)
+### 1. UserPlan (implemented — differs from the original sketch)
+
+`subscription` lives on `UserDocument` as originally planned, but quotas turned out **not** to be per-user — they're a single shared `PlanQuotasDocument`, keyed by plan, auto-seeded on first read:
+
 ```typescript
 // apps/api/src/users/user.model.ts
-
-// To add to UserDocument:
 interface UserDocument {
   // ... existing
   plan: Plan; // 'free' | 'starter' | 'pro' | 'enterprise'
+  billing?: UserBilling; // stripeCustomerId, stripeSubscriptionId, status, currentPeriodEnd
+}
 
-  // To add:
-  subscription?: {
-    stripeId?: string;
-    status: 'active' | 'cancelled' | 'past_due';
-    currentPeriodEnd?: Timestamp;
-  };
-  quotas?: {
-    projectsLimit: number;        // free: 3, starter: 20, pro: unlimited
-    artifactRetentionDays: number; // free: 7, starter: 30, pro: 90
-    monthlyWebhookCalls: number;  // free: 0, starter: 100, pro: unlimited
-  };
+// apps/api/src/quotas/plan-quotas.model.ts (shared doc, collection `planQuotas`, id `default`)
+interface PlanQuotasDocument {
+  free: { projectsLimit: number | null };
+  starter: { projectsLimit: number | null };
+  pro: { projectsLimit: number | null };
+  enterprise: { projectsLimit: number | null };
 }
 ```
+
+Phase 2 (below) extends this same `PlanQuotasDocument` shape with `artifactRetentionDays` per plan — keep new quota fields here, not on `UserDocument`, to stay consistent with what's already shipped.
 
 ### 2. BuildAnalytics (new)
 ```typescript
@@ -134,35 +136,6 @@ interface NotificationConfigDocument {
 }
 ```
 
-### 4. BuildSchedule (new, for Phase 2)
-```typescript
-// apps/api/src/schedules/build-schedule.model.ts
-
-export const BUILD_SCHEDULES_COLLECTION = 'buildSchedules';
-
-interface BuildScheduleDocument {
-  userId: string;
-  projectId: string;
-
-  name: string; // "Daily staging build"
-  cronExpression: string; // "0 0 * * *" (midnight)
-
-  buildConfig: {
-    branch: string;
-    environment: Environment;
-    platforms: Platform[];
-    envVars?: Record<string, string>;
-  };
-
-  enabled: boolean;
-  lastRun?: Timestamp;
-  nextRun?: Timestamp;
-
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-```
-
 ---
 
 ## 🔌 PHASE 0: GitHub Webhook — reliability prerequisite (before Phase 1)
@@ -190,12 +163,12 @@ interface BuildScheduleDocument {
 6. Call `finalizeBuildStatus()` with the webhook payload data (no need to call the GitHub API again, everything is already in the payload).
 
 **Checklist**:
-- [ ] `finalizeBuildStatus()` extracted from `refreshStatus()`, reused as-is
-- [ ] Webhook configured on the GitHub App (event `workflow_run`)
-- [ ] HMAC signature verification (reject if invalid)
-- [ ] `projectId`/`buildId` resolution via `githubRepoFullName` + `run.name`
-- [ ] Shared idempotency guard (no double counting if both polling and webhook process the same build)
-- [ ] Test: build finished with no client connected → `finalizeBuildStatus()` still triggered
+- [x] `finalizeBuildStatus()` extracted from `refreshStatus()`, reused as-is
+- [ ] Webhook configured on the GitHub App (event `workflow_run`) — external config, confirm in GitHub App settings
+- [x] HMAC signature verification (reject if invalid)
+- [x] `projectId`/`buildId` resolution via `githubRepoFullName` + `run.name`
+- [x] Shared idempotency guard (no double counting if both polling and webhook process the same build)
+- [x] Test: build finished with no client connected → `finalizeBuildStatus()` still triggered
 
 ---
 
@@ -352,32 +325,42 @@ async handleSlackNotification(job: Job) {
 - On save, show a confirmation
 - "Test Message" → `POST /projects/:id/notifications/test`
 
+### 1.5 Production Build Gating (implemented, outside the original phasing)
+
+Rather than build scheduling, the conversion lever we actually shipped: `BuildsService.create()` (`apps/api/src/builds/builds.service.ts`) now rejects `environment: 'production'` for `plan === 'free'` with a `ForbiddenException`, before any call to GitHub. Frontend (`project-build-new.ts`) shows an inline warning + disables the submit button as soon as "Production" is selected while on the Free plan, with the real API error surfaced on submit as a fallback.
+
+**Why this can't be bypassed by triggering the GitHub Actions workflow manually**: signing secrets (iOS certificate always, Android keystore in production) are never in the repo — they're fetched at runtime via a short-lived, single-use `secrets_token` minted only by `BuildsService.create()`. No token, no signed artifact, regardless of how the workflow is triggered. See `RunTokensService` (`apps/api/src/internal/run-tokens.service.ts`) and `InternalSecretsController` (`apps/api/src/internal/internal-secrets.controller.ts`).
+
+**Known scope limit**: iOS signs Ad Hoc "always" today (`workflow-template.ts:6`) — there's no separate App Store distribution certificate yet, so an iOS "production" build isn't actually store-submittable yet regardless of plan. Real App Store signing is a separate piece of work, not covered by this gate.
+
 ---
 
-## 🔔 PHASE 2: Artifact Versioning + Build Scheduling (Week 3)
+## 🔒 PHASE 2: Artifact Retention (time-boxed, auto-delete)
 
-### 2.1 Artifact Versioning
+**Scope constraint to keep in mind**: today, `BuildsService.ensureHostedArtifact()` only ever uploads to Firebase Storage for **staging** builds (`environment !== staging` throws `BadRequestException`) — that's the OTA/Ad Hoc install path. Production artifacts are never copied into MobileFlow's own storage; they only exist as GitHub Actions run artifacts, subject to GitHub's own retention window, which this system doesn't control. So this phase's retention/auto-delete governs **staging artifacts hosted for OTA install**, not production ones — extending real retention control to production would first require hosting production artifacts too (a separate decision, not assumed here).
 
-**Backend changes**:
-- Modify `BuildDocument` to track artifactVersions
-- `BuildsService.ensureHostedArtifact()` → stop deleting old artifacts
-- New endpoint: `GET /projects/:id/builds/artifacts/archive` → list all artifacts
+### 2.1 Data model changes
 
-**Frontend**:
-- In `build-detail`, display "Artifact versions"
-- Allow downloading/restoring a previous version
+- `apps/api/src/quotas/plan-quotas.model.ts` (`PlanQuotasDocument`): add `artifactRetentionDays: number | null` per plan — `free: 7, starter: 30, pro: 90` (mirrors the original pricing promise), `null` = unlimited.
+- `apps/api/src/builds/build.model.ts` (`BuildDocument`): add `artifactUploadedAt: Timestamp | null`. This is the retention anchor — **not** `createdAt`, since hosting is lazy/on-demand (a build can exist for weeks before anyone clicks "Install"). Set it in `ensureHostedArtifact()` alongside `artifactStoragePath`.
 
-### 2.2 Build Scheduling (Cron)
+### 2.2 Backend
 
-**Backend**:
-- Service: `SchedulesService` → schedules CRUD
-- Worker: polling/cron that triggers builds automatically
-- Use `node-cron` or a Redis ZSET for scheduling
+- `StorageService` (`apps/api/src/storage/storage.service.ts`): add `deleteFile(path: string): Promise<void>` — doesn't exist today (only `uploadBuffer`/`getSignedDownloadUrl`).
+- New `ArtifactRetentionService.purgeExpiredArtifacts()`: for each build with `artifactStoragePath != null`, look up the owning user's current plan (evaluated live, same philosophy as `ProjectsService.getQuotaUsage` — not locked in at upload time, so a downgrade shortens retention going forward), compute the cutoff from `artifactUploadedAt`, delete the Storage file + clear `artifactStoragePath`/`artifactUploadedAt` on expiry.
+- **Scheduling**: prefer a **BullMQ repeatable job** over `@nestjs/schedule`. Redis/BullMQ is already wired up for notifications; a plain `@Cron()` would fire once per running API instance if the API is ever scaled horizontally, causing redundant delete attempts. BullMQ repeatable jobs are deduplicated across instances.
+- No new user-facing endpoint is required for the deletion itself — it's a background sweep. Worth exposing "expires in N days" wherever the artifact/install link is shown, computed client-side from `artifactUploadedAt + retentionDays`.
 
-**Frontend**:
-- New "Schedules" page in project detail
-- Form to create a cron job
-- Display execution history
+### 2.3 Frontend
+
+- `build-detail`: show "Available until <date>" once hosted; if already purged, replace the "Install" button with a clear message instead of a broken link. Re-clicking "Install" can safely re-trigger `ensureHostedArtifact()` (already idempotent), but it now also needs to handle the case where the underlying GitHub Actions artifact itself has since expired (build fails with a clear error instead of a silent failure).
+
+### 2.4 Tests
+
+- Unit: the "is this build's artifact expired" pure function (plan × `artifactUploadedAt` × now)
+- Unit: `purgeExpiredArtifacts()` against a mixed set of builds/plans/ages (mock `StorageService`/Firestore)
+- Unit: `StorageService.deleteFile()` (mocked GCS call)
+- E2E: run the sweep, assert the Storage delete + Firestore update happened only for the expired build, not the fresh one
 
 ---
 
@@ -388,9 +371,11 @@ async handleSlackNotification(job: Job) {
   "free": {
     "price": "$0",
     "features": [
-      "Unlimited builds (GitHub Actions)",
+      "Unlimited staging builds (GitHub Actions, Ad Hoc install)",
+      "Production builds not included — server-side gated, see Phase 1.5",
       "Analytics (view only, current month)",
       "Email notifications (failed builds only)",
+      "Staging artifacts kept 7 days",
       "3 projects max"
     ]
   },
@@ -398,8 +383,9 @@ async handleSlackNotification(job: Job) {
     "price": "$9/month",
     "features": [
       "Everything in Free, plus:",
-      "Slack/Discord notifications (all events)",
-      "Artifact archive (30 days)",
+      "Production builds (App Store / Play Store publishing)",
+      "Slack notifications (all events — Discord config stored but delivery not implemented yet)",
+      "Staging artifacts kept 30 days",
       "20 projects"
     ]
   },
@@ -408,8 +394,7 @@ async handleSlackNotification(job: Job) {
     "features": [
       "Everything in Starter, plus:",
       "Unlimited projects",
-      "Build scheduling (cron)",
-      "Artifact archive (90 days)",
+      "Staging artifacts kept 90 days",
       "Webhooks (TestFlight, Sentry, S3)",
       "Advanced analytics (trends, breakdowns)",
       "Priority support"
@@ -423,60 +408,65 @@ async handleSlackNotification(job: Job) {
 ## 🚦 Implementation checklist
 
 ### Phase 0 - GitHub Webhook (prerequisite)
-- [ ] Extract `finalizeBuildStatus()` from `refreshStatus()` in `BuildsService`
-- [ ] Create `github-webhook.controller.ts` + `github-webhook.service.ts`
-- [ ] Configure the webhook on the GitHub App (event `workflow_run`) + secret
-- [ ] HMAC signature verification
-- [ ] Tests: build finalized server-side with no client connected
+- [x] Extract `finalizeBuildStatus()` from `refreshStatus()` in `BuildsService`
+- [x] Create `github-webhook.controller.ts` + `github-webhook.service.ts`
+- [ ] Configure the webhook on the GitHub App (event `workflow_run`) + secret — **external config, not verifiable from the repo; confirm in the GitHub App settings before relying on it in production**
+- [x] HMAC signature verification
+- [x] Tests: build finalized server-side with no client connected (`github-webhook.e2e-spec.ts`, plus the concurrent webhook/polling regression test in `builds.service.spec.ts`)
 
 ### Phase 1.1 - Analytics Service
-- [ ] Create `analytics.model.ts` with BuildAnalyticsDocument
-- [ ] Create `analytics.service.ts` with methods:
+- [x] Create `analytics.model.ts` with BuildAnalyticsDocument
+- [x] Create `analytics.service.ts` with methods:
   - `recordBuild(userId, projectId, buildInfo)`
   - `getSummary(userId, projectId)`
   - `getTrends(userId, projectId)`
   - `getBreakdown(userId, projectId)`
-- [ ] Integrate into `builds.service.ts` → call `recordBuild()` when status changes
-- [ ] Create `analytics.controller.ts` with GET endpoints
-- [ ] Unit tests + E2E
+- [x] Integrate into `builds.service.ts` → call `recordBuild()` when status changes
+- [x] Create `analytics.controller.ts` with GET endpoints
+- [x] Unit tests + E2E
 
 ### Phase 1.2 - Notifications Service
-- [ ] Create `notification-config.model.ts`
-- [ ] Create `notification-config.service.ts` (CRUD)
-- [ ] Create `notifications.service.ts` with:
+- [x] Create `notification-config.model.ts`
+- [x] Create `notification-config.service.ts` (CRUD)
+- [x] Create `notifications.service.ts` with:
   - `sendSlackNotification(config, event)`
-  - `sendDiscordNotification(config, event)`
+  - ~~`sendDiscordNotification(config, event)`~~ — config storage exists (`notification-config.model.ts`), delivery not implemented; `notifications.processor.ts` only dispatches `slack-notification` and `email-notification` jobs
   - `sendEmailNotification(email, event)`
   - Job handlers for BullMQ
-- [ ] Integrate into `builds.service.ts` → emit event on build status change
-- [ ] Create `notifications.controller.ts` with POST endpoints
-- [ ] Tests + E2E
+- [x] Integrate into `builds.service.ts` → emit event on build status change
+- [x] Create `notifications.controller.ts` with POST endpoints
+- [x] Tests + E2E
 
 ### Phase 1.3 - Analytics Frontend
-- [ ] Create `analytics.ts` component
-- [ ] Create `analytics-summary.ts` component (cards)
-- [ ] Create `analytics-chart.ts` component (trends)
-- [ ] Add route in `project-shell.ts`
-- [ ] Tests
+- [x] Create `analytics.ts` component
+- [x] Create `analytics-summary.ts` component (cards)
+- [x] Create `analytics-charts.ts` component (trends)
+- [x] Add route in `app.routes.ts`
+- [ ] Tests — no `.spec.ts` yet for any analytics frontend component
 
 ### Phase 1.4 - Notifications Frontend
-- [ ] Create `notifications-config.ts` page
-- [ ] Create `slack-config-form.ts` form
-- [ ] API wrapper service
-- [ ] Add route
-- [ ] Tests
+- [x] Create `notifications-config.ts` page
+- [x] Create `slack-config-form.ts` form
+- [x] API wrapper service
+- [x] Add route
+- [ ] Tests — no `.spec.ts` yet for either notifications frontend component
 
 ### Phase 1.5 - Plan Check & Gating
-- [ ] Modify `users.service.ts` → add `getPlan(userId)`
-- [ ] Create `plan.guard.ts` (NestJS guard) for premium endpoints
+- [x] ~~Modify `users.service.ts` → add `getPlan(userId)`~~ — done differently: plan is read directly off the JWT payload (`AuthenticatedUser.plan`), no dedicated `getPlan()` method needed
+- [x] Create `plan.guard.ts` (NestJS guard) for premium endpoints — actual shape differs from the sketch below, uses a decorator + `Reflector` instead of a guard factory:
   ```typescript
-  @UseGuards(JwtAuthGuard, PlanGuard('starter'))
+  @UseGuards(PlanGuard)
+  @RequirePlan(Plan.starter)
   @Post(':id/notifications/config')
   ```
-- [ ] Frontend: show "Premium feature" lock if the user is on Free
+- [x] Production build gating for the Free plan (`BuildsService.create()`) — not in the original phasing, added as the stronger alternative to build scheduling, see Phase 1.5 narrative above
+- [ ] Frontend: show "Premium feature" lock if the user is on Free — done for the production-build gate (`project-build-new.ts`) only; notifications/analytics endpoints are still blocked API-side with no UI lock (per note #3 below, intentional for now)
 
-### Phase 2 & 3
-- [ ] Depends on Phase 1, similar steps
+### Phase 2
+- [ ] See the detailed Phase 2 checklist above (2.1-2.4)
+
+### Phase 3
+- [ ] Depends on Phase 1/2, similar steps
 
 ---
 
@@ -493,7 +483,7 @@ async handleSlackNotification(job: Job) {
 ### Modules to create
 1. `AnalyticsModule` → export AnalyticsService
 2. `NotificationsModule` → export NotificationsService, NotificationConfigService
-3. `SchedulesModule` (Phase 2)
+3. `ArtifactRetentionModule` (Phase 2)
 
 ### App.module.ts
 Add the new modules
@@ -529,8 +519,8 @@ If needed, create a migration script to add fields to users
 - [ ] Clear free vs premium UI
 
 **Phase 2**:
-- [ ] Build scheduling works (cron tests)
-- [ ] Artifact versioning tested
+- [ ] Artifacts past their plan's retention window are deleted automatically, on-schedule, with no manual intervention
+- [ ] A user's artifacts still within the retention window are never touched by the sweep
 
 **Conversion**:
 - [ ] Measure: % of users who enable Slack → engagement indicator
