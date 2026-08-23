@@ -10,6 +10,8 @@ import type {
   CreateBuildPayload,
   CreateProjectPayload,
   CreateSecretPayload,
+  GeneratedIosCertificate,
+  GenerateIosCertificatePayload,
   NotificationConfig,
   Project,
   ProjectsQuota,
@@ -110,6 +112,18 @@ export class ProjectsService {
   removeSecret(projectId: string, secretId: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(`${this.baseUrl}/${projectId}/secrets/${secretId}`),
+    );
+  }
+
+  generateIosCertificate(
+    projectId: string,
+    payload: GenerateIosCertificatePayload,
+  ): Promise<GeneratedIosCertificate> {
+    return firstValueFrom(
+      this.http.post<GeneratedIosCertificate>(
+        `${this.baseUrl}/${projectId}/secrets/generate-ios-certificate`,
+        payload,
+      ),
     );
   }
 

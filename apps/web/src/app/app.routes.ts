@@ -72,6 +72,13 @@ export const routes: Routes = [
           import('./features/projects/secrets/project-secrets').then((m) => m.ProjectSecrets),
       },
       {
+        path: 'secrets/ios-certificate-wizard',
+        loadComponent: () =>
+          import('./features/projects/certificates/ios-certificate-wizard').then(
+            (m) => m.IosCertificateWizard,
+          ),
+      },
+      {
         path: 'analytics',
         loadComponent: () =>
           import('./features/projects/analytics/analytics').then((m) => m.Analytics),

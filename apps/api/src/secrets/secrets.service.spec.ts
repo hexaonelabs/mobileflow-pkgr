@@ -1,3 +1,4 @@
+import type { AppleCertificateService } from '../apple/apple-certificate.service';
 import { Environment } from '../builds/build.model';
 import type { EncryptionService } from '../crypto/encryption.service';
 import type { FirestoreService } from '../firestore/firestore.service';
@@ -105,11 +106,25 @@ function createEncryptionMock() {
   };
 }
 
+function createAppleCertificateServiceMock() {
+  return {
+    createDistributionCertificate: jest.fn(async () => ({
+      certificateContentBase64: 'cert-b64',
+      serialNumber: 'SERIAL',
+      expirationDate: '2027-01-01T00:00:00.000Z',
+    })),
+  };
+}
+
 describe('SecretsService.create - environment scoping', () => {
   it('uploading a production provisioning profile does not delete the existing staging one', async () => {
     const staging = secretDoc({ fileName: 'staging.mobileprovision' });
     const { firestore, state } = createFirestoreMock([{ id: 'secret-staging', data: staging }]);
-    const service = new SecretsService(firestore, createEncryptionMock() as unknown as EncryptionService);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
 
     const dto = {
       type: SecretType.ios_provisioning_profile,
@@ -134,7 +149,11 @@ describe('SecretsService.create - environment scoping', () => {
       { id: 'secret-staging', data: staging },
       { id: 'secret-production', data: production },
     ]);
-    const service = new SecretsService(firestore, createEncryptionMock() as unknown as EncryptionService);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
 
     const dto = {
       type: SecretType.ios_provisioning_profile,
@@ -156,7 +175,11 @@ describe('SecretsService.create - environment scoping', () => {
   it('keeps ios_certificate as a single slot per project (environment stays null on both sides)', async () => {
     const existing = secretDoc({ type: SecretType.ios_certificate, environment: null, fileName: 'old.p12' });
     const { firestore, state } = createFirestoreMock([{ id: 'secret-cert', data: existing }]);
-    const service = new SecretsService(firestore, createEncryptionMock() as unknown as EncryptionService);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
 
     const dto = {
       type: SecretType.ios_certificate,
@@ -192,7 +215,11 @@ describe('SecretsService.getDecryptedForPlatform - environment scoping', () => {
       { id: 'secret-production', data: production },
       { id: 'secret-cert', data: cert },
     ]);
-    const service = new SecretsService(firestore, createEncryptionMock() as unknown as EncryptionService);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
 
     const result = await service.getDecryptedForPlatform('user1', 'proj1', Platform.ios, Environment.production);
 
@@ -203,10 +230,105 @@ describe('SecretsService.getDecryptedForPlatform - environment scoping', () => {
   it('returns null for a requested environment that has no profile yet, distinct from no profile at all', async () => {
     const staging = secretDoc();
     const { firestore } = createFirestoreMock([{ id: 'secret-staging', data: staging }]);
-    const service = new SecretsService(firestore, createEncryptionMock() as unknown as EncryptionService);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
 
     const result = await service.getDecryptedForPlatform('user1', 'proj1', Platform.ios, Environment.production);
 
     expect(result.iosProvisioningProfile).toBeNull();
+  });
+});
+
+describe('SecretsService.getAppStoreConnectKey', () => {
+  it('decrypts and decodes the .p8 content for the project', async () => {
+    const doc = secretDoc({
+      type: SecretType.app_store_connect_key,
+      environment: null,
+      ciphertext: JSON.stringify({
+        fileBase64: Buffer.from('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----').toString(
+          'base64',
+        ),
+        password: null,
+        alias: null,
+        keyPassword: null,
+        issuerId: 'issuer-123',
+        keyId: 'key-abc',
+      }),
+    });
+    const { firestore } = createFirestoreMock([{ id: 'secret-asc', data: doc }]);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
+
+    const result = await service.getAppStoreConnectKey('user1', 'proj1');
+
+    expect(result).toEqual({
+      issuerId: 'issuer-123',
+      keyId: 'key-abc',
+      privateKeyPem: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+    });
+  });
+
+  it('returns null when the project has no App Store Connect key configured', async () => {
+    const { firestore } = createFirestoreMock([]);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
+
+    const result = await service.getAppStoreConnectKey('user1', 'proj1');
+
+    expect(result).toBeNull();
+  });
+});
+
+describe('SecretsService.generateIosDistributionCertificate', () => {
+  it('delegates to AppleCertificateService using the project App Store Connect key', async () => {
+    const doc = secretDoc({
+      type: SecretType.app_store_connect_key,
+      environment: null,
+      ciphertext: JSON.stringify({
+        fileBase64: Buffer.from('pem-content').toString('base64'),
+        password: null,
+        alias: null,
+        keyPassword: null,
+        issuerId: 'issuer-123',
+        keyId: 'key-abc',
+      }),
+    });
+    const { firestore } = createFirestoreMock([{ id: 'secret-asc', data: doc }]);
+    const appleCertificateService = createAppleCertificateServiceMock();
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      appleCertificateService as unknown as AppleCertificateService,
+    );
+
+    const result = await service.generateIosDistributionCertificate('user1', 'proj1', 'CSR_PEM');
+
+    expect(appleCertificateService.createDistributionCertificate).toHaveBeenCalledWith(
+      { issuerId: 'issuer-123', keyId: 'key-abc', privateKeyPem: 'pem-content' },
+      'CSR_PEM',
+    );
+    expect(result.certificateContentBase64).toBe('cert-b64');
+  });
+
+  it('throws NotFoundException when no App Store Connect key is configured for the project', async () => {
+    const { firestore } = createFirestoreMock([]);
+    const service = new SecretsService(
+      firestore,
+      createEncryptionMock() as unknown as EncryptionService,
+      createAppleCertificateServiceMock() as unknown as AppleCertificateService,
+    );
+
+    await expect(
+      service.generateIosDistributionCertificate('user1', 'proj1', 'CSR_PEM'),
+    ).rejects.toThrow("Ajoutez d'abord une clé App Store Connect API à ce projet.");
   });
 });

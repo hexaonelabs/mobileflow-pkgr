@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { BuildsService } from '../builds/builds.service';
 import { CreateBuildDto } from '../builds/dto/create-build.dto';
 import { CreateSecretDto } from '../secrets/dto/create-secret.dto';
+import { GenerateIosCertificateDto } from '../secrets/dto/generate-ios-certificate.dto';
 import { SecretsService } from '../secrets/secrets.service';
 import type { Plan } from '../users/user.model';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -135,6 +136,15 @@ export class ProjectsController {
   @Get(':id/secrets')
   listSecrets(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.secretsService.findAllForProject(req.user.id, id);
+  }
+
+  @Post(':id/secrets/generate-ios-certificate')
+  generateIosCertificate(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: GenerateIosCertificateDto,
+  ) {
+    return this.secretsService.generateIosDistributionCertificate(req.user.id, id, dto.csrPem);
   }
 
   @Delete(':id/secrets/:secretId')

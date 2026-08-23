@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
+import { AppleCertificateService, type DistributionCertificate } from '../apple/apple-certificate.service';
 import type { Environment } from '../builds/build.model';
 import { EncryptionService } from '../crypto/encryption.service';
 import { FirestoreService } from '../firestore/firestore.service';
@@ -20,6 +21,8 @@ interface DecryptedSecretPayload {
   password: string | null;
   alias: string | null;
   keyPassword: string | null;
+  issuerId: string | null;
+  keyId: string | null;
 }
 
 export interface BuildSecretsPayload {
@@ -33,6 +36,7 @@ export class SecretsService {
   constructor(
     private readonly firestore: FirestoreService,
     private readonly encryption: EncryptionService,
+    private readonly appleCertificateService: AppleCertificateService,
   ) {}
 
   private get secrets() {
@@ -67,6 +71,8 @@ export class SecretsService {
       password: dto.password ?? null,
       alias: dto.alias ?? null,
       keyPassword: dto.keyPassword ?? null,
+      issuerId: dto.issuerId ?? null,
+      keyId: dto.keyId ?? null,
     });
     const { ciphertext, iv, authTag } = this.encryption.encrypt(userId, payload);
 
@@ -160,6 +166,53 @@ export class SecretsService {
       iosCertificate: decrypt(findOne(SecretType.ios_certificate, false)),
       iosProvisioningProfile: decrypt(findOne(SecretType.ios_provisioning_profile, true)),
     };
+  }
+
+  // Réservée à l'endpoint authentifié JWT utilisateur qui déclenche la génération de certificat
+  // (generateIosDistributionCertificate ci-dessous) — contrairement à getDecryptedForPlatform,
+  // jamais consommée par le runner GitHub Actions.
+  async getAppStoreConnectKey(
+    userId: string,
+    projectId: string,
+  ): Promise<{ issuerId: string; keyId: string; privateKeyPem: string } | null> {
+    const snapshot = await this.secrets
+      .where('projectId', '==', projectId)
+      .where('type', '==', SecretType.app_store_connect_key)
+      .where('environment', '==', null)
+      .get();
+    const doc = snapshot.docs[0]?.data() as SecretDocument | undefined;
+    if (!doc) {
+      return null;
+    }
+    const plaintext = this.encryption.decrypt(userId, {
+      ciphertext: doc.ciphertext,
+      iv: doc.iv,
+      authTag: doc.authTag,
+    });
+    const payload = JSON.parse(plaintext) as DecryptedSecretPayload;
+    if (!payload.issuerId || !payload.keyId) {
+      return null;
+    }
+    return {
+      issuerId: payload.issuerId,
+      keyId: payload.keyId,
+      privateKeyPem: Buffer.from(payload.fileBase64, 'base64').toString('utf8'),
+    };
+  }
+
+  // Fait signer une CSR par Apple via la clé App Store Connect du projet ; ne persiste rien —
+  // le navigateur reconstruit et upload le .p12 via create() ci-dessus, endpoint inchangé.
+  async generateIosDistributionCertificate(
+    userId: string,
+    projectId: string,
+    csrPem: string,
+  ): Promise<DistributionCertificate> {
+    await this.getOwnedProject(userId, projectId);
+    const key = await this.getAppStoreConnectKey(userId, projectId);
+    if (!key) {
+      throw new NotFoundException('Ajoutez d\'abord une clé App Store Connect API à ce projet.');
+    }
+    return this.appleCertificateService.createDistributionCertificate(key, csrPem);
   }
 
   private toMillis(value: SecretDocument['createdAt']): number {

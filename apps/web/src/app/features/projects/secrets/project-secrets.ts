@@ -14,7 +14,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
 import type {
   Environment,
@@ -45,6 +45,7 @@ const SECRET_TYPE_LABELS: Record<SecretType, string> = {
   ios_certificate: 'iOS Certificate (.p12)',
   ios_provisioning_profile: 'iOS Provisioning Profile (.mobileprovision)',
   android_keystore: 'Android Keystore',
+  app_store_connect_key: 'App Store Connect API Key',
 };
 
 const ENVIRONMENT_LABELS: Record<Environment, string> = {
@@ -54,7 +55,7 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
 
 @Component({
   selector: 'app-project-secrets',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-6">
@@ -125,6 +126,18 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
                 <option value="android_keystore">Keystore Android</option>
               </select>
             </div>
+
+            @if (selectedType() === 'ios_certificate') {
+              <p class="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800">
+                No .p12 yet? MobileFlow can generate and sign one for you automatically.
+                <a
+                  [routerLink]="['/projects', project.id, 'secrets', 'ios-certificate-wizard']"
+                  class="font-medium underline hover:text-accent-900"
+                >
+                  Generate a certificate
+                </a>
+              </p>
+            }
 
             <div class="flex flex-col gap-1">
               <label class="text-sm font-medium text-neutral-900" for="file">File</label>

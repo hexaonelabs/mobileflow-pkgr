@@ -20,8 +20,13 @@ export class CreateSecretDto {
   @IsEnum(Environment)
   environment?: Environment;
 
-  // Un provisioning profile (.mobileprovision) n'est pas protégé par mot de passe.
-  @ValidateIf((dto: CreateSecretDto) => dto.type !== SecretType.ios_provisioning_profile)
+  // Ni un provisioning profile (.mobileprovision) ni une clé App Store Connect API (.p8) ne
+  // sont protégés par un mot de passe.
+  @ValidateIf(
+    (dto: CreateSecretDto) =>
+      dto.type !== SecretType.ios_provisioning_profile &&
+      dto.type !== SecretType.app_store_connect_key,
+  )
   @IsString()
   @IsNotEmpty()
   password?: string;
@@ -34,4 +39,16 @@ export class CreateSecretDto {
   @IsOptional()
   @IsString()
   keyPassword?: string;
+
+  // Identifiants de la clé App Store Connect API — cf. developer.apple.com > Users and Access >
+  // Integrations. Requis uniquement pour app_store_connect_key ; fileBase64 porte le .p8.
+  @ValidateIf((dto: CreateSecretDto) => dto.type === SecretType.app_store_connect_key)
+  @IsString()
+  @IsNotEmpty()
+  issuerId?: string;
+
+  @ValidateIf((dto: CreateSecretDto) => dto.type === SecretType.app_store_connect_key)
+  @IsString()
+  @IsNotEmpty()
+  keyId?: string;
 }
