@@ -1,0 +1,263 @@
+---
+import PipelineVisual from './PipelineVisual.astro';
+
+const steps = [
+  {
+    id: 'connect' as const,
+    number: '01',
+    kicker: 'Once',
+    title: 'Point us at your repo',
+    body: 'Install the pkgr.app GitHub App, pick a repository and a branch. That is the entire integration — no code to upload by hand, no build config to write, and you can revoke access at any moment.',
+    bullets: ['Official GitHub App', 'One branch per project', 'Revocable in one click'],
+  },
+  {
+    id: 'secure' as const,
+    number: '02',
+    kicker: 'Once',
+    title: 'Hand over the keys, once',
+    body: 'Certificates, provisioning profiles and your Android keystore go into the Vault. Encrypted at rest, injected only into the run that needs them, never shown to a browser again. The one file you genuinely cannot afford to lose stops living in a Downloads folder.',
+    bullets: ['Encrypted at rest', 'Short-lived run tokens', 'EU data residency'],
+  },
+  {
+    id: 'push' as const,
+    number: '03',
+    kicker: 'Every day, forever',
+    title: 'Then go back to writing code',
+    body: 'Every push to your branch starts a build on its own. Redundant runs cancel themselves. There is nothing to trigger, nothing to babysit, no Xcode to open — and no Mac anywhere in the loop.',
+    bullets: ['Automatic on push', 'Ephemeral isolated runners', 'Manual trigger anytime'],
+  },
+  {
+    id: 'ship' as const,
+    number: '04',
+    kicker: 'Three minutes later',
+    title: 'A signed binary comes out',
+    body: 'Signed iOS and Android artifacts, ready to upload to the stores — alongside the status, duration, commit, branch and full logs of every run you have ever made. No more wondering whether last night’s release actually shipped.',
+    bullets: ['Signed .ipa and .aab', 'Full run history', 'Complete logs, kept'],
+  },
+];
+---
+
+{/* No `overflow-hidden` here: it would turn this section into the scroll
+    container for the sticky stage and pin it off-screen. The aurora clips
+    itself, so the overflow guard is not needed. */}
+<section id="pipeline" class="relative isolate scroll-mt-20 py-24 sm:py-32">
+  <div class="aurora" aria-hidden="true">
+    <div
+      class="aurora-blob animate-drift top-[8%] right-[-12%] h-[560px] w-[680px] opacity-45"
+      style="background: radial-gradient(closest-side, var(--color-accent-200), transparent);"
+    >
+    </div>
+    <div
+      class="aurora-blob animate-drift bottom-[4%] left-[-10%] h-[500px] w-[600px] opacity-40"
+      style="background: radial-gradient(closest-side, var(--color-iris-200), transparent); animation-delay: -11s;"
+    >
+    </div>
+  </div>
+
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="mx-auto max-w-2xl text-center" data-reveal="up">
+      <p class="text-accent-700 inline-flex items-center gap-2 text-sm font-semibold">
+        <span class="bg-accent-600 inline-block h-1.5 w-1.5 rounded-full" aria-hidden="true"></span>
+        The pipeline
+      </p>
+      <h2 class="mt-3 text-3xl font-bold tracking-tight text-balance text-neutral-900 sm:text-5xl">
+        Four steps. You do the first two once.
+      </h2>
+      <p class="mt-5 text-lg text-neutral-600">
+        After that, shipping a mobile app is the same gesture as shipping a website:
+        <span class="font-mono font-semibold text-neutral-900">git push</span>.
+      </p>
+    </div>
+
+    {/* Columns must stretch (the grid default): `items-start` would collapse
+        the stage column to its own height and leave the sticky pane no travel. */}
+    <div class="mt-20 lg:grid lg:grid-cols-2 lg:gap-16" data-pipeline>
+      <!-- Acts -->
+      <ol class="relative" data-pipeline-list>
+        <!-- Progress rail, desktop only: fills as the reader moves through the acts. -->
+        <div
+          class="absolute top-0 bottom-0 left-5 hidden w-px bg-neutral-200 lg:block"
+          aria-hidden="true"
+        >
+          <div
+            class="from-accent-600 to-accent-400 w-full origin-top bg-gradient-to-b transition-[height] duration-150 ease-out"
+            style="height: 0%"
+            data-pipeline-progress
+          >
+          </div>
+        </div>
+
+        {
+          steps.map((step, i) => (
+            <li
+              class="relative lg:flex lg:min-h-[78vh] lg:items-center lg:pl-14"
+              data-pipeline-step={i}
+              data-active={i === 0 ? 'true' : 'false'}
+            >
+              <div
+                class="relative rounded-2xl p-6 transition-all duration-500 ease-out-expo lg:p-7"
+                data-pipeline-card
+              >
+                {/* Anchored to the card, not the list item, so it stays aligned
+                    with the copy however tall the act turns out to be. */}
+                <span
+                  class="absolute top-7 -left-14 z-10 hidden h-10 w-10 items-center justify-center rounded-full border-2 border-neutral-200 bg-white font-mono text-xs font-bold text-neutral-400 transition-all duration-500 lg:flex"
+                  data-pipeline-node
+                  aria-hidden="true"
+                >
+                  {step.number}
+                </span>
+
+                <p class="text-accent-700 font-mono text-xs font-semibold tracking-wide uppercase">
+                  {step.kicker}
+                </p>
+                <h3 class="mt-2 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+                  <span class="text-accent-600 font-mono text-lg lg:hidden">{step.number} </span>
+                  {step.title}
+                </h3>
+                <p class="mt-4 leading-relaxed text-neutral-600">{step.body}</p>
+
+                <ul class="mt-5 flex flex-wrap gap-2">
+                  {step.bullets.map((bullet) => (
+                    <li class="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200">
+                      <svg
+                        class="text-accent-600 h-3 w-3 flex-none"
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Mobile keeps each visual inline with its act — sticky panes
+                    do not survive a single-column layout. */}
+                <PipelineVisual step={step.id} class="mt-8 h-[420px] lg:hidden" />
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+
+      <!-- Sticky stage -->
+      <div class="hidden lg:block">
+        <!-- A full-height sticky viewport with the stage centred inside it:
+             percentage `top` values would resolve against this column's own
+             height, not the screen. -->
+        <div class="sticky top-0 flex h-screen items-center">
+          <div class="relative h-[540px] w-full">
+            {
+              steps.map((step, i) => (
+                <div
+                  class:list={[
+                    'absolute inset-0 transition-all duration-700 ease-out-expo',
+                    i === 0 ? 'opacity-100' : 'opacity-0',
+                  ]}
+                  style={i === 0 ? '' : 'transform: scale(0.96) translateY(12px); filter: blur(8px);'}
+                  data-pipeline-visual={i}
+                >
+                  <PipelineVisual step={step.id} />
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-pipeline]');
+
+  if (root) {
+    const stepEls = Array.from(root.querySelectorAll<HTMLElement>('[data-pipeline-step]'));
+    const visuals = Array.from(root.querySelectorAll<HTMLElement>('[data-pipeline-visual]'));
+    const progress = root.querySelector<HTMLElement>('[data-pipeline-progress]');
+    const list = root.querySelector<HTMLElement>('[data-pipeline-list]');
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const setActive = (index: number): void => {
+      stepEls.forEach((el, i) => {
+        const active = i === index;
+        el.setAttribute('data-active', String(active));
+
+        const node = el.querySelector<HTMLElement>('[data-pipeline-node]');
+        node?.classList.toggle('border-accent-600', active);
+        node?.classList.toggle('bg-accent-600', active);
+        node?.classList.toggle('text-white', active);
+        node?.classList.toggle('shadow-lg', active);
+        node?.classList.toggle('shadow-indigo-600/40', active);
+        node?.classList.toggle('scale-110', active);
+        node?.classList.toggle('border-neutral-200', !active);
+        node?.classList.toggle('bg-white', !active);
+        node?.classList.toggle('text-neutral-400', !active);
+
+        // Emphasis is added to the active act rather than subtracted from the
+        // others, so inactive copy always keeps full AA contrast.
+        const card = el.querySelector<HTMLElement>('[data-pipeline-card]');
+        card?.classList.toggle('glass', active);
+        card?.classList.toggle('hairline', active);
+      });
+
+      visuals.forEach((el, i) => {
+        const active = i === index;
+        el.classList.toggle('opacity-100', active);
+        el.classList.toggle('opacity-0', !active);
+        el.style.transform = active ? 'scale(1) translateY(0)' : 'scale(0.96) translateY(12px)';
+        el.style.filter = active ? 'blur(0px)' : 'blur(8px)';
+      });
+    };
+
+    // The act crossing the middle of the viewport is the one being read.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute('data-pipeline-step'));
+            setActive(index);
+          }
+        }
+      },
+      { rootMargin: '-50% 0px -50% 0px', threshold: 0 },
+    );
+
+    stepEls.forEach((el) => observer.observe(el));
+
+    if (progress && list && !reduced.matches) {
+      let ticking = false;
+
+      const updateProgress = (): void => {
+        ticking = false;
+        if (!desktop.matches) return;
+
+        const rect = list.getBoundingClientRect();
+        const ratio = (window.innerHeight / 2 - rect.top) / rect.height;
+        progress.style.height = `${Math.min(Math.max(ratio, 0), 1) * 100}%`;
+      };
+
+      window.addEventListener(
+        'scroll',
+        () => {
+          if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(updateProgress);
+          }
+        },
+        { passive: true },
+      );
+      window.addEventListener('resize', updateProgress, { passive: true });
+      updateProgress();
+    }
+
+    setActive(0);
+  }
+</script>

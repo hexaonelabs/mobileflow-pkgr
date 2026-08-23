@@ -17,7 +17,14 @@
       "name": "marketing",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--workspace=marketing"],
-      "port": 4321
+      "port": 4321,
+      "autoPort": true
+    },
+    {
+      "name": "marketing-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--workspace=marketing", "--", "--port", "4331"],
+      "port": 4331
     }
   ]
 }

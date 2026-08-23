@@ -1,0 +1,158 @@
+---
+// Fragments of a real release day. Deliberately heterogeneous — a Slack ping,
+// a build log, an expiry notice — so the section reads as accumulated mess
+// rather than as another tidy feature grid.
+const fragments = [
+  {
+    kind: 'slack',
+    author: 'Marta — Product',
+    time: '18:42',
+    body: 'hey, any chance you can cut the iOS build tonight? my Mac is at the office 🙈',
+    position: 'lg:col-span-5 lg:mt-0 lg:-rotate-2',
+  },
+  {
+    kind: 'log',
+    title: 'xcodebuild — exit 65',
+    body: "error: No signing certificate 'iOS Distribution' found for team 9K2X4L8QRT",
+    position: 'lg:col-span-7 lg:mt-8 lg:rotate-1',
+  },
+  {
+    kind: 'mail',
+    title: 'Apple Developer',
+    body: 'Your provisioning profile expires in 3 days. Apps signed with it will stop building.',
+    position: 'lg:col-span-6 lg:-mt-2 lg:rotate-1',
+  },
+  {
+    kind: 'note',
+    title: 'Where is the keystore?',
+    body: 'Not in 1Password. Not in the repo. Tom left in March. Lose it and the app can never be updated again.',
+    position: 'lg:col-span-6 lg:mt-6 lg:-rotate-1',
+  },
+  {
+    kind: 'ci',
+    title: 'CI · release-android',
+    body: 'Failed after 11m 04s — 3 lines of log, no history, no context.',
+    position: 'lg:col-span-7 lg:-rotate-1',
+  },
+  {
+    kind: 'clock',
+    title: 'Friday, 21:15',
+    body: 'Fourth build attempt. Version mismatch again. The release was due at 17:00.',
+    position: 'lg:col-span-5 lg:mt-4 lg:rotate-2',
+  },
+];
+
+const chrome: Record<string, { tint: string; icon: string }> = {
+  slack: {
+    tint: 'text-neutral-500',
+    icon: '<path d="M4 12h6M4 8h10M4 16h7" /><rect x="3" y="4" width="18" height="16" rx="3" />',
+  },
+  log: {
+    tint: 'text-red-600',
+    icon: '<circle cx="12" cy="12" r="8.5" /><line x1="9.4" y1="9.4" x2="14.6" y2="14.6" /><line x1="14.6" y1="9.4" x2="9.4" y2="14.6" />',
+  },
+  mail: {
+    tint: 'text-amber-600',
+    icon: '<rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="m3.5 7 8.5 6 8.5-6" />',
+  },
+  note: {
+    tint: 'text-red-600',
+    icon: '<path d="M10.3 3.9 2.6 17.4A1.8 1.8 0 0 0 4.2 20h15.6a1.8 1.8 0 0 0 1.6-2.6L13.7 3.9a1.8 1.8 0 0 0-3.4 0Z" /><line x1="12" y1="9.5" x2="12" y2="13.5" /><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none" />',
+  },
+  ci: {
+    tint: 'text-red-600',
+    icon: '<circle cx="12" cy="12" r="8.5" /><line x1="12" y1="7.6" x2="12" y2="12.6" /><circle cx="12" cy="16.4" r="0.9" fill="currentColor" stroke="none" />',
+  },
+  clock: {
+    tint: 'text-amber-600',
+    icon: '<circle cx="12" cy="12.5" r="8" /><path d="M12 7.8v4.7l3.4 2" /><line x1="9" y1="2.6" x2="15" y2="2.6" />',
+  },
+};
+---
+
+<section class="relative isolate overflow-hidden bg-neutral-50 py-24 sm:py-32">
+  <div class="aurora" aria-hidden="true">
+    <div
+      class="aurora-blob top-[10%] left-[-10%] h-[420px] w-[520px] opacity-30"
+      style="background: radial-gradient(closest-side, #fecaca, transparent);"
+    >
+    </div>
+    <div
+      class="aurora-blob right-[-8%] bottom-[6%] h-[380px] w-[480px] opacity-30"
+      style="background: radial-gradient(closest-side, #fde68a, transparent);"
+    >
+    </div>
+  </div>
+
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="mx-auto max-w-2xl text-center" data-reveal="up">
+      <p
+        class="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-700 ring-1 ring-red-200/70"
+      >
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true"></span>
+        Release day, today
+      </p>
+      <h2 class="mt-4 text-3xl font-bold tracking-tight text-balance text-neutral-900 sm:text-5xl">
+        None of this is engineering.
+      </h2>
+      <p class="mt-5 text-lg text-neutral-600">
+        It's the tax you pay for shipping mobile without a build pipeline — and it lands on the same
+        person every single release.
+      </p>
+    </div>
+
+    <ul class="mt-16 grid gap-4 lg:grid-cols-12 lg:gap-5">
+      {
+        fragments.map((fragment, i) => (
+          <li
+            class:list={[
+              'group rounded-xl border border-neutral-200/90 bg-white p-5 shadow-sm transition-all duration-500 ease-out-expo hover:z-10 hover:rotate-0 hover:border-neutral-300 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none lg:hover:-translate-y-1.5',
+              fragment.position,
+            ]}
+            data-reveal="up"
+            style={`--reveal-delay: ${i * 70}ms`}
+          >
+            <p
+              class:list={[
+                'flex items-center gap-2 text-xs font-semibold tracking-wide',
+                chrome[fragment.kind].tint,
+              ]}
+            >
+              <svg
+                class="h-4 w-4 flex-none"
+                aria-hidden="true"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                set:html={chrome[fragment.kind].icon}
+              />
+              {fragment.kind === 'slack' ? fragment.author : fragment.title}
+              {fragment.kind === 'slack' && (
+                <span class="font-normal text-neutral-400">{fragment.time}</span>
+              )}
+            </p>
+            <p
+              class:list={[
+                'mt-2.5 text-sm leading-relaxed text-neutral-700',
+                fragment.kind === 'log' && 'font-mono text-[0.8rem] text-red-700',
+              ]}
+            >
+              {fragment.body}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p
+      class="mx-auto mt-16 max-w-2xl text-center text-lg font-medium text-balance text-neutral-800 sm:text-xl"
+      data-reveal="up"
+    >
+      Every one of these is a human doing work a pipeline should have done —
+      <span class="text-accent-700">silently, three minutes after the push.</span>
+    </p>
+  </div>
+</section>

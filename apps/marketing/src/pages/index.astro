@@ -3,30 +3,23 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import StackStrip from '../components/StackStrip.astro';
-import PainPoints from '../components/PainPoints.astro';
-import Features from '../components/Features.astro';
-import HowItWorks from '../components/HowItWorks.astro';
-import SecretVault from '../components/SecretVault.astro';
-import BuildHistory from '../components/BuildHistory.astro';
-import WhyPkgr from '../components/WhyPkgr.astro';
-import Scarcity from '../components/Scarcity.astro';
-import FinalCta from '../components/FinalCta.astro';
+import FrictionWall from '../components/FrictionWall.astro';
+import Pipeline from '../components/Pipeline.astro';
+import Shift from '../components/Shift.astro';
+import FoundingOffer from '../components/FoundingOffer.astro';
 import Footer from '../components/Footer.astro';
 ---
 
 <Layout>
   <Header />
   <main id="main-content">
+    {/* Promise → recognition → demonstration → contrast → offer. */}
     <Hero />
     <StackStrip />
-    <PainPoints />
-    <Features />
-    <HowItWorks />
-    <SecretVault />
-    <BuildHistory />
-    <WhyPkgr />
-    <Scarcity />
-    <FinalCta />
+    <FrictionWall />
+    <Pipeline />
+    <Shift />
+    <FoundingOffer />
   </main>
   <Footer />
 </Layout>

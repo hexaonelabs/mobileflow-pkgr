@@ -3,42 +3,157 @@
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --color-accent-50: #eef2ff;
   --color-accent-100: #e0e7ff;
+  --color-accent-200: #c7d2fe;
+  --color-accent-300: #a5b4fc;
+  --color-accent-400: #818cf8;
   --color-accent-500: #6366f1;
   --color-accent-600: #4f46e5;
   --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #312e81;
+  --color-accent-950: #1e1b4b;
+
+  /* Secondary hues, used only to give the aurora backdrops depth. */
+  --color-iris-200: #e9d5ff;
+  --color-iris-300: #d8b4fe;
+  --color-aqua-200: #a5f3fc;
+  --color-aqua-300: #67e8f9;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {
   scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+  /* Sticky header offset, so anchor targets never land underneath it. */
+  scroll-padding-top: 5rem;
 }
 
 body {
   font-family: var(--font-sans);
 }
 
-/* Scroll-reveal: content is only pre-hidden once JS confirms it can animate it back in. */
+/* ---------------------------------------------------------------------------
+   Aurora backdrops — soft coloured light pooling behind light-mode sections.
+   Each blob is a radial gradient, heavily blurred and low-opacity so it reads
+   as ambient light rather than as a shape.
+--------------------------------------------------------------------------- */
+
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -10;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+/* ---------------------------------------------------------------------------
+   Technical grid — a faint blueprint texture that fades out at the edges.
+--------------------------------------------------------------------------- */
+
+.grid-fade {
+  background-image:
+    linear-gradient(to right, rgb(15 23 42 / 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(15 23 42 / 0.055) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   Surfaces
+--------------------------------------------------------------------------- */
+
+/* Both surface classes paint `background`, so they share one fill variable
+   instead of fighting over the shorthand. Override `--surface-fill` inline to
+   put either treatment on a dark panel — a `bg-*` utility would be overwritten. */
+.glass {
+  --surface-fill: rgb(255 255 255 / 0.72);
+  background: var(--surface-fill);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 0.9) inset,
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 12px 32px -12px rgb(79 70 229 / 0.18);
+}
+
+/* A 1px gradient hairline, drawn as a padded background so it survives any
+   border-radius without needing a pseudo-element per usage. */
+.hairline {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+        var(--surface-fill, rgb(255 255 255 / 0.9)),
+        var(--surface-fill, rgb(255 255 255 / 0.9))
+      )
+      padding-box,
+    linear-gradient(140deg, rgb(79 70 229 / 0.28), rgb(15 23 42 / 0.06) 45%, rgb(79 70 229 / 0.2))
+      border-box;
+}
+
+.lift {
+  transition:
+    transform 0.4s var(--ease-out-expo),
+    box-shadow 0.4s var(--ease-out-expo);
+}
+
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 0.9) inset,
+    0 24px 48px -20px rgb(79 70 229 / 0.32);
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll reveal — content is only pre-hidden once JS confirms it can bring it
+   back, so the page stays readable when scripts fail.
+--------------------------------------------------------------------------- */
+
 .js [data-reveal] {
   opacity: 0;
-  transform: translateY(18px);
   transition:
-    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.8s var(--ease-out-expo),
+    transform 0.8s var(--ease-out-expo),
+    filter 0.8s var(--ease-out-expo);
   transition-delay: var(--reveal-delay, 0ms);
+}
+
+.js [data-reveal='up'],
+.js [data-reveal=''] {
+  transform: translateY(22px);
+}
+
+.js [data-reveal='left'] {
+  transform: translateX(-24px);
+}
+
+.js [data-reveal='right'] {
+  transform: translateX(24px);
+}
+
+.js [data-reveal='scale'] {
+  transform: scale(0.96);
+  filter: blur(6px);
 }
 
 .js [data-reveal].is-revealed {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
+  filter: none;
 }
+
+/* ---------------------------------------------------------------------------
+   Keyframes
+--------------------------------------------------------------------------- */
 
 @keyframes marquee {
   to {
@@ -49,7 +164,7 @@ body {
 }
 
 .animate-marquee {
-  animation: marquee 28s linear infinite;
+  animation: marquee 34s linear infinite;
 }
 
 @keyframes blink {
@@ -68,18 +183,36 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
   }
 }
 
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Slow, offset drifts give the aurora blobs a living, non-repeating feel. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(4%, -3%, 0) scale(1.06);
+  }
+  66% {
+    transform: translate3d(-3%, 3%, 0) scale(0.96);
+  }
+}
+
+.animate-drift {
+  animation: drift 22s ease-in-out infinite;
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -88,21 +221,50 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.5s ease both;
+  animation: fade-in-up 0.55s var(--ease-out-expo) both;
   animation-delay: var(--reveal-delay, 0ms);
 }
 
+/* A highlight sweeping across a progress rail, to signal live work. */
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — strip every ambient animation, keep every piece of content.
+--------------------------------------------------------------------------- */
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .js [data-reveal] {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
+  }
+
+  .lift:hover {
+    transform: none;
   }
 
   .animate-marquee,
   .animate-blink,
   .animate-float,
-  .animate-fade-in-up {
+  .animate-drift,
+  .animate-fade-in-up,
+  .animate-shimmer {
     animation: none;
   }
 }

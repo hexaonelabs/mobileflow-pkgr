@@ -1,0 +1,255 @@
+---
+// Product mockups for each pipeline act. Purely illustrative — every fact they
+// depict is also stated in the step copy next to them, so they carry no
+// information of their own and stay hidden from assistive tech.
+interface Props {
+  step: 'connect' | 'secure' | 'push' | 'ship';
+  class?: string;
+}
+
+const { step, class: className = '' } = Astro.props;
+
+const repos = [
+  { name: 'acme/store-app', meta: 'TypeScript · Capacitor', selected: true },
+  { name: 'acme/design-system', meta: 'TypeScript', selected: false },
+  { name: 'acme/marketing-site', meta: 'Astro', selected: false },
+];
+
+const secrets = [
+  { name: 'ios_distribution.p12', meta: 'Apple Distribution · expires 2027' },
+  { name: 'android_release.keystore', meta: 'RSA 2048 · alias release' },
+  { name: 'app_store_connect.p8', meta: 'API key · issuer 8f2a…' },
+];
+
+const history = [
+  { commit: 'a1b2c3d', branch: 'main', status: 'ok', time: '3m 42s' },
+  { commit: '9e8f7a6', branch: 'main', status: 'ok', time: '4m 05s' },
+  { commit: '5d4c3b2', branch: 'feat/onboarding', status: 'fail', time: '1m 58s' },
+];
+---
+
+<div class:list={['h-full w-full', className]} aria-hidden="true">
+  {
+    step === 'connect' && (
+      <div class="hairline flex h-full flex-col rounded-2xl bg-white p-5 shadow-xl shadow-indigo-900/10">
+        <div class="flex items-center gap-2.5 border-b border-neutral-100 pb-4">
+          <svg class="h-5 w-5 text-neutral-900" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.93.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" />
+          </svg>
+          <p class="text-sm font-semibold text-neutral-900">Select a repository</p>
+          <span class="ml-auto rounded-full bg-green-50 px-2 py-0.5 text-[0.68rem] font-semibold text-green-700">
+            App installed
+          </span>
+        </div>
+
+        <ul class="mt-4 space-y-2">
+          {repos.map((repo) => (
+            <li
+              class:list={[
+                'flex items-center gap-3 rounded-lg border px-3.5 py-3 transition-colors',
+                repo.selected
+                  ? 'border-accent-300 bg-accent-50/70 ring-accent-500/30 ring-2'
+                  : 'border-neutral-200 bg-white',
+              ]}
+            >
+              <span
+                class:list={[
+                  'flex h-4 w-4 flex-none items-center justify-center rounded-full border-2',
+                  repo.selected ? 'border-accent-600 bg-accent-600' : 'border-neutral-300',
+                ]}
+              >
+                {repo.selected && (
+                  <svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                )}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-medium text-neutral-900">{repo.name}</span>
+                <span class="block truncate text-xs text-neutral-500">{repo.meta}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="mt-auto flex items-center gap-3 pt-5">
+          <div class="flex flex-1 items-center gap-2 rounded-lg border border-neutral-200 px-3.5 py-2.5">
+            <svg class="h-4 w-4 flex-none text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <circle cx="7" cy="6" r="2.2" />
+              <circle cx="7" cy="18" r="2.2" />
+              <circle cx="17" cy="9" r="2.2" />
+              <path d="M7 8.2v7.6M17 11.2c0 3-4 2.6-7 4" />
+            </svg>
+            <span class="font-mono text-xs text-neutral-700">main</span>
+          </div>
+          <span class="bg-accent-600 rounded-lg px-4 py-2.5 text-xs font-semibold text-white">
+            Connect
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    step === 'secure' && (
+      <div class="hairline flex h-full flex-col rounded-2xl bg-white p-5 shadow-xl shadow-indigo-900/10">
+        <div class="flex items-center gap-3 border-b border-neutral-100 pb-4">
+          <span class="bg-accent-600 flex h-9 w-9 flex-none items-center justify-center rounded-lg text-white">
+            <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold text-neutral-900">Secret Vault</p>
+            <p class="text-xs text-neutral-500">Encrypted at rest · EU region</p>
+          </div>
+        </div>
+
+        <ul class="mt-4 space-y-2.5">
+          {secrets.map((secret) => (
+            <li class="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50/60 px-3.5 py-3">
+              <svg class="h-4 w-4 flex-none text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 3v5h5" />
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+              </svg>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-mono text-xs font-medium text-neutral-900">
+                  {secret.name}
+                </span>
+                <span class="block truncate text-[0.7rem] text-neutral-500">{secret.meta}</span>
+              </span>
+              <span class="inline-flex flex-none items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-[0.68rem] font-semibold text-green-700">
+                <span class="relative flex h-1.5 w-1.5">
+                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
+                  <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+                </span>
+                Sealed
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="mt-auto flex items-center gap-2 rounded-lg bg-neutral-900 px-3.5 py-3 pt-3">
+          <svg class="text-accent-400 h-4 w-4 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3 19 6v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />
+          </svg>
+          <p class="font-mono text-[0.7rem] text-neutral-400">
+            AES-256-GCM · never exposed to the client
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    step === 'push' && (
+      <div
+        class="hairline flex h-full flex-col rounded-2xl p-5 font-mono shadow-xl shadow-indigo-900/25"
+        style="--surface-fill: #0a0a0a"
+      >
+        <div class="flex items-center gap-3 border-b border-white/10 pb-4">
+          <span class="relative flex h-2 w-2">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+          </span>
+          <p class="text-xs text-neutral-400">build #129 · running</p>
+          <p class="ml-auto text-xs text-neutral-600">pushed 4s ago</p>
+        </div>
+
+        <p class="mt-4 text-xs text-neutral-500">
+          <span class="text-accent-400">$</span> git commit -m "fix: checkout total" && git push
+        </p>
+
+        <div class="mt-5 space-y-4">
+          <div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-neutral-300">iOS · release</span>
+              <span class="text-neutral-500">2m 18s</span>
+            </div>
+            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div class="from-accent-500 to-accent-300 relative h-full w-[72%] overflow-hidden rounded-full bg-gradient-to-r">
+                <span class="animate-shimmer absolute inset-y-0 -left-1/3 w-1/3 bg-white/40 blur-sm" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-neutral-300">Android · release</span>
+              <span class="text-green-400">done</span>
+            </div>
+            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div class="h-full w-full rounded-full bg-green-500" />
+            </div>
+          </div>
+        </div>
+
+        <ul class="mt-5 space-y-1.5 text-[0.7rem] leading-relaxed text-neutral-500">
+          <li>✓ runner provisioned — ephemeral, isolated</li>
+          <li>✓ vault secrets injected — 3 files</li>
+          <li>✓ npx cap sync ios</li>
+          <li class="text-neutral-300">▸ xcodebuild archive -scheme App</li>
+        </ul>
+
+        <p class="mt-auto border-t border-white/10 pt-3 text-[0.7rem] text-neutral-500">
+          You didn't open a terminal. This is just what happened.
+        </p>
+      </div>
+    )
+  }
+
+  {
+    step === 'ship' && (
+      <div class="hairline flex h-full flex-col rounded-2xl bg-white p-5 shadow-xl shadow-indigo-900/10">
+        <div class="grid gap-2.5 sm:grid-cols-2">
+          {[
+            { file: 'app-release.ipa', platform: 'iOS', size: '24.8 MB' },
+            { file: 'app-release.aab', platform: 'Android', size: '18.2 MB' },
+          ].map((artifact) => (
+            <div class="border-accent-200 from-accent-50 rounded-xl border bg-gradient-to-br to-white p-3.5">
+              <div class="flex items-center gap-2">
+                <span class="bg-accent-600 flex h-7 w-7 flex-none items-center justify-center rounded-md text-white">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </span>
+                <span class="text-xs font-semibold text-neutral-900">{artifact.platform}</span>
+                <span class="ml-auto text-[0.68rem] text-neutral-500">{artifact.size}</span>
+              </div>
+              <p class="mt-2.5 truncate font-mono text-[0.72rem] text-neutral-700">
+                {artifact.file}
+              </p>
+              <p class="text-accent-700 mt-1 text-[0.68rem] font-semibold">Signed · ready</p>
+            </div>
+          ))}
+        </div>
+
+        <div class="mt-4 flex-1 overflow-hidden rounded-xl border border-neutral-200">
+          <p class="border-b border-neutral-200 bg-neutral-50 px-3.5 py-2 text-[0.68rem] font-semibold tracking-wide text-neutral-500 uppercase">
+            Build history
+          </p>
+          <ul class="divide-y divide-neutral-100">
+            {history.map((build) => (
+              <li class="flex items-center gap-3 px-3.5 py-2.5">
+                <span
+                  class:list={[
+                    'h-1.5 w-1.5 flex-none rounded-full',
+                    build.status === 'ok' ? 'bg-green-500' : 'bg-red-500',
+                  ]}
+                />
+                <span class="font-mono text-[0.72rem] text-neutral-900">{build.commit}</span>
+                <span class="truncate text-[0.72rem] text-neutral-500">{build.branch}</span>
+                <span class="ml-auto flex-none text-[0.72rem] text-neutral-400">{build.time}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p class="mt-3.5 text-center text-[0.72rem] text-neutral-500">
+          Every run kept — status, duration, commit, branch, full logs.
+        </p>
+      </div>
+    )
+  }
+</div>

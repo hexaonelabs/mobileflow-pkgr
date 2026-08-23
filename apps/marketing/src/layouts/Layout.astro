@@ -35,7 +35,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <script is:inline>
@@ -64,7 +64,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
               }
             }
           },
-          { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
+          // A low threshold keeps tall sections (which can exceed the viewport)
+          // from waiting on a percentage they can never reach.
+          { threshold: 0.05, rootMargin: '0px 0px -60px 0px' },
         );
 
         revealTargets.forEach((target) => observer.observe(target));

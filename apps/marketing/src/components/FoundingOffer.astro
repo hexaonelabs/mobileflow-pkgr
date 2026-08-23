@@ -1,0 +1,133 @@
+---
+import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
+
+const guarantees = [
+  {
+    title: 'One payment, never again',
+    body: `CHF ${FOUNDER_PRICE_CHF} once. Starter becomes subscription-only for everyone who arrives after these ${FOUNDER_SPOTS} spots.`,
+    icon: '<path d="M12 2v20" /><path d="M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.8 5 3.3 5 1.4 5 3.4-2.2 3.3-5 3.3-5-1.2-5-3.1" />',
+  },
+  {
+    title: `${FOUNDER_SPOTS} spots, then closed`,
+    body: 'The cap is the whole point. Once it is reached, or once we go public, this price is gone for good.',
+    icon: '<path d="M12 3l1.9 5.5L19.5 10l-5.6 1.5L12 17l-1.9-5.5L4.5 10l5.6-1.5z" />',
+  },
+  {
+    title: 'Zero risk, in writing',
+    body: `Not live by ${ACCESS_DEADLINE}? You are refunded in full, automatically, without having to ask.`,
+    icon: '<path d="M12 3 19 6v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" /><path d="M9 12l2 2 4-4" />',
+  },
+];
+---
+
+<section id="founding-access" class="scroll-mt-20 py-24 sm:py-32">
+  <div class="mx-auto max-w-5xl px-6">
+    <div
+      class="relative isolate overflow-hidden rounded-3xl bg-neutral-950 px-6 py-16 sm:px-14 sm:py-20"
+      data-reveal="scale"
+    >
+      <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div
+          class="animate-drift absolute top-[-38%] left-1/2 h-[620px] w-[980px] -translate-x-1/2 rounded-full opacity-90 blur-[80px]"
+          style="background: radial-gradient(closest-side, var(--color-accent-600), transparent);"
+        >
+        </div>
+        <div
+          class="animate-drift absolute right-[-15%] bottom-[-40%] h-[460px] w-[600px] rounded-full opacity-70 blur-[80px]"
+          style="background: radial-gradient(closest-side, #7c3aed, transparent); animation-delay: -9s;"
+        >
+        </div>
+      </div>
+
+      <div class="text-center">
+        <p
+          class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-semibold text-white ring-1 ring-white/20"
+        >
+          <svg
+            aria-hidden="true"
+            class="text-accent-300 h-4 w-4"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"></path>
+          </svg>
+          Founding access
+        </p>
+
+        <h2
+          class="mt-5 text-3xl font-bold tracking-tight text-balance text-white sm:text-5xl sm:leading-[1.1]"
+        >
+          {FOUNDER_SPOTS} spots. Then it's a subscription, like everything else.
+        </h2>
+
+        <p class="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-neutral-300">
+          pkgr.app launches as a monthly plan. This one-time price exists for the {FOUNDER_SPOTS} developers
+          who back it before that happens — and for nobody after them.
+        </p>
+
+        <div class="mt-10 flex flex-col items-center">
+          <div class="flex items-end justify-center gap-2.5">
+            <span class="mb-3 text-2xl font-semibold text-neutral-400">CHF</span>
+            <span
+              class="text-7xl leading-none font-extrabold tracking-tight text-white sm:text-8xl"
+            >
+              {FOUNDER_PRICE_CHF}
+            </span>
+            <span class="mb-3 text-lg font-medium text-neutral-400">once</span>
+          </div>
+          <p class="mt-3 text-sm text-neutral-400">
+            Lifetime access to the Starter plan — its usage limits still apply.
+          </p>
+        </div>
+
+        <div class="mt-10 flex flex-col items-center gap-4">
+          <a
+            href="/early-access"
+            class="group focus-visible:ring-accent-300 relative rounded-full bg-white px-9 py-4 text-base font-semibold text-neutral-900 shadow-2xl shadow-indigo-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-indigo-400/50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus-visible:outline-none active:translate-y-0"
+          >
+            <span class="flex items-center gap-2">
+              Claim a founding spot
+              <span
+                class="transition-transform duration-300 group-hover:translate-x-1"
+                aria-hidden="true">→</span
+              >
+            </span>
+          </a>
+          <p class="text-sm text-neutral-400">
+            Card or crypto · full refund if we miss {ACCESS_DEADLINE}
+          </p>
+        </div>
+      </div>
+
+      <ul class="mt-14 grid gap-4 sm:grid-cols-3">
+        {
+          guarantees.map((guarantee, i) => (
+            <li
+              class="rounded-2xl bg-white/[0.06] p-5 ring-1 ring-white/10 backdrop-blur-sm"
+              data-reveal="up"
+              style={`--reveal-delay: ${150 + i * 90}ms`}
+            >
+              <span
+                class="text-accent-300 mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-white/10"
+                aria-hidden="true"
+              >
+                <svg
+                  class="h-4.5 w-4.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  set:html={guarantee.icon}
+                />
+              </span>
+              <p class="text-sm font-semibold text-white">{guarantee.title}</p>
+              <p class="mt-1.5 text-sm leading-relaxed text-neutral-400">{guarantee.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
