@@ -11,15 +11,15 @@ const cryptoAddress =
 const contactEmail = 'contact@pkgr.app';
 
 const perks = [
-  'Lifetime access — no subscription, ever',
+  'Lifetime access to the Starter plan — no subscription, ever',
   'Direct input on which features ship next',
-  'Founding price: CHF 250 once, instead of a future subscription',
+  'Founding price: CHF 250 once, instead of a future Starter subscription',
 ];
 ---
 
 <Layout
-  title="Get lifetime access"
-  description="pkgr.app is opening early access at a one-time founding price of CHF 250 for lifetime access, before pricing moves to a subscription."
+  title="Get lifetime Starter access"
+  description="pkgr.app is opening early access to the Starter plan at a one-time founding price of CHF 250 for lifetime access, before Starter pricing moves to a subscription."
 >
   <Header />
   <main id="main-content">
@@ -31,12 +31,18 @@ const perks = [
           Early access · Founding price
         </p>
         <h1 class="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
-          Get pkgr.app for life
+          Get the Starter plan for life
         </h1>
         <p class="mx-auto mt-6 max-w-xl text-lg text-neutral-600">
-          We're capping founding access at {FOUNDER_SPOTS} developers, total. This is a one-time founding
-          price — once pkgr.app launches publicly, pricing moves to a recurring subscription. Everyone
-          who joins now keeps lifetime access, no subscription, ever.
+          We're capping founding access at {FOUNDER_SPOTS} developers, total. CHF {FOUNDER_PRICE_CHF}
+          buys lifetime access to the Starter plan — the same plan and the same limits as everyone
+          else, just paid once instead of every month. Once pkgr.app launches publicly, Starter moves
+          to a recurring subscription; founding members keep it for free, forever.
+        </p>
+        <p class="mx-auto mt-4 max-w-xl text-sm text-neutral-500">
+          Starter is one of two plans: a free plan with tight limits for trying pkgr.app out, and
+          Starter for regular use, with its own usage limits. Founding access is for Starter — it
+          isn't unlimited, and it isn't every future plan we build.
         </p>
 
         <div
@@ -45,7 +51,7 @@ const perks = [
           <span class="text-5xl font-extrabold tracking-tight text-neutral-900"
             >CHF {FOUNDER_PRICE_CHF}</span
           >
-          <span class="text-sm text-neutral-500">one-time · lifetime access</span>
+          <span class="text-sm text-neutral-500">one-time · lifetime Starter access</span>
         </div>
 
         <div class="mt-14 grid gap-6 text-left sm:grid-cols-2">
@@ -53,7 +59,7 @@ const perks = [
             <h2 class="text-base font-semibold text-neutral-900">Pay with card</h2>
             <p class="mt-2 text-sm text-neutral-600">
               Secure checkout via Stripe. Your email is captured automatically so we can confirm
-              your lifetime access.
+              your lifetime Starter access.
             </p>
             <a
               href={stripeLink}
@@ -97,7 +103,7 @@ const perks = [
               >
                 {contactEmail}
               </a>{' '}
-              so we can confirm your lifetime access.
+              so we can confirm your lifetime Starter access.
             </p>
           </div>
         </div>
@@ -105,7 +111,7 @@ const perks = [
         <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left">
           <p class="text-sm font-semibold text-amber-900">pkgr.app is still under development</p>
           <p class="mt-1.5 text-sm text-amber-800">
-            If you don't have access to the product by <strong>{ACCESS_DEADLINE}</strong>, we'll
+            If you don't have Starter access by <strong>{ACCESS_DEADLINE}</strong>, we'll
             refund your CHF {FOUNDER_PRICE_CHF} in full — no questions asked. Card payments are refunded
             via Stripe; crypto payments are sent back to the wallet you paid from.
           </p>
