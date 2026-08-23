@@ -8,11 +8,15 @@ const { class: className = 'h-7 w-7' } = Astro.props;
 
 <svg viewBox="0 0 24 24" class={className} aria-hidden="true">
   <rect width="24" height="24" rx="6" class="fill-accent-600"></rect>
-  <path
-    d="M6 16.5V7.5l6 6 6-6v9"
-    fill="none"
-    stroke="white"
-    stroke-width="1.9"
-    stroke-linecap="round"
-    stroke-linejoin="round"></path>
+  <g fill="white" opacity="0.35">
+    <circle cx="7" cy="7" r="1.2"></circle>
+    <circle cx="12" cy="7" r="1.2"></circle>
+    <circle cx="17" cy="7" r="1.2"></circle>
+    <circle cx="7" cy="12" r="1.2"></circle>
+    <circle cx="12" cy="12" r="1.2"></circle>
+    <circle cx="17" cy="12" r="1.2"></circle>
+    <circle cx="7" cy="17" r="1.2"></circle>
+    <circle cx="12" cy="17" r="1.2"></circle>
+  </g>
+  <circle cx="17" cy="17" r="1.2" fill="white"></circle>
 </svg>

@@ -6,14 +6,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   template: `
     <svg [attr.class]="class()" viewBox="0 0 24 24" aria-hidden="true">
       <rect width="24" height="24" rx="6" class="fill-accent-600" />
-      <path
-        d="M6 16.5V7.5l6 6 6-6v9"
-        fill="none"
-        stroke="white"
-        stroke-width="1.9"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
+      <g fill="white" opacity="0.35">
+        <circle cx="7" cy="7" r="1.2" />
+        <circle cx="12" cy="7" r="1.2" />
+        <circle cx="17" cy="7" r="1.2" />
+        <circle cx="7" cy="12" r="1.2" />
+        <circle cx="12" cy="12" r="1.2" />
+        <circle cx="17" cy="12" r="1.2" />
+        <circle cx="7" cy="17" r="1.2" />
+        <circle cx="12" cy="17" r="1.2" />
+      </g>
+      <circle cx="17" cy="17" r="1.2" fill="white" />
     </svg>
   `,
 })

@@ -10,10 +10,62 @@ const cryptoAddress =
   import.meta.env.PUBLIC_CRYPTO_USDC_ADDRESS ?? '0xdbcC75e1ac8765A3C1AD07826B3693983afDb3a9';
 const contactEmail = 'contact@pkgr.app';
 
-const perks = [
-  'Lifetime access to the Starter plan — no subscription, ever',
-  'Direct input on which features ship next',
-  'Founding price: CHF 250 once, instead of a future Starter subscription',
+const trustPoints = [
+  'No subscription, ever',
+  `${FOUNDER_SPOTS} spots, no more sold at this price`,
+  'Refunded in full if we run late',
+];
+
+const included = [
+  {
+    title: 'The full build pipeline',
+    description:
+      'Connect a GitHub repo, trigger signed Android and iOS builds through GitHub Actions — the same pipeline every pkgr.app plan runs on.',
+  },
+  {
+    title: "Starter's usage limits — same as everyone else",
+    description:
+      "You get exactly what a monthly Starter subscriber gets, nothing less. You just pay for it once, now, instead of every month for as long as you use it.",
+  },
+  {
+    title: 'Certificates handled for you',
+    description:
+      'Signing certificates and keystores live in the Vault, not in an email thread — generated, stored, and used automatically on every build.',
+  },
+  {
+    title: 'A say in what ships next',
+    description:
+      "Founding members get a direct line to us. If Starter's limits are getting in your way, tell us first — we're pricing future tiers around real usage, not guesses.",
+  },
+];
+
+const faqs = [
+  {
+    question: 'What am I actually buying?',
+    answer:
+      "Lifetime access to the Starter plan, for a single payment of CHF " +
+      FOUNDER_PRICE_CHF +
+      '. Not access to every future plan, and not unlimited use — Starter’s own usage limits still apply. You just never pay for Starter again.',
+  },
+  {
+    question: 'Why not just wait for the free plan?',
+    answer:
+      "You can. At launch there will also be a free plan with a tighter cap, no purchase required. This offer is for developers who already know a monthly Starter subscription is in their future and would rather pay once, now, at the founding price.",
+  },
+  {
+    question: 'What happens right after I pay?',
+    answer:
+      "You get an email confirmation immediately. Stripe charges you once — nothing is stored for future billing. When pkgr.app opens to your cohort, your Starter access is already waiting; there's no second checkout.",
+  },
+  {
+    question: `What if pkgr.app isn't live by ${ACCESS_DEADLINE}?`,
+    answer:
+      "You're refunded in full, automatically, no questions asked. Card payments go back through Stripe; crypto payments are returned to the wallet you paid from.",
+  },
+  {
+    question: 'I paid with crypto — how do I get confirmed?',
+    answer: `Email your transaction hash to ${contactEmail}. We confirm it against the chain by hand and reply directly — no automated flow to get stuck in.`,
+  },
 ];
 ---
 
@@ -23,26 +75,94 @@ const perks = [
 >
   <Header />
   <main id="main-content">
-    <section class="py-24 sm:py-32">
-      <div class="mx-auto max-w-3xl px-6 text-center">
+    <section class="pt-20 pb-16 sm:pt-28 sm:pb-20">
+      <div class="mx-auto max-w-2xl px-6 text-center" data-reveal>
         <p
-          class="text-accent-700 bg-accent-50 mb-6 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium"
+          class="text-accent-700 bg-accent-50 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
         >
-          Early access · Founding price
+          <svg aria-hidden="true" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" stroke="none">
+            <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"></path>
+          </svg>
+          Founding access · {FOUNDER_SPOTS} spots, once
         </p>
-        <h1 class="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
-          Get the Starter plan for life
+
+        <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
+          Pay once. Keep Starter for life.
         </h1>
-        <p class="mx-auto mt-6 max-w-xl text-lg text-neutral-600">
-          We're capping founding access at {FOUNDER_SPOTS} developers, total. CHF {FOUNDER_PRICE_CHF}
-          buys lifetime access to the Starter plan — the same plan and the same limits as everyone
-          else, just paid once instead of every month. Once pkgr.app launches publicly, Starter moves
-          to a recurring subscription; founding members keep it for free, forever.
+
+        <p class="mx-auto mt-5 max-w-lg text-lg text-neutral-600">
+          CHF {FOUNDER_PRICE_CHF} today locks in the Starter plan forever — before pkgr.app opens to
+          the public and Starter becomes a monthly subscription.
         </p>
-        <p class="mx-auto mt-4 max-w-xl text-sm text-neutral-500">
-          Starter is one of two plans: a free plan with tight limits for trying pkgr.app out, and
-          Starter for regular use, with its own usage limits. Founding access is for Starter — it
-          isn't unlimited, and it isn't every future plan we build.
+
+        <div class="mt-8 flex flex-col items-center gap-4">
+          <a
+            href="#pricing"
+            class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 inline-flex items-center justify-center rounded-full px-7 py-3.5 text-base font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
+          >
+            Get lifetime Starter access
+          </a>
+
+          <ul class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-neutral-500">
+            {
+              trustPoints.map((point) => (
+                <li class="flex items-center gap-1.5">
+                  <svg
+                    aria-hidden="true"
+                    class="h-4 w-4 flex-none text-emerald-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  {point}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t border-neutral-200 bg-neutral-50 py-16 sm:py-24">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-2xl text-center" data-reveal>
+          <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+            What lifetime Starter access includes
+          </h2>
+          <p class="mt-4 text-lg text-neutral-600">
+            One plan, priced once. Nothing hidden, nothing extra — and a free plan sits alongside it
+            at launch for anyone who wants to try pkgr.app before committing to either.
+          </p>
+        </div>
+
+        <div class="mt-14 grid gap-6 sm:grid-cols-2">
+          {
+            included.map((item, i) => (
+              <div
+                class="rounded-xl border border-neutral-200 bg-white p-6"
+                data-reveal
+                style={`--reveal-delay: ${i * 80}ms`}
+              >
+                <h3 class="text-base font-semibold text-neutral-900">{item.title}</h3>
+                <p class="mt-2 text-sm leading-relaxed text-neutral-600">{item.description}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="py-16 sm:py-24">
+      <div class="mx-auto max-w-3xl px-6 text-center" data-reveal>
+        <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+          Claim your spot
+        </h2>
+        <p class="mx-auto mt-4 max-w-xl text-lg text-neutral-600">
+          {FOUNDER_SPOTS} spots, total, at this price — gone for good once the cap is reached or
+          pkgr.app goes public, whichever happens first.
         </p>
 
         <div
@@ -54,9 +174,9 @@ const perks = [
           <span class="text-sm text-neutral-500">one-time · lifetime Starter access</span>
         </div>
 
-        <div class="mt-14 grid gap-6 text-left sm:grid-cols-2">
-          <div class="rounded-2xl border border-neutral-200 p-6">
-            <h2 class="text-base font-semibold text-neutral-900">Pay with card</h2>
+        <div class="mt-10 grid min-w-0 gap-6 text-left sm:grid-cols-2">
+          <div class="min-w-0 rounded-2xl border border-neutral-200 p-6">
+            <h3 class="text-base font-semibold text-neutral-900">Pay with card</h3>
             <p class="mt-2 text-sm text-neutral-600">
               Secure checkout via Stripe. Your email is captured automatically so we can confirm
               your lifetime Starter access.
@@ -67,19 +187,19 @@ const perks = [
               rel="noopener noreferrer"
               class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-6 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Pay CHF 250 with card
+              Pay CHF {FOUNDER_PRICE_CHF} with card
             </a>
           </div>
 
-          <div class="rounded-2xl border border-neutral-200 p-6">
-            <h2 class="text-base font-semibold text-neutral-900">Pay with crypto</h2>
+          <div class="min-w-0 rounded-2xl border border-neutral-200 p-6">
+            <h3 class="text-base font-semibold text-neutral-900">Pay with crypto</h3>
             <p class="mt-2 text-sm text-neutral-600">
               No intermediary — send USDC directly on <strong>Arbitrum One</strong> to the address below.
             </p>
             <div
               class="mt-4 flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5"
             >
-              <code id="crypto-address" class="flex-1 truncate font-mono text-xs text-neutral-700">
+              <code id="crypto-address" class="min-w-0 flex-1 truncate font-mono text-xs text-neutral-700">
                 {cryptoAddress}
               </code>
               <button
@@ -108,34 +228,75 @@ const perks = [
           </div>
         </div>
 
-        <div class="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-left">
-          <p class="text-sm font-semibold text-amber-900">pkgr.app is still under development</p>
-          <p class="mt-1.5 text-sm text-amber-800">
-            If you don't have Starter access by <strong>{ACCESS_DEADLINE}</strong>, we'll
-            refund your CHF {FOUNDER_PRICE_CHF} in full — no questions asked. Card payments are refunded
-            via Stripe; crypto payments are sent back to the wallet you paid from.
+        <div class="mt-8 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-left">
+          <svg
+            aria-hidden="true"
+            class="mt-0.5 h-5 w-5 flex-none text-emerald-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 12.5l1.8 1.8 3.2-4.2"
+            />
+          </svg>
+          <p class="text-sm text-emerald-900">
+            <strong class="font-semibold">Zero-risk guarantee.</strong> pkgr.app is still under
+            development. If you don't have Starter access by <strong>{ACCESS_DEADLINE}</strong>,
+            we'll refund your CHF {FOUNDER_PRICE_CHF} in full — no questions asked.
           </p>
         </div>
+      </div>
+    </section>
 
-        <ul class="mt-8 grid gap-4 text-left sm:grid-cols-3">
+    <section class="border-t border-neutral-200 bg-neutral-50 py-16 sm:py-24">
+      <div class="mx-auto max-w-3xl px-6">
+        <div class="text-center" data-reveal>
+          <h2 class="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+            Frequently asked questions
+          </h2>
+        </div>
+
+        <div class="mt-10 divide-y divide-neutral-200 rounded-2xl border border-neutral-200 bg-white">
           {
-            perks.map((perk) => (
-              <li class="flex gap-3 rounded-xl border border-neutral-200 p-5 text-sm text-neutral-700">
-                <svg
-                  aria-hidden="true"
-                  class="text-accent-600 mt-0.5 h-5 w-5 flex-none"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                <span>{perk}</span>
-              </li>
+            faqs.map((faq) => (
+              <details class="group p-6 open:pb-6 [&_summary::-webkit-details-marker]:hidden">
+                <summary class="focus-visible:ring-accent-600 flex cursor-pointer list-none items-center justify-between gap-4 rounded-sm text-base font-semibold text-neutral-900 focus-visible:ring-2 focus-visible:outline-none">
+                  {faq.question}
+                  <svg
+                    aria-hidden="true"
+                    class="h-5 w-5 flex-none text-neutral-400 transition-transform duration-200 group-open:rotate-45"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </summary>
+                <p class="mt-3 text-sm leading-relaxed text-neutral-600">{faq.answer}</p>
+              </details>
             ))
           }
-        </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16 sm:py-24">
+      <div class="mx-auto max-w-2xl px-6 text-center" data-reveal>
+        <h2 class="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          {FOUNDER_SPOTS} spots, CHF {FOUNDER_PRICE_CHF} once — gone for good after that.
+        </h2>
+        <p class="mt-3 text-neutral-600">Refunded in full if we're not live by {ACCESS_DEADLINE}.</p>
+        <a
+          href="#pricing"
+          class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-8 inline-flex items-center justify-center rounded-full px-7 py-3.5 text-base font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
+        >
+          Get lifetime Starter access
+        </a>
       </div>
     </section>
   </main>
