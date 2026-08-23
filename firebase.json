@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "target": "mobileflow-pkgr",
+    "public": "apps/marketing/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

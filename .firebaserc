@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "genft-6f456"
+  },
+  "targets": {
+    "genft-6f456": {
+      "hosting": {
+        "mobileflow-pkgr": [
+          "mobileflow-pkgr"
+        ]
+      }
+    }
+  }
+}
