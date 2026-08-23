@@ -46,6 +46,7 @@ coverage/
 testem.log
 /typings
 __screenshots__/
+hosting.*
 
 # System files
 .DS_Store
