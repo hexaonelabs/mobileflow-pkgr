@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   output: 'static',
-  site: 'https://mobileflow.dev',
+  site: 'https://pkgr.app',
   vite: {
     plugins: [tailwindcss()],
   },
