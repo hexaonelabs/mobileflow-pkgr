@@ -1,0 +1,48 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="quickstart"
+  title="Quickstart"
+  description="Connect a repository and get your first signed build in four steps."
+>
+  <h2 id="connect-your-repository">1. Connect your repository</h2>
+  <p>
+    Install the pkgr.app GitHub App from your account, then pick the repository and branch you
+    want to build. That's the entire integration — no build config to write by hand. See <a
+      href="/docs/github-app">connecting your repository</a
+    > for what the app can and can't access.
+  </p>
+
+  <h2 id="configure-your-project">2. Configure your project</h2>
+  <p>
+    Choose a platform — Android, iOS, or both — set any environment variables your app needs, and
+    upload signing certificates and keystores to the <a href="/docs/secret-vault">Secret Vault</a
+    >. You only do this once per project.
+  </p>
+
+  <h2 id="trigger-a-build">3. Trigger a build</h2>
+  <p>
+    Push to your configured branch to start a build automatically, or trigger one manually from
+    the dashboard at any time. Choose <code>staging</code> while you're testing, or <code
+      >production</code
+    > when you're ready to ship — see <a href="/docs/builds">triggering &amp; managing builds</a> for
+    the difference.
+  </p>
+
+  <h2 id="install-or-download-your-artifact">4. Install or download your artifact</h2>
+  <p>
+    Staging builds get an install link you can open straight from your phone — see <a
+      href="/docs/ota-installs">installing staging builds</a
+    >. Production builds produce a signed binary ready to upload to the stores, downloadable from
+    the build's detail page.
+  </p>
+
+  <h2 id="not-live-yet">Not live yet?</h2>
+  <p>
+    pkgr.app is currently in early access. <a href="/early-access">Get lifetime access</a> or <a
+      href="/contact">reach out</a
+    > if you run into anything not covered here.
+  </p>
+</DocsLayout>

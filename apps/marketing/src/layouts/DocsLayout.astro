@@ -1,0 +1,203 @@
+---
+import Layout from './Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { DOCS_NAV, DOCS_PAGES, docsHref } from '../data/docs-nav';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Must match a slug in DOCS_PAGES (empty string for the hub page). */
+  slug: string;
+}
+
+const { title, description, slug } = Astro.props;
+
+const currentIndex = DOCS_PAGES.findIndex((page) => page.slug === slug);
+const prev = currentIndex > 0 ? DOCS_PAGES[currentIndex - 1] : null;
+const next =
+  currentIndex >= 0 && currentIndex < DOCS_PAGES.length - 1 ? DOCS_PAGES[currentIndex + 1] : null;
+---
+
+<Layout title={`${title} — pkgr.app docs`} description={description}>
+  <Header />
+  <main id="main-content">
+    <div
+      class="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:grid lg:grid-cols-[240px_minmax(0,1fr)_200px] lg:items-start lg:gap-12"
+    >
+      <!-- Mobile navigation: native disclosure, no JS required. -->
+      <details class="mb-8 rounded-xl border border-neutral-200 bg-neutral-50 lg:hidden">
+        <summary
+          class="focus-visible:ring-accent-600 cursor-pointer list-none rounded-xl px-4 py-3 text-sm font-semibold text-neutral-900 focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden"
+        >
+          Documentation menu
+        </summary>
+        <nav aria-label="Documentation" class="border-t border-neutral-200 px-4 py-4">
+          {
+            DOCS_NAV.map((section) => (
+              <div class="mb-4 last:mb-0">
+                <p class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">
+                  {section.title}
+                </p>
+                <ul class="mt-2 space-y-1">
+                  {section.pages.map((page) => (
+                    <li>
+                      <a
+                        href={docsHref(page.slug)}
+                        aria-current={page.slug === slug ? 'page' : undefined}
+                        class:list={[
+                          'focus-visible:ring-accent-600 block rounded-md px-2 py-1.5 text-sm focus-visible:ring-2 focus-visible:outline-none',
+                          page.slug === slug
+                            ? 'bg-accent-50 text-accent-700 font-semibold'
+                            : 'text-neutral-600 hover:bg-white hover:text-neutral-900',
+                        ]}
+                      >
+                        {page.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </nav>
+      </details>
+
+      <!-- Desktop sidebar -->
+      <nav
+        aria-label="Documentation"
+        class="sticky top-24 hidden max-h-[calc(100vh-7rem)] overflow-y-auto pr-2 lg:block"
+      >
+        {
+          DOCS_NAV.map((section) => (
+            <div class="mb-6 last:mb-0">
+              <p class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">
+                {section.title}
+              </p>
+              <ul class="mt-2 space-y-1 border-l border-neutral-200">
+                {section.pages.map((page) => (
+                  <li>
+                    <a
+                      href={docsHref(page.slug)}
+                      aria-current={page.slug === slug ? 'page' : undefined}
+                      class:list={[
+                        'focus-visible:ring-accent-600 -ml-px block border-l-2 py-1.5 pl-3 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                        page.slug === slug
+                          ? 'border-accent-600 text-accent-700 font-semibold'
+                          : 'border-transparent text-neutral-600 hover:border-neutral-300 hover:text-neutral-900',
+                      ]}
+                    >
+                      {page.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
+
+      <!-- Content -->
+      <div class="min-w-0">
+        <h1 class="text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+          {title}
+        </h1>
+        <p class="mt-3 text-lg text-neutral-600">{description}</p>
+
+        <div
+          id="docs-content"
+          class="prose prose-neutral mt-8 max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-accent-600 prose-a:font-medium hover:prose-a:text-accent-700"
+        >
+          <slot />
+        </div>
+
+        {
+          (prev || next) && (
+            <nav
+              aria-label="Page navigation"
+              class="mt-16 flex flex-col gap-3 border-t border-neutral-200 pt-8 sm:flex-row sm:justify-between"
+            >
+              {prev ? (
+                <a
+                  href={docsHref(prev.slug)}
+                  class="focus-visible:ring-accent-600 group flex-1 rounded-xl border border-neutral-200 p-4 transition-colors hover:border-neutral-300 hover:bg-neutral-50 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <span class="text-xs font-medium text-neutral-400">Previous</span>
+                  <span class="group-hover:text-accent-700 mt-1 block text-sm font-semibold text-neutral-900">
+                    ← {prev.title}
+                  </span>
+                </a>
+              ) : (
+                <span />
+              )}
+              {next ? (
+                <a
+                  href={docsHref(next.slug)}
+                  class="focus-visible:ring-accent-600 group flex-1 rounded-xl border border-neutral-200 p-4 text-right transition-colors hover:border-neutral-300 hover:bg-neutral-50 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <span class="text-xs font-medium text-neutral-400">Next</span>
+                  <span class="group-hover:text-accent-700 mt-1 block text-sm font-semibold text-neutral-900">
+                    {next.title} →
+                  </span>
+                </a>
+              ) : (
+                <span />
+              )}
+            </nav>
+          )
+        }
+      </div>
+
+      <!-- On-page table of contents, populated client-side from the rendered headings. -->
+      <nav aria-label="On this page" class="sticky top-24 mt-12 hidden lg:mt-0 lg:block" id="docs-toc">
+        <p class="text-xs font-semibold tracking-wide text-neutral-400 uppercase">On this page</p>
+        <ul class="mt-3 space-y-1 border-l border-neutral-200 text-sm" id="docs-toc-list"></ul>
+      </nav>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  const list = document.getElementById('docs-toc-list');
+  const toc = document.getElementById('docs-toc');
+  const headings = Array.from(document.querySelectorAll<HTMLElement>('#docs-content h2[id]'));
+
+  if (list && toc && headings.length > 1) {
+    headings.forEach((heading) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `#${heading.id}`;
+      a.textContent = heading.textContent;
+      a.className =
+        '-ml-px block border-l-2 border-transparent py-1 pl-3 text-neutral-500 transition-colors hover:text-neutral-900';
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+
+    const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a'));
+
+    const setActive = (id: string): void => {
+      links.forEach((link) => {
+        const active = link.getAttribute('href') === `#${id}`;
+        link.classList.toggle('border-accent-600', active);
+        link.classList.toggle('text-neutral-900', active);
+        link.classList.toggle('font-medium', active);
+        link.classList.toggle('text-neutral-500', !active);
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        }
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 },
+    );
+
+    headings.forEach((heading) => observer.observe(heading));
+  } else if (toc) {
+    toc.classList.add('lg:hidden');
+  }
+</script>

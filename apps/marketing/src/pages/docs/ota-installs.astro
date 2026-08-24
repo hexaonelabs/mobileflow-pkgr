@@ -1,0 +1,33 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="ota-installs"
+  title="Installing staging builds"
+  description="Ad Hoc install links for staging builds, and how long they stick around."
+>
+  <h2 id="the-install-link">The install link</h2>
+  <p>
+    Once a staging build finishes, pkgr.app hosts the signed artifact itself and shows an
+    "Install" button on the build's detail page. Open that page on the target device to install
+    over the air — no cable, no store submission. Production builds aren't hosted this way; see
+    below.
+  </p>
+
+  <h2 id="artifact-retention">Artifact retention</h2>
+  <p>
+    Hosted staging artifacts are kept for a plan-based window, then deleted automatically: 7 days
+    on Free, 30 on Starter, 90 on Pro, unlimited on Enterprise. The build detail page shows
+    "Available until &lt;date&gt;" while it's live. Once that date passes, the install button
+    reverts to its default state — trigger a new build to get a fresh, installable artifact.
+  </p>
+
+  <h2 id="production-artifacts">Production artifacts</h2>
+  <p>
+    Production builds aren't copied into pkgr.app's own storage — they exist only as the GitHub
+    Actions run's artifact, subject to GitHub's own retention window. Download the signed binary
+    from the build's detail page while that underlying artifact is still available on GitHub's
+    side.
+  </p>
+</DocsLayout>

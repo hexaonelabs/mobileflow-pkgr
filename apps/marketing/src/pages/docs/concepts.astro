@@ -1,0 +1,45 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="concepts"
+  title="Core concepts"
+  description="The five ideas that make the rest of the docs make sense."
+>
+  <h2 id="project">Project</h2>
+  <p>
+    A project pairs one GitHub repository with one branch. It holds its own environment variables,
+    signing secrets, notification settings, and build history. If you need builds from two
+    branches of the same repo — say, <code>develop</code> and <code>main</code> — create two projects.
+  </p>
+
+  <h2 id="build">Build</h2>
+  <p>
+    A build is a single run of the pipeline, scoped to a platform (Android or iOS) and an
+    environment (staging or production). Each one carries a status, a duration, the commit and
+    branch it ran from, and its full logs.
+  </p>
+
+  <h2 id="environment">Environment</h2>
+  <p>
+    <strong>Staging</strong> builds are meant for testing: Android compiles an unsigned debug build,
+    iOS signs Ad Hoc, and the result is installable over the air. <strong>Production</strong> builds
+    are signed release builds, gated by plan — see <a href="/docs/plans">plans &amp; limits</a>.
+  </p>
+
+  <h2 id="secret-vault">Secret Vault</h2>
+  <p>
+    The encrypted store for your iOS certificate, provisioning profile, and Android keystore.
+    Uploaded once per project, reused on every build. Full details in <a href="/docs/secret-vault"
+      >Secret Vault</a
+    >.
+  </p>
+
+  <h2 id="run-token">Run token</h2>
+  <p>
+    A short-lived, single-use credential minted only when a build actually starts. It's the only
+    way secrets ever leave the Vault — a build that was never triggered through pkgr.app, or a
+    token that's already been used, gets nothing back.
+  </p>
+</DocsLayout>

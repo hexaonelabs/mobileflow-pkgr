@@ -1,0 +1,42 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="builds"
+  title="Triggering & managing builds"
+  description="Push to build, or trigger by hand — either way, every run is logged."
+>
+  <h2 id="automatic-builds">Automatic builds on push</h2>
+  <p>
+    Every push to a project's configured branch starts a build for each platform you've enabled. A
+    new push to the same branch cancels the in-flight run for it, so you never end up waiting
+    behind a commit you've already superseded.
+  </p>
+
+  <h2 id="manual-builds">Manual builds</h2>
+  <p>
+    Trigger a build from the project dashboard at any time, without needing a new commit — useful
+    for re-running a build after fixing a secret, or building an older commit again.
+  </p>
+
+  <h2 id="staging-vs-production">Staging vs. production</h2>
+  <p>
+    <strong>Staging</strong> compiles an unsigned Android debug build and an Ad Hoc-signed iOS build,
+    installable over the air — see <a href="/docs/ota-installs">installing staging builds</a>. It's
+    available on every plan, without limit.
+  </p>
+  <p>
+    <strong>Production</strong> produces a signed release build. It's gated server-side by plan: on
+    the Free plan, a production build request is rejected before it ever reaches GitHub, with a clear
+    message explaining why. Starter and above can build production. See <a href="/docs/plans"
+      >plans &amp; limits</a
+    >.
+  </p>
+
+  <h2 id="build-history-and-logs">Build history &amp; logs</h2>
+  <p>
+    Every run keeps its status, duration, commit, branch, and full logs, so you can always tell
+    whether last night's release actually shipped — and why, if it didn't.
+  </p>
+</DocsLayout>

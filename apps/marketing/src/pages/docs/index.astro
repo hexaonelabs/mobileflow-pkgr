@@ -1,0 +1,69 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import { DOCS_NAV, docsHref } from '../../data/docs-nav';
+
+const sections = DOCS_NAV.map((section) => ({
+  ...section,
+  pages: section.pages.filter((page) => page.slug !== ''),
+}));
+
+const slugify = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+---
+
+<DocsLayout
+  slug=""
+  title="Documentation"
+  description="Everything you need to connect a repository, sign your app, and ship builds — without a Mac."
+>
+  <p>
+    This is the complete guide to pkgr.app: how a repository turns into a signed binary, what each
+    environment does differently, and where your certificates actually live. Start with the <a
+      href={docsHref('quickstart')}>quickstart</a
+    > if you're setting up your first project, or jump straight to a chapter below.
+  </p>
+
+  <h2 id="concepts-at-a-glance">Concepts at a glance</h2>
+  <ul>
+    <li>
+      <strong>Project</strong> — a GitHub repository and branch, with its own secrets, environment
+      variables, and build history. See <a href={`${docsHref('concepts')}#project`}
+        >core concepts</a
+      >.
+    </li>
+    <li><strong>Build</strong> — one run of the pipeline, scoped to a platform and an environment.</li>
+    <li>
+      <strong>Environment</strong> — <code>staging</code> builds are installable over the air; <code
+        >production</code
+      > builds are gated by plan.
+    </li>
+    <li>
+      <strong>Secret Vault</strong> — encrypted storage for your iOS certificate, provisioning profile,
+      and Android keystore.
+    </li>
+    <li>
+      <strong>Run token</strong> — a short-lived, single-use credential that hands secrets to one build
+      and nothing else.
+    </li>
+  </ul>
+
+  {
+    sections.map((section) => (
+      <>
+        <h2 id={slugify(section.title)}>{section.title}</h2>
+        <div class="not-prose grid gap-4 sm:grid-cols-2">
+          {section.pages.map((page) => (
+            <a
+              href={docsHref(page.slug)}
+              class="focus-visible:ring-accent-600 group rounded-xl border border-neutral-200 p-5 transition-colors hover:border-accent-300 hover:bg-accent-50/40 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <p class="group-hover:text-accent-700 font-semibold text-neutral-900">
+                {page.title}
+              </p>
+              <p class="mt-1.5 text-sm text-neutral-600">{page.summary}</p>
+            </a>
+          ))}
+        </div>
+      </>
+    ))
+  }
+</DocsLayout>

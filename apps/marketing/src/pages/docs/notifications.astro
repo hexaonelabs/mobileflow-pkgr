@@ -1,0 +1,29 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="notifications"
+  title="Notifications"
+  description="Get pinged in Slack or by email when a build finishes."
+>
+  <h2 id="slack">Slack</h2>
+  <p>
+    Paste an incoming webhook URL into the project's Notifications settings, choose which events
+    to send, and save. A "Send test message" action confirms the webhook works before you rely on
+    it.
+  </p>
+
+  <h2 id="email">Email</h2>
+  <p>
+    Email notifications go out for failed builds by default, using the address on your account —
+    no extra configuration needed.
+  </p>
+
+  <h2 id="events">Events</h2>
+  <ul>
+    <li>Build started</li>
+    <li>Build succeeded</li>
+    <li>Build failed</li>
+  </ul>
+</DocsLayout>

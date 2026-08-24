@@ -1,0 +1,39 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="android-signing"
+  title="Android signing"
+  description="Upload a keystore once, get signed .aab files from then on."
+>
+  <h2 id="what-you-need">What you need</h2>
+  <p>
+    A Java keystore (<code>.jks</code> or <code>.keystore</code>) along with its store password,
+    key alias, and key password.
+  </p>
+
+  <h2 id="uploading-your-keystore">Uploading your keystore</h2>
+  <p>
+    From the project's Secrets screen, upload the keystore file and its credentials once —
+    encrypted at rest the same way as your iOS secrets. See <a href="/docs/secret-vault"
+      >Secret Vault</a
+    >.
+  </p>
+
+  <h2 id="staging-vs-production">Staging vs. production</h2>
+  <p>
+    Staging Android builds are unsigned debug builds — no secrets requested at all, so you can
+    test a project before ever touching the Vault. Production builds request your keystore and
+    produce a signed <code>.aab</code>, ready to upload to Google Play, gated by plan — see <a
+      href="/docs/plans">plans &amp; limits</a
+    >.
+  </p>
+
+  <h2 id="if-you-lose-your-keystore">If you lose your keystore</h2>
+  <p>
+    A Google Play listing is tied to the keystore that signed its first release — losing it means
+    you can't publish an update under that same listing ever again. pkgr.app stores your keystore
+    encrypted for signing builds, but it isn't a backup service: keep your own secure copy too.
+  </p>
+</DocsLayout>

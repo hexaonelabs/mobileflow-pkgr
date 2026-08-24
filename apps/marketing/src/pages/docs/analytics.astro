@@ -1,0 +1,30 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="analytics"
+  title="Analytics"
+  description="Success rate, duration, and trends for every project."
+>
+  <h2 id="whats-tracked">What's tracked</h2>
+  <p>
+    Every finished build — success, failed, or cancelled — is recorded: total builds, success
+    rate, and average duration, broken down by platform (Android/iOS) and environment
+    (staging/production).
+  </p>
+
+  <h2 id="where-to-find-it">Where to find it</h2>
+  <p>
+    A project's Analytics tab shows the current month's summary, plus a trend chart covering the
+    last 30 days.
+  </p>
+
+  <h2 id="how-it-stays-accurate">How it stays accurate</h2>
+  <p>
+    pkgr.app listens for GitHub's own build-completed webhook, in addition to polling from the
+    dashboard, so a build is recorded whether or not anyone has the app open when it finishes. One
+    caveat: builds that finished before this webhook went live weren't backfilled, so very old
+    projects may show a gap for that early period.
+  </p>
+</DocsLayout>

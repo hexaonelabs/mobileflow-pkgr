@@ -1,0 +1,38 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="github-app"
+  title="Connecting your repository"
+  description="Install the GitHub App, pick a branch, and you're done — for good."
+>
+  <h2 id="installing-the-app">Installing the GitHub App</h2>
+  <p>
+    From the dashboard, "Connect GitHub" starts GitHub's own App installation flow. You choose
+    which repositories pkgr.app can access — all of them, or a hand-picked selection — directly on
+    GitHub's side, not inside pkgr.app.
+  </p>
+
+  <h2 id="one-branch-per-project">One branch per project</h2>
+  <p>
+    Each project tracks exactly one repository and branch. Want builds from more than one branch?
+    Create a second project pointing at the same repo — each keeps its own secrets and history
+    independently.
+  </p>
+
+  <h2 id="what-this-unlocks">What this unlocks</h2>
+  <p>
+    Once connected, pushes to the configured branch can start builds automatically, and you can
+    trigger builds manually at any time — see <a href="/docs/builds"
+      >triggering &amp; managing builds</a
+    >.
+  </p>
+
+  <h2 id="revoking-access">Revoking access</h2>
+  <p>
+    Revoke access anytime from GitHub's own "Installed GitHub Apps" settings. pkgr.app immediately
+    loses the ability to read the repository or trigger workflows. Your existing build history and
+    artifacts stay put until you delete the project yourself.
+  </p>
+</DocsLayout>

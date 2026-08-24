@@ -1,0 +1,48 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="faq"
+  title="FAQ & troubleshooting"
+  description="Common signing errors, and how to get unstuck."
+>
+  <h2 id="no-signing-certificate-found">"No signing certificate 'iOS Distribution' found"</h2>
+  <p>
+    Your Apple Distribution certificate hasn't been uploaded to this project's Vault yet, or was
+    uploaded to a different project. Check the Secrets screen and re-upload if needed — see <a
+      href="/docs/ios-signing">iOS signing</a
+    >.
+  </p>
+
+  <h2 id="provisioning-profile-expired">Provisioning profile expired</h2>
+  <p>
+    Apple provisioning profiles carry a fixed expiry date. Generate a new one from your Apple
+    Developer account and upload it to the Vault — pkgr.app doesn't auto-renew certificates or
+    profiles on your behalf today.
+  </p>
+
+  <h2 id="i-lost-my-android-keystore">I lost my Android keystore</h2>
+  <p>
+    See <a href="/docs/android-signing#if-you-lose-your-keystore">Android signing</a> — pkgr.app can't
+    recover a keystore it was never given a backup of.
+  </p>
+
+  <h2 id="a-build-seems-stuck-in-queued">A build seems stuck in "queued"</h2>
+  <p>
+    Check GitHub Actions directly for the repository. pkgr.app triggers the run, but the actual
+    queue is GitHub's own runner capacity — not something pkgr.app controls.
+  </p>
+
+  <h2 id="my-staging-install-link-disappeared">My staging install link disappeared</h2>
+  <p>
+    Staging artifacts expire on a plan-based schedule — see <a href="/docs/ota-installs#artifact-retention"
+      >artifact retention</a
+    >. Trigger a new build to get a fresh, installable one.
+  </p>
+
+  <h2 id="still-stuck">Still stuck?</h2>
+  <p>
+    Check <a href="/status">status</a> for ongoing incidents, or <a href="/contact">reach out</a> directly.
+  </p>
+</DocsLayout>

@@ -1,0 +1,50 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="plans"
+  title="Plans & limits"
+  description="What each plan unlocks, today and later."
+>
+  <h2 id="today-early-access">Today: early access</h2>
+  <p>
+    pkgr.app is currently in early access. The only way in right now is the founding offer — a
+    one-time payment for lifetime access to the Starter plan, described on the <a
+      href="/early-access">early access page</a
+    >. A free plan, with a tighter cap, opens alongside it at public launch.
+  </p>
+
+  <h2 id="how-plans-differ">How plans differ</h2>
+  <ul>
+    <li>
+      <strong>Production builds</strong> — the Free plan can't request one; the API rejects it
+      before it ever reaches GitHub. Starter and above can build production.
+    </li>
+    <li>
+      <strong>Projects</strong> — Free is capped at a small number of projects; Starter and Pro
+      raise or remove that cap.
+    </li>
+    <li>
+      <strong>Artifact retention</strong> — staging install links stick around longer on higher
+      plans. See <a href="/docs/ota-installs">installing staging builds</a>.
+    </li>
+    <li>
+      <strong>Notifications &amp; analytics</strong> — Slack notifications and deeper analytics
+      (trends, breakdowns) unlock from Starter and Pro respectively.
+    </li>
+  </ul>
+
+  <h2 id="checking-your-plan">Checking your plan</h2>
+  <p>
+    Your current plan is shown in account settings. Features you don't have access to stay visible
+    in the UI, blocked with a clear message when you try to use them — nothing is hidden outright.
+  </p>
+
+  <h2 id="upgrading">Upgrading</h2>
+  <p>
+    Current pricing and how to get access lives on the <a href="/early-access"
+      >early access page</a
+    >. For anything else, <a href="/contact">get in touch</a>.
+  </p>
+</DocsLayout>

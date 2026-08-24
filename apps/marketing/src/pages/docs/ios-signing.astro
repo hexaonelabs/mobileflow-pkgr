@@ -1,0 +1,51 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+---
+
+<DocsLayout
+  slug="ios-signing"
+  title="iOS signing"
+  description="What pkgr.app needs to produce a signed .ipa for staging and production."
+>
+  <h2 id="what-you-need">What you need</h2>
+  <ul>
+    <li>An Apple Developer Program membership</li>
+    <li>
+      An Apple Distribution certificate (<code>.p12</code>) — generate one from the <a
+        href="/docs/secret-vault#generating-an-ios-certificate">Secret Vault</a
+      >, or upload your own. One certificate covers both environments.
+    </li>
+    <li>An Ad Hoc provisioning profile, for <code>staging</code> builds</li>
+    <li>An App Store provisioning profile, for <code>production</code> builds</li>
+  </ul>
+
+  <h2 id="environment-aware-exports">Environment-aware exports</h2>
+  <p>
+    The same Apple Distribution certificate signs both environments — what changes is the
+    provisioning profile. <code>staging</code> builds export Ad Hoc, signed for the device UDIDs
+    listed in your Ad Hoc profile, and stay installable over the air. <code>production</code>
+    builds export App Store, using your App Store provisioning profile, and produce an <code
+      >.ipa</code
+    > that's ready to upload to App Store Connect. Android isn't affected by any of this — it already
+    signs with your uploaded keystore for production, unrelated to iOS profiles.
+  </p>
+
+  <h2 id="uploading-to-the-vault">Uploading to the Vault</h2>
+  <p>
+    From the project's Secrets screen, upload your certificate once — it isn't tied to an
+    environment. Provisioning profiles are: when you upload one, pick <code>Staging</code> or
+    <code>Production</code> so pkgr.app knows which export it belongs to. Uploading a new profile
+    only replaces the one for that same environment; the other stays untouched. Every subsequent
+    build reuses whichever profile matches its environment, delivered via a run token — see <a
+      href="/docs/secret-vault">Secret Vault</a
+    >.
+  </p>
+
+  <h2 id="adding-a-device">Adding a device to the Ad Hoc profile</h2>
+  <p>
+    Adding a UDID means regenerating the Ad Hoc provisioning profile in your Apple Developer
+    account and re-uploading it as your <code>Staging</code> profile — pkgr.app doesn't manage
+    device registration on your behalf. This only applies to the Ad Hoc profile; App Store
+    profiles don't list devices.
+  </p>
+</DocsLayout>
