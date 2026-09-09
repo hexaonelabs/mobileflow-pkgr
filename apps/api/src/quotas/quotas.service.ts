@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FirestoreService } from '../firestore/firestore.service';
-import type { Plan } from '../users/user.model';
+import { Plan } from '../users/user.model';
 import {
   DEFAULT_PLAN_QUOTAS,
   PLAN_QUOTAS_COLLECTION,
@@ -29,6 +29,8 @@ export class QuotasService {
 
   // Auto-seed au premier appel plutôt qu'une étape manuelle de config Firestore — même idiome
   // que BillingService.requireBilling() qui rattrape un état manquant à la volée.
+  // Merge avec DEFAULT_PLAN_QUOTAS par plan : un doc déjà existant (créé avant l'ajout d'un
+  // nouveau champ de quota) ne doit pas faire retomber ce champ à `undefined`.
   private async getQuotas(): Promise<PlanQuotasDocument> {
     const ref = this.firestore.db.collection(PLAN_QUOTAS_COLLECTION).doc(PLAN_QUOTAS_DOC_ID);
     const doc = await ref.get();
@@ -36,6 +38,12 @@ export class QuotasService {
       await ref.set(DEFAULT_PLAN_QUOTAS);
       return DEFAULT_PLAN_QUOTAS;
     }
-    return doc.data() as PlanQuotasDocument;
+    const stored = doc.data() as Partial<PlanQuotasDocument>;
+    return {
+      [Plan.free]: { ...DEFAULT_PLAN_QUOTAS[Plan.free], ...stored[Plan.free] },
+      [Plan.starter]: { ...DEFAULT_PLAN_QUOTAS[Plan.starter], ...stored[Plan.starter] },
+      [Plan.pro]: { ...DEFAULT_PLAN_QUOTAS[Plan.pro], ...stored[Plan.pro] },
+      [Plan.enterprise]: { ...DEFAULT_PLAN_QUOTAS[Plan.enterprise], ...stored[Plan.enterprise] },
+    };
   }
 }

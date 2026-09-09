@@ -91,4 +91,18 @@ describe('QuotasService', () => {
     await expect(service.getAnalyticsHistoryMonths(Plan.starter)).resolves.toBeNull();
     expect(store.get(PLAN_QUOTAS_DOC_ID)?.free.analyticsHistoryMonths).toBe(1);
   });
+
+  it('backfills analyticsHistoryMonths with the default when reading a legacy document that predates it', async () => {
+    const legacyDoc = {
+      free: { projectsLimit: 1, artifactRetentionDays: 7 },
+      starter: { projectsLimit: 5, artifactRetentionDays: 30 },
+      pro: { projectsLimit: null, artifactRetentionDays: 90 },
+      enterprise: { projectsLimit: null, artifactRetentionDays: null },
+    } as unknown as PlanQuotasDocument;
+    const { db } = createFirestore(legacyDoc);
+    const service = new QuotasService({ db });
+
+    await expect(service.getAnalyticsHistoryMonths(Plan.free)).resolves.toBe(1);
+    await expect(service.getAnalyticsHistoryMonths(Plan.starter)).resolves.toBeNull();
+  });
 });
