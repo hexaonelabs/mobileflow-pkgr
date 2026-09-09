@@ -22,6 +22,11 @@ export class QuotasService {
     return quotas[plan]?.artifactRetentionDays ?? null;
   }
 
+  async getAnalyticsHistoryMonths(plan: Plan): Promise<number | null> {
+    const quotas = await this.getQuotas();
+    return quotas[plan]?.analyticsHistoryMonths ?? null;
+  }
+
   // Auto-seed au premier appel plutôt qu'une étape manuelle de config Firestore — même idiome
   // que BillingService.requireBilling() qui rattrape un état manquant à la volée.
   private async getQuotas(): Promise<PlanQuotasDocument> {

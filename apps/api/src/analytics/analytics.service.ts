@@ -3,6 +3,8 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { FirestoreService } from '../firestore/firestore.service';
 import { PROJECTS_COLLECTION, Platform, type ProjectDocument } from '../projects/project.model';
 import { BuildStatus, Environment } from '../builds/build.model';
+import { QuotasService } from '../quotas/quotas.service';
+import type { Plan } from '../users/user.model';
 import {
   ANALYTICS_COLLECTION,
   type AnalyticsBreakdownResponse,
@@ -11,7 +13,6 @@ import {
   type BuildAnalyticsDocument,
 } from './build-analytics.model';
 
-const TRENDS_MONTHS = 3;
 const DAILY_BREAKDOWN_DAYS = 30;
 
 type DailyBreakdownEntry = BuildAnalyticsDocument['dailyBreakdown'][number];
@@ -20,7 +21,10 @@ type AnalyticsStats = Omit<BuildAnalyticsDocument, 'createdAt' | 'updatedAt' | '
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly firestore: FirestoreService) {}
+  constructor(
+    private readonly firestore: FirestoreService,
+    private readonly quotas: QuotasService,
+  ) {}
 
   private get analyticsCollection() {
     return this.firestore.db.collection(ANALYTICS_COLLECTION);
@@ -114,39 +118,70 @@ export class AnalyticsService {
     });
   }
 
-  async getSummary(userId: string, projectId: string): Promise<AnalyticsSummaryResponse> {
+  async getSummary(
+    userId: string,
+    projectId: string,
+    plan: Plan,
+  ): Promise<AnalyticsSummaryResponse> {
     await this.getOwnedProject(userId, projectId);
     const { year, month } = this.getCurrentYearMonth();
-    const doc = await this.fetchMonthDocument(userId, projectId, year, month);
+    if (await this.isCurrentMonthOnly(plan)) {
+      const doc = await this.fetchMonthDocument(userId, projectId, year, month);
+      return {
+        ...(doc ? this.toStats(doc) : this.emptyStats(userId, projectId, year, month)),
+        createdAt: doc ? this.toIsoString(doc.createdAt) : null,
+        updatedAt: doc ? this.toIsoString(doc.updatedAt) : null,
+      };
+    }
+
+    const docs = await this.fetchAllDocuments(userId, projectId);
     return {
-      ...(doc ? this.toStats(doc) : this.emptyStats(userId, projectId, year, month)),
-      createdAt: doc ? this.toIsoString(doc.createdAt) : null,
-      updatedAt: doc ? this.toIsoString(doc.updatedAt) : null,
+      ...this.aggregateStats(userId, projectId, year, month, docs),
+      createdAt: null,
+      updatedAt: null,
     };
   }
 
-  async getTrends(userId: string, projectId: string): Promise<AnalyticsTrendsResponse> {
+  async getTrends(userId: string, projectId: string, plan: Plan): Promise<AnalyticsTrendsResponse> {
     await this.getOwnedProject(userId, projectId);
-    const { year, month } = this.getCurrentYearMonth();
-    const months = await Promise.all(
-      this.lastNMonths(year, month, TRENDS_MONTHS).map(async ({ year: y, month: m }) => {
-        const stats = await this.getMonthStats(userId, projectId, y, m);
-        return {
-          year: y,
-          month: m,
-          total: stats.totalBuilds,
-          successful: stats.totalSuccessful,
-          successRate: stats.successRate,
-        };
-      }),
-    );
-    return { months };
+    if (await this.isCurrentMonthOnly(plan)) {
+      const { year, month } = this.getCurrentYearMonth();
+      const stats = await this.getMonthStats(userId, projectId, year, month);
+      return {
+        months: [
+          {
+            year,
+            month,
+            total: stats.totalBuilds,
+            successful: stats.totalSuccessful,
+            successRate: stats.successRate,
+          },
+        ],
+      };
+    }
+
+    const docs = await this.fetchAllDocuments(userId, projectId);
+    return {
+      months: docs.map((doc) => ({
+        year: doc.year,
+        month: doc.month,
+        total: doc.totalBuilds,
+        successful: doc.totalSuccessful,
+        successRate: doc.successRate,
+      })),
+    };
   }
 
-  async getBreakdown(userId: string, projectId: string): Promise<AnalyticsBreakdownResponse> {
+  async getBreakdown(
+    userId: string,
+    projectId: string,
+    plan: Plan,
+  ): Promise<AnalyticsBreakdownResponse> {
     await this.getOwnedProject(userId, projectId);
     const { year, month } = this.getCurrentYearMonth();
-    const stats = await this.getMonthStats(userId, projectId, year, month);
+    const stats = (await this.isCurrentMonthOnly(plan))
+      ? await this.getMonthStats(userId, projectId, year, month)
+      : this.aggregateStats(userId, projectId, year, month, await this.fetchAllDocuments(userId, projectId));
     return {
       platform: {
         ios: this.toRate(stats.byPlatform.ios),
@@ -157,6 +192,66 @@ export class AnalyticsService {
         production: this.toRate(stats.byEnvironment.production),
       },
     };
+  }
+
+  // Free plan : historique limité au mois courant. Autres plans : illimité (all time).
+  private async isCurrentMonthOnly(plan: Plan): Promise<boolean> {
+    return (await this.quotas.getAnalyticsHistoryMonths(plan)) === 1;
+  }
+
+  private async fetchAllDocuments(
+    userId: string,
+    projectId: string,
+  ): Promise<BuildAnalyticsDocument[]> {
+    const snap = await this.analyticsCollection
+      .where('userId', '==', userId)
+      .where('projectId', '==', projectId)
+      .get();
+    return snap.docs
+      .map((doc) => doc.data() as BuildAnalyticsDocument)
+      .sort((a, b) => a.year - b.year || a.month - b.month);
+  }
+
+  private aggregateStats(
+    userId: string,
+    projectId: string,
+    year: number,
+    month: number,
+    docs: BuildAnalyticsDocument[],
+  ): AnalyticsStats {
+    if (docs.length === 0) return this.emptyStats(userId, projectId, year, month);
+
+    const durationSum = docs.reduce((sum, doc) => sum + doc.avgDurationSeconds * doc.totalBuilds, 0);
+    const totalBuilds = docs.reduce((sum, doc) => sum + doc.totalBuilds, 0);
+    const totalSuccessful = docs.reduce((sum, doc) => sum + doc.totalSuccessful, 0);
+
+    return {
+      userId,
+      projectId,
+      year,
+      month,
+      totalBuilds,
+      totalSuccessful,
+      totalFailed: docs.reduce((sum, doc) => sum + doc.totalFailed, 0),
+      totalCancelled: docs.reduce((sum, doc) => sum + doc.totalCancelled, 0),
+      byPlatform: {
+        ios: this.mergePlatformStats(docs.map((doc) => doc.byPlatform.ios)),
+        android: this.mergePlatformStats(docs.map((doc) => doc.byPlatform.android)),
+      },
+      byEnvironment: {
+        staging: this.mergePlatformStats(docs.map((doc) => doc.byEnvironment.staging)),
+        production: this.mergePlatformStats(docs.map((doc) => doc.byEnvironment.production)),
+      },
+      avgDurationSeconds: totalBuilds > 0 ? Math.round(durationSum / totalBuilds) : 0,
+      successRate: totalBuilds > 0 ? Math.round((totalSuccessful / totalBuilds) * 1000) / 10 : 0,
+    };
+  }
+
+  private mergePlatformStats(stats: PlatformOrEnvironmentStats[]): PlatformOrEnvironmentStats {
+    return stats.reduce(
+      (acc, s) => ({ total: acc.total + s.total, successful: acc.successful + s.successful }),
+      { total: 0, successful: 0 },
+    );
   }
 
   private async getMonthStats(
@@ -284,25 +379,6 @@ export class AnalyticsService {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
-  }
-
-  private lastNMonths(
-    year: number,
-    month: number,
-    count: number,
-  ): Array<{ year: number; month: number }> {
-    return Array.from({ length: count }, (_, i) =>
-      this.shiftYearMonth(year, month, -(count - 1 - i)),
-    );
-  }
-
-  private shiftYearMonth(
-    year: number,
-    month: number,
-    offset: number,
-  ): { year: number; month: number } {
-    const totalMonths = year * 12 + (month - 1) + offset;
-    return { year: Math.floor(totalMonths / 12), month: (totalMonths % 12) + 1 };
   }
 
   private getCurrentYearMonth(): { year: number; month: number } {

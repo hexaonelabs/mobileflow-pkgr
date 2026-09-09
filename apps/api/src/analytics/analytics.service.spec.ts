@@ -2,8 +2,17 @@ import { NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { BuildStatus, Environment } from '../builds/build.model';
 import { Platform, PROJECTS_COLLECTION } from '../projects/project.model';
+import { Plan } from '../users/user.model';
 import type { BuildAnalyticsDocument } from './build-analytics.model';
 import type { FirestoreService } from '../firestore/firestore.service';
+import type { QuotasService } from '../quotas/quotas.service';
+
+// Free = mois courant uniquement, tous les autres plans = historique complet (all time).
+function createFakeQuotas(): QuotasService {
+  return {
+    getAnalyticsHistoryMonths: (plan: Plan) => Promise.resolve(plan === Plan.free ? 1 : null),
+  } as unknown as QuotasService;
+}
 
 interface FakeDocRef {
   id: string;
@@ -34,6 +43,17 @@ function createAnalyticsFirestoreHarness(options: { projectFound?: boolean } = {
         const entry = store.get(id);
         return Promise.resolve({ exists: entry !== undefined, data: () => entry?.data });
       },
+    }),
+    // Émule les deux .where() equality chainés utilisés par fetchAllDocuments().
+    where: (field: 'userId' | 'projectId', _op: '==', value: string) => ({
+      where: (field2: 'userId' | 'projectId', _op2: '==', value2: string) => ({
+        get: () => {
+          const docs = [...store.values()]
+            .filter((entry) => entry.data[field] === value && entry.data[field2] === value2)
+            .map((entry) => ({ data: () => entry.data }));
+          return Promise.resolve({ docs });
+        },
+      }),
     }),
   };
 
@@ -96,16 +116,18 @@ function currentYearMonth(): { year: number; month: number } {
 describe('AnalyticsService', () => {
   it('throws when the project is not owned by the user', async () => {
     const { db } = createAnalyticsFirestoreHarness({ projectFound: false });
-    const service = new AnalyticsService({ db });
+    const service = new AnalyticsService({ db }, createFakeQuotas());
 
-    await expect(service.getSummary('user1', 'proj1')).rejects.toThrow(NotFoundException);
+    await expect(service.getSummary('user1', 'proj1', Plan.free)).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it('getSummary returns zeroed defaults when no build has been recorded yet', async () => {
     const { db } = createAnalyticsFirestoreHarness();
-    const service = new AnalyticsService({ db });
+    const service = new AnalyticsService({ db }, createFakeQuotas());
 
-    const summary = await service.getSummary('user1', 'proj1');
+    const summary = await service.getSummary('user1', 'proj1', Plan.free);
 
     expect(summary.totalBuilds).toBe(0);
     expect(summary.successRate).toBe(0);
@@ -117,7 +139,7 @@ describe('AnalyticsService', () => {
 
   it('recordBuild increments totals, per-platform/environment stats, and dailyBreakdown', async () => {
     const { db } = createAnalyticsFirestoreHarness();
-    const service = new AnalyticsService({ db });
+    const service = new AnalyticsService({ db }, createFakeQuotas());
 
     await service.recordBuild('user1', 'proj1', {
       platform: Platform.ios,
@@ -126,7 +148,7 @@ describe('AnalyticsService', () => {
       durationSeconds: 120,
     });
 
-    const summary = await service.getSummary('user1', 'proj1');
+    const summary = await service.getSummary('user1', 'proj1', Plan.free);
     expect(summary.totalBuilds).toBe(1);
     expect(summary.totalSuccessful).toBe(1);
     expect(summary.byPlatform.ios).toEqual({ total: 1, successful: 1 });
@@ -134,14 +156,14 @@ describe('AnalyticsService', () => {
     expect(summary.avgDurationSeconds).toBe(120);
     expect(summary.successRate).toBe(100);
 
-    const breakdown = await service.getBreakdown('user1', 'proj1');
+    const breakdown = await service.getBreakdown('user1', 'proj1', Plan.free);
     expect(breakdown.platform.ios).toEqual({ count: 1, rate: 100 });
     expect(breakdown.environment.staging).toEqual({ count: 1, rate: 100 });
   });
 
   it('two concurrent recordBuild() calls the same day both land in dailyBreakdown (no lost update)', async () => {
     const { db, store } = createAnalyticsFirestoreHarness();
-    const service = new AnalyticsService({ db });
+    const service = new AnalyticsService({ db }, createFakeQuotas());
 
     await Promise.all([
       service.recordBuild('user1', 'proj1', {
@@ -158,7 +180,7 @@ describe('AnalyticsService', () => {
       }),
     ]);
 
-    const summary = await service.getSummary('user1', 'proj1');
+    const summary = await service.getSummary('user1', 'proj1', Plan.free);
     expect(summary.totalBuilds).toBe(2);
     expect(summary.totalSuccessful).toBe(1);
     expect(summary.totalFailed).toBe(1);
@@ -172,9 +194,9 @@ describe('AnalyticsService', () => {
     expect(rawDoc?.dailyBreakdown[0].successful).toBe(1);
   });
 
-  it('getTrends returns the last 3 months, oldest first, zeroed when no data exists', async () => {
+  it('getTrends on the free plan only returns the current month', async () => {
     const { db } = createAnalyticsFirestoreHarness();
-    const service = new AnalyticsService({ db });
+    const service = new AnalyticsService({ db }, createFakeQuotas());
 
     await service.recordBuild('user1', 'proj1', {
       platform: Platform.ios,
@@ -183,10 +205,58 @@ describe('AnalyticsService', () => {
       durationSeconds: 60,
     });
 
-    const trends = await service.getTrends('user1', 'proj1');
-    expect(trends.months).toHaveLength(3);
-    expect(trends.months[2].total).toBe(1);
-    expect(trends.months[2].successRate).toBe(100);
-    expect(trends.months[0].total).toBe(0);
+    const trends = await service.getTrends('user1', 'proj1', Plan.free);
+    expect(trends.months).toHaveLength(1);
+    expect(trends.months[0]).toMatchObject(currentYearMonth());
+    expect(trends.months[0].total).toBe(1);
+    expect(trends.months[0].successRate).toBe(100);
+  });
+
+  it('getSummary/getTrends on a paid plan aggregate across all recorded months, not just the current one', async () => {
+    const { db, store } = createAnalyticsFirestoreHarness();
+    const service = new AnalyticsService({ db }, createFakeQuotas());
+
+    // Build enregistré "le mois dernier" : on écrit directement le document analytics
+    // correspondant plutôt que de mocker Date, pour rester simple.
+    const { year, month } = currentYearMonth();
+    const lastMonth = month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
+    store.set(analyticsDocId('user1', 'proj1', lastMonth.year, lastMonth.month), {
+      version: 1,
+      data: {
+        userId: 'user1',
+        projectId: 'proj1',
+        year: lastMonth.year,
+        month: lastMonth.month,
+        totalBuilds: 1,
+        totalSuccessful: 1,
+        totalFailed: 0,
+        totalCancelled: 0,
+        byPlatform: {
+          ios: { total: 1, successful: 1 },
+          android: { total: 0, successful: 0 },
+        },
+        byEnvironment: {
+          staging: { total: 1, successful: 1 },
+          production: { total: 0, successful: 0 },
+        },
+        dailyBreakdown: [],
+        avgDurationSeconds: 90,
+        successRate: 100,
+        createdAt: undefined as never,
+        updatedAt: undefined as never,
+      },
+    });
+
+    const summary = await service.getSummary('user1', 'proj1', Plan.starter);
+    expect(summary.totalBuilds).toBe(1);
+    expect(summary.byPlatform.ios).toEqual({ total: 1, successful: 1 });
+
+    const trends = await service.getTrends('user1', 'proj1', Plan.starter);
+    expect(trends.months).toHaveLength(1);
+    expect(trends.months[0]).toMatchObject({ year: lastMonth.year, month: lastMonth.month });
+
+    // Sur le plan Free, ce même build du mois dernier reste invisible.
+    const freeSummary = await service.getSummary('user1', 'proj1', Plan.free);
+    expect(freeSummary.totalBuilds).toBe(0);
   });
 });

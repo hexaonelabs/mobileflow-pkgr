@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  computed,
   effect,
   inject,
   input,
@@ -30,14 +31,16 @@ const MONTH_LABELS = [
 ];
 
 // L'API n'expose pas le `dailyBreakdown` (30 derniers jours) via un endpoint —
-// seul `getTrends()` (3 derniers mois) est public. Le graphique de tendance
-// est donc mensuel plutôt que journalier.
+// seul `getTrends()` est public. Le graphique de tendance est donc mensuel plutôt
+// que journalier. La fenêtre retournée dépend du plan de l'utilisateur côté backend
+// (mois courant pour Free, tout l'historique pour Starter+) : le titre s'adapte au
+// nombre de mois reçus plutôt que de dupliquer cette règle ici.
 @Component({
   selector: 'app-analytics-charts',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="rounded-2xl border border-neutral-200 bg-white p-5">
-      <h3 class="text-sm font-semibold text-neutral-900">Trends (last 3 months)</h3>
+      <h3 class="text-sm font-semibold text-neutral-900">{{ chartTitle() }}</h3>
       @if (errorMessage()) {
         <p role="alert" class="mt-2 text-sm text-red-700">{{ errorMessage() }}</p>
       } @else if (!loaded()) {
@@ -58,6 +61,10 @@ export class AnalyticsChartsComponent implements OnDestroy {
 
   protected readonly loaded = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly monthsCount = signal(0);
+  protected readonly chartTitle = computed(() =>
+    this.monthsCount() <= 1 ? 'Trends (current month)' : 'Trends (all time)',
+  );
 
   constructor() {
     effect(() => {
@@ -70,6 +77,7 @@ export class AnalyticsChartsComponent implements OnDestroy {
       this.projectsService
         .getAnalyticsTrends(projectId)
         .then((trends) => {
+          this.monthsCount.set(trends.months.length);
           this.renderChart(canvas.nativeElement, trends.months);
           this.loaded.set(true);
         })

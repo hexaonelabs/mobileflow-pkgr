@@ -23,7 +23,7 @@ describe('AnalyticsController', () => {
 
     const result = await controller.getSummary(requestFor(user), 'proj1');
 
-    expect(analyticsService.getSummary).toHaveBeenCalledWith('user1', 'proj1');
+    expect(analyticsService.getSummary).toHaveBeenCalledWith('user1', 'proj1', 'free');
     expect(result).toEqual({ totalBuilds: 1 });
   });
 
@@ -33,7 +33,7 @@ describe('AnalyticsController', () => {
 
     await controller.getTrends(requestFor(user), 'proj1');
 
-    expect(analyticsService.getTrends).toHaveBeenCalledWith('user1', 'proj1');
+    expect(analyticsService.getTrends).toHaveBeenCalledWith('user1', 'proj1', 'free');
   });
 
   it('getBreakdown delegates to AnalyticsService.getBreakdown', async () => {
@@ -42,6 +42,6 @@ describe('AnalyticsController', () => {
 
     await controller.getBreakdown(requestFor(user), 'proj1');
 
-    expect(analyticsService.getBreakdown).toHaveBeenCalledWith('user1', 'proj1');
+    expect(analyticsService.getBreakdown).toHaveBeenCalledWith('user1', 'proj1', 'free');
   });
 });
