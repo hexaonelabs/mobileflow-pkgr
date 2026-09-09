@@ -29,6 +29,9 @@ export interface UserBilling {
   stripeSubscriptionId: string;
   status: SubscriptionStatus;
   currentPeriodEnd: Timestamp;
+  // Achat founder (one-time, hors cycle d'abonnement) : le plan ne doit plus jamais être
+  // rétrogradé par un event de subscription (ex: l'ancienne subscription free annulée).
+  lifetime?: boolean;
 }
 
 export interface UserDocument {

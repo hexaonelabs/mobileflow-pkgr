@@ -4,8 +4,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
 
-const stripeLink =
-  import.meta.env.PUBLIC_STRIPE_PAYMENT_LINK ?? 'https://buy.stripe.com/REPLACE_WITH_YOUR_LINK';
+const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'https://app.pkgr.app';
+const founderCheckoutUrl = `${appUrl}/auth/register?intent=founder`;
 const cryptoAddress =
   import.meta.env.PUBLIC_CRYPTO_USDC_ADDRESS ?? '0xCb78f41D24bA383BfD956F0808F2ED8Ba4F9DD01';
 const contactEmail = 'contact@pkgr.app';
@@ -178,16 +178,14 @@ const faqs = [
           <div class="min-w-0 rounded-2xl border border-neutral-200 p-6">
             <h3 class="text-base font-semibold text-neutral-900">Pay with card</h3>
             <p class="mt-2 text-sm text-neutral-600">
-              Secure checkout via Stripe. Your email is captured automatically so we can confirm
-              your lifetime Starter access.
+              Create your pkgr.app account first, then pay via secure Stripe checkout — your
+              lifetime Starter access is attached to that account automatically.
             </p>
             <a
-              href={stripeLink}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={founderCheckoutUrl}
               class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-6 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Pay CHF {FOUNDER_PRICE_CHF} with card
+              Create account & pay CHF {FOUNDER_PRICE_CHF}
             </a>
           </div>
 

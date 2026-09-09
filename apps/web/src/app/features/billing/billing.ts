@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { BillingService } from '../../core/billing/billing.service';
 import type { SubscriptionSummary } from '../../core/billing/billing.models';
 
@@ -34,6 +35,10 @@ const PLAN_CARDS: PlanCard[] = [
         <h2 class="text-lg font-bold tracking-tight text-neutral-900">Billing</h2>
         <p class="mt-1 text-sm text-neutral-600">Manage your MobileFlow subscription.</p>
       </div>
+
+      @if (founderRedirecting()) {
+        <p class="text-sm text-neutral-600" role="status">Redirecting you to secure checkout…</p>
+      }
 
       @if (errorMessage()) {
         <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -106,12 +111,14 @@ const PLAN_CARDS: PlanCard[] = [
 })
 export class Billing implements OnInit {
   private readonly billingService = inject(BillingService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly plans = PLAN_CARDS;
   protected readonly subscription = signal<SubscriptionSummary | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly checkoutLoading = signal(false);
   protected readonly portalLoading = signal(false);
+  protected readonly founderRedirecting = signal(false);
 
   async ngOnInit(): Promise<void> {
     try {
@@ -119,6 +126,21 @@ export class Billing implements OnInit {
       this.subscription.set(sub);
     } catch (err) {
       this.errorMessage.set(this.extractErrorMessage(err, 'Unable to load your subscription.'));
+    }
+
+    if (this.route.snapshot.queryParamMap.get('intent') === 'founder') {
+      await this.redirectToFounderCheckout();
+    }
+  }
+
+  private async redirectToFounderCheckout(): Promise<void> {
+    this.founderRedirecting.set(true);
+    try {
+      const { url } = await this.billingService.createFounderCheckoutSession();
+      window.location.href = url;
+    } catch (err) {
+      this.founderRedirecting.set(false);
+      this.errorMessage.set(this.extractErrorMessage(err, 'Unable to start founder checkout.'));
     }
   }
 

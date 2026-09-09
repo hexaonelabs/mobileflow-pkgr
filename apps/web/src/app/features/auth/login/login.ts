@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Logo } from '../../../shared/ui/logo';
 
@@ -16,7 +16,7 @@ import { Logo } from '../../../shared/ui/logo';
       </div>
 
       <div class="rounded-2xl border border-neutral-200 bg-white p-6">
-        <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <!-- <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-neutral-900" for="email">Email</label>
             <input
@@ -64,22 +64,28 @@ import { Logo } from '../../../shared/ui/logo';
           >
             {{ submitting() ? 'Signing in…' : 'Sign in' }}
           </button>
-        </form>
+        </form> -->
 
-        <div class="mt-4 flex items-center gap-3" aria-hidden="true">
+        <!-- <div class="mt-4 flex items-center gap-3" aria-hidden="true">
           <span class="h-px flex-1 bg-neutral-200"></span>
           <span class="text-xs text-neutral-400">or</span>
           <span class="h-px flex-1 bg-neutral-200"></span>
-        </div>
+        </div> -->
 
-        <div class="mt-4 flex flex-col gap-2">
-          <button
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <h2 class="text-sm font-semibold text-neutral-900">Sign in with GitHub</h2>
+            <p class="text-sm text-neutral-600">
+              Use your GitHub account to connect instantly.
+            </p>
+          </div>
+          <!-- <button
             type="button"
             class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
             (click)="authService.loginWithGoogle()"
           >
             Continue with Google
-          </button>
+          </button> -->
           <button
             type="button"
             class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
@@ -92,7 +98,11 @@ import { Logo } from '../../../shared/ui/logo';
 
       <p class="text-center text-sm text-neutral-600">
         Don't have an account?
-        <a class="font-medium text-accent-600 hover:underline" routerLink="/auth/register">
+        <a
+          class="font-medium text-accent-600 hover:underline"
+          routerLink="/auth/register"
+          [queryParams]="{ intent: route.snapshot.queryParamMap.get('intent') }"
+        >
           Create account
         </a>
       </p>
@@ -103,6 +113,7 @@ export class Login {
   protected readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  protected readonly route = inject(ActivatedRoute);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -127,7 +138,8 @@ export class Login {
     const { email, password } = this.form.getRawValue();
     try {
       await this.authService.login(email, password);
-      await this.router.navigateByUrl('/');
+      const intent = this.route.snapshot.queryParamMap.get('intent');
+      await this.router.navigateByUrl(intent === 'founder' ? '/billing?intent=founder' : '/');
     } catch {
       this.errorMessage.set('Invalid credentials.');
     } finally {

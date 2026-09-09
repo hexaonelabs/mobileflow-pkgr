@@ -19,6 +19,12 @@ export class BillingService {
     );
   }
 
+  createFounderCheckoutSession(): Promise<CheckoutSessionResult> {
+    return firstValueFrom(
+      this.http.post<CheckoutSessionResult>(`${this.baseUrl}/checkout/founder`, {}),
+    );
+  }
+
   createPortalSession(): Promise<PortalSessionResult> {
     return firstValueFrom(this.http.post<PortalSessionResult>(`${this.baseUrl}/portal`, {}));
   }

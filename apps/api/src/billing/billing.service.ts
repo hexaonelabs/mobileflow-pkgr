@@ -4,6 +4,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { FirestoreService } from '../firestore/firestore.service';
 import {
+  Plan,
   SubscriptionStatus,
   USERS_COLLECTION,
   type SubscriptionStatus as SubscriptionStatusType,
@@ -72,11 +73,50 @@ export class BillingService {
       line_items: [{ price: this.planMapping.priceIdFor(targetPlan), quantity: 1 }],
       success_url: `${this.frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${this.frontendUrl}/billing/cancel`,
+      metadata: { userId },
     });
     if (!session.url) {
       throw new Error("Stripe n'a pas retourné d'URL de Checkout.");
     }
     return { url: session.url };
+  }
+
+  // Offre founder (site marketing) : paiement unique, hors cycle d'abonnement Stripe.
+  async createFounderCheckoutSession(userId: string): Promise<{ url: string }> {
+    const billing = await this.requireBilling(userId);
+    const founderPriceId = this.config.getOrThrow<string>('STRIPE_PRICE_FOUNDER_LIFETIME');
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer: billing.stripeCustomerId,
+      line_items: [{ price: founderPriceId, quantity: 1 }],
+      success_url: `${this.frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${this.frontendUrl}/billing/cancel`,
+      metadata: { userId, intent: 'founder_lifetime' },
+    });
+    if (!session.url) {
+      throw new Error("Stripe n'a pas retourné d'URL de Checkout.");
+    }
+    return { url: session.url };
+  }
+
+  // Annule la subscription en cours (le plan free à 0€ posé à l'inscription, cf.
+  // provisionCustomer) et fige le user sur starter à vie : plus aucun event de
+  // subscription ne doit pouvoir rétrograder ce plan ensuite.
+  async activateLifetimeStarter(userId: string): Promise<void> {
+    const billing = await this.requireBilling(userId);
+    if (billing.stripeSubscriptionId) {
+      await this.cancelSubscription(billing.stripeSubscriptionId);
+    }
+    const lifetimeBilling: UserBilling = {
+      stripeCustomerId: billing.stripeCustomerId,
+      stripeSubscriptionId: '',
+      status: SubscriptionStatus.active,
+      currentPeriodEnd: Timestamp.fromDate(new Date('2999-12-31')),
+      lifetime: true,
+    };
+    await this.users
+      .doc(userId)
+      .update({ plan: Plan.starter, billing: lifetimeBilling, updatedAt: FieldValue.serverTimestamp() });
   }
 
   async createPortalSession(userId: string): Promise<{ url: string }> {

@@ -40,14 +40,25 @@ export class StripeWebhookService {
   private async handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
     const customerId =
       typeof session.customer === 'string' ? session.customer : session.customer?.id;
-    const subscriptionId =
-      typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
-    if (!customerId || !subscriptionId) {
-      this.logger.warn(`Checkout session ${session.id} sans customer/subscription, ignoré.`);
+    if (!customerId) {
+      this.logger.warn(`Checkout session ${session.id} sans customer, ignoré.`);
+      return;
+    }
+    const userId =
+      session.metadata?.userId ?? (await this.billingService.findUserIdByCustomerId(customerId));
+
+    // Achat founder (site marketing) : paiement unique, pas de subscription à traiter.
+    if (session.mode === 'payment' && session.metadata?.intent === 'founder_lifetime') {
+      await this.billingService.activateLifetimeStarter(userId);
       return;
     }
 
-    const userId = await this.billingService.findUserIdByCustomerId(customerId);
+    const subscriptionId =
+      typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+    if (!subscriptionId) {
+      this.logger.warn(`Checkout session ${session.id} sans subscription, ignoré.`);
+      return;
+    }
     const previousBilling = await this.billingService.getBilling(userId);
     const subscription = await this.billingService.stripe.subscriptions.retrieve(subscriptionId);
 

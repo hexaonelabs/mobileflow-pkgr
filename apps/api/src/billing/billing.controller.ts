@@ -22,6 +22,11 @@ export class BillingController {
     return this.billingService.createCheckoutSession(req.user.id, dto.targetPlan);
   }
 
+  @Post('checkout/founder')
+  createFounderCheckoutSession(@Req() req: AuthenticatedRequest) {
+    return this.billingService.createFounderCheckoutSession(req.user.id);
+  }
+
   @Post('portal')
   createPortalSession(@Req() req: AuthenticatedRequest) {
     return this.billingService.createPortalSession(req.user.id);
