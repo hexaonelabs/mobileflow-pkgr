@@ -18,7 +18,7 @@ const NAV_LINK_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 h
       >
         <a routerLink="/projects" class="flex items-center gap-2">
           <app-logo class="h-6 w-6" />
-          <span class="text-base font-bold tracking-tight text-neutral-900">MobileFlow</span>
+          <span class="text-base font-bold tracking-tight text-neutral-900">pkgr.app</span>
         </a>
         <button
           type="button"
@@ -32,7 +32,7 @@ const NAV_LINK_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 h
       <aside class="hidden w-64 shrink-0 flex-col border-r border-neutral-200 bg-white md:flex">
         <div class="flex items-center gap-2 border-b border-neutral-200 px-5 py-4">
           <app-logo class="h-7 w-7" />
-          <span class="text-base font-bold tracking-tight text-neutral-900">MobileFlow</span>
+          <span class="text-base font-bold tracking-tight text-neutral-900">pkgr.app</span>
         </div>
 
         <nav aria-label="Main navigation" class="flex flex-1 flex-col gap-1 px-3 py-4">

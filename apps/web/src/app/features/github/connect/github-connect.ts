@@ -95,7 +95,7 @@ import type { Project, ProjectsQuota } from '../../../core/projects/project.mode
       } @else {
         <div class="rounded-2xl border border-neutral-200 bg-white p-6">
           <p class="text-sm text-neutral-600">
-            MobileFlow needs to install a GitHub App on the repositories you want to build.
+            pkgr.app needs to install a GitHub App on the repositories you want to build.
             The following permissions will be requested during installation:
           </p>
 

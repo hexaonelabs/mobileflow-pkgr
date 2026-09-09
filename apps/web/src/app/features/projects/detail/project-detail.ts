@@ -459,7 +459,7 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
             <section aria-labelledby="workflow-heading">
               <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Build workflow</h3>
               <p class="mt-1 text-sm text-neutral-600">
-                MobileFlow installs the workflow ({{ '.github/workflows/mobileflow.yml' }}) only once.
+                pkgr.app installs the workflow ({{ '.github/workflows/mobileflow.yml' }}) only once.
                 You can then customize it freely — it will never be overwritten automatically.
               </p>
 
@@ -510,7 +510,7 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
             <section aria-label="Delete project">
               <h3 class="text-sm font-semibold text-neutral-900">Delete project</h3>
               <p class="mt-1 text-sm text-neutral-600">
-                Permanently remove this project from MobileFlow, including its build history and stored secrets.
+                Permanently remove this project from pkgr.app, including its build history and stored secrets.
               </p>
               <button
                 type="button"
@@ -594,7 +594,7 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
 
                 @if (hasMissingReadinessSteps()) {
                   <div class="mt-4 rounded-xl border border-accent-100 bg-accent-50 p-4">
-                    <p class="text-sm font-medium text-accent-900">Let MobileFlow configure it for you</p>
+                    <p class="text-sm font-medium text-accent-900">Let pkgr.app configure it for you</p>
                     <p class="mt-1 text-sm text-accent-800">
                       We'll install Capacitor and add the missing platforms with a single commit to
                       {{ project.githubRepoFullName }}. This is the fastest way to get building.

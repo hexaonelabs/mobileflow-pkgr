@@ -80,7 +80,7 @@ function progressIndexFor(step: WizardStep): number {
             Generate an Apple Distribution certificate
           </h2>
           <p class="mt-1 text-sm text-neutral-600">
-            MobileFlow generates and signs your certificate automatically — no macOS, no Keychain
+            pkgr.app generates and signs your certificate automatically — no macOS, no Keychain
             Access.
           </p>
         </div>
@@ -208,7 +208,7 @@ function progressIndexFor(step: WizardStep): number {
                 Step 2 of 2 — Name your certificate
               </h3>
               <p class="mt-2 text-sm text-neutral-600">
-                MobileFlow will generate a signing key, request a certificate from Apple, and install it
+                pkgr.app will generate a signing key, request a certificate from Apple, and install it
                 on this project automatically.
               </p>
 
@@ -288,7 +288,7 @@ function progressIndexFor(step: WizardStep): number {
                   Download a backup copy (.p12)
                 </a>
                 <p class="mt-2 text-xs text-neutral-500">
-                  This is your only chance to save a local copy — MobileFlow doesn't display it again
+                  This is your only chance to save a local copy — pkgr.app doesn't display it again
                   after you leave this page.
                 </p>
               }

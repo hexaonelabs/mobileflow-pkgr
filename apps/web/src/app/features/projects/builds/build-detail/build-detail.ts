@@ -89,7 +89,7 @@ const ACTION_BUTTON_CLASS =
               <h3 id="logs-heading" class="text-sm font-semibold text-neutral-900">Logs</h3>
               <div class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
                 <p class="text-sm text-neutral-600">
-                  Detailed build logs are not yet displayed directly in MobileFlow — this is planned for a future version.
+                  Detailed build logs are not yet displayed directly in pkgr.app — this is planned for a future version.
                 </p>
                 @if (build.logsUrl) {
                   <a
@@ -162,7 +162,7 @@ const ACTION_BUTTON_CLASS =
                         </button>
                       } @else {
                         <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="downloading()" (click)="downloadArtifact(build.id)">
-                          {{ downloading() ? 'Preparing link…' : 'Download (hosted by MobileFlow)' }}
+                          {{ downloading() ? 'Preparing link…' : 'Download (hosted by pkgr.app)' }}
                         </button>
                         @if (artifactExpiresAt(build); as expiresAt) {
                           <p class="text-xs text-neutral-500">Available until {{ formatDate(expiresAt) }}</p>

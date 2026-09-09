@@ -45,7 +45,7 @@ export class IosCertificateCryptoService {
   }
 
   // crypto.getRandomValues (pas Math.random) : mot de passe interne, jamais saisi ni mémorisé
-  // par l'utilisateur — MobileFlow le stocke chiffré et l'utilise au moment du build.
+  // par l'utilisateur — pkgr.app le stocke chiffré et l'utilise au moment du build.
   generateRandomPassword(length = 32): string {
     const bytes = crypto.getRandomValues(new Uint8Array(length));
     let binary = '';

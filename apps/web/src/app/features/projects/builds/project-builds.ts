@@ -207,7 +207,7 @@ const MENU_MAX_HEIGHT = 320;
                 {{
                   downloadingIds().has(build.id)
                     ? 'Preparing link…'
-                    : 'Download (hosted by MobileFlow)'
+                    : 'Download (hosted by pkgr.app)'
                 }}
               </button>
               @if (build.platform === 'ios') {

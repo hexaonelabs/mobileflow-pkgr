@@ -33,7 +33,7 @@ const PLAN_CARDS: PlanCard[] = [
     <div class="flex flex-col gap-6">
       <div>
         <h2 class="text-lg font-bold tracking-tight text-neutral-900">Billing</h2>
-        <p class="mt-1 text-sm text-neutral-600">Manage your MobileFlow subscription.</p>
+        <p class="mt-1 text-sm text-neutral-600">Manage your pkgr.app subscription.</p>
       </div>
 
       @if (founderRedirecting()) {

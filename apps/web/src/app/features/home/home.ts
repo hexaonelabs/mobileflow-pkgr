@@ -13,7 +13,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <h1 class="text-2xl font-bold tracking-tight text-neutral-900">
             Welcome, {{ user.email }}
           </h1>
-          <p class="mt-1 text-sm text-neutral-600">Here's an overview of your MobileFlow account.</p>
+          <p class="mt-1 text-sm text-neutral-600">Here's an overview of your pkgr.app account.</p>
         </div>
 
         <div class="rounded-2xl border border-neutral-200 bg-white p-6">

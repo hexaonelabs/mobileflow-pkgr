@@ -129,7 +129,7 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
 
             @if (selectedType() === 'ios_certificate') {
               <p class="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800">
-                No .p12 yet? MobileFlow can generate and sign one for you automatically.
+                No .p12 yet? pkgr.app can generate and sign one for you automatically.
                 <a
                   [routerLink]="['/projects', project.id, 'secrets', 'ios-certificate-wizard']"
                   class="font-medium underline hover:text-accent-900"
