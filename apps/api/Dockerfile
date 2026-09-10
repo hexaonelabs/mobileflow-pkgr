@@ -31,4 +31,4 @@ COPY --from=prod-deps /app/apps/api/package.json ./package.json
 COPY --from=build /app/apps/api/dist ./dist
 
 EXPOSE 4000
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
