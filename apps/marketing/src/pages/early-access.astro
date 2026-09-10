@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
+import { FOUNDER_SPOTS, FOUNDER_PRICE_USD, ACCESS_DEADLINE } from '../config';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'https://app.pkgr.app';
 const founderCheckoutUrl = `${appUrl}/auth/register?intent=founder`;
@@ -43,8 +43,8 @@ const faqs = [
   {
     question: 'What am I actually buying?',
     answer:
-      "Lifetime access to the Starter plan, for a single payment of CHF " +
-      FOUNDER_PRICE_CHF +
+      "Lifetime access to the Starter plan, for a single payment of $" +
+      FOUNDER_PRICE_USD +
       '. Not access to every future plan, and not unlimited use — Starter’s own usage limits still apply. You just never pay for Starter again.',
   },
   {
@@ -71,7 +71,7 @@ const faqs = [
 
 <Layout
   title="Get lifetime Starter access"
-  description="pkgr.app is opening early access to the Starter plan at a one-time founding price of CHF 250 for lifetime access, before Starter pricing moves to a subscription."
+  description={`pkgr.app is opening early access to the Starter plan at a one-time founding price of $${FOUNDER_PRICE_USD} for lifetime access, before Starter pricing moves to a subscription.`}
 >
   <Header />
   <main id="main-content">
@@ -87,11 +87,11 @@ const faqs = [
         </p>
 
         <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
-          Pay once. Keep Starter for life.
+          Pay once. <br />Keep Starter for life.
         </h1>
 
         <p class="mx-auto mt-5 max-w-lg text-lg text-neutral-600">
-          CHF {FOUNDER_PRICE_CHF} today locks in the Starter plan forever — before pkgr.app opens to
+          ${FOUNDER_PRICE_USD} today locks in the Starter plan forever — before pkgr.app opens to
           the public and Starter becomes a monthly subscription.
         </p>
 
@@ -169,7 +169,7 @@ const faqs = [
           class="mx-auto mt-10 inline-flex items-baseline gap-2 rounded-2xl border border-neutral-200 px-8 py-6"
         >
           <span class="text-5xl font-extrabold tracking-tight text-neutral-900"
-            >CHF {FOUNDER_PRICE_CHF}</span
+            >${FOUNDER_PRICE_USD}</span
           >
           <span class="text-sm text-neutral-500">one-time · lifetime Starter access</span>
         </div>
@@ -185,7 +185,7 @@ const faqs = [
               href={founderCheckoutUrl}
               class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-6 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Create account & pay CHF {FOUNDER_PRICE_CHF}
+              Create account & pay ${FOUNDER_PRICE_USD}
             </a>
           </div>
 
@@ -244,7 +244,7 @@ const faqs = [
           <p class="text-sm text-emerald-900">
             <strong class="font-semibold">Zero-risk guarantee.</strong> pkgr.app is still under
             development. If you don't have Starter access by <strong>{ACCESS_DEADLINE}</strong>,
-            we'll refund your CHF {FOUNDER_PRICE_CHF} in full — no questions asked.
+            we'll refund your ${FOUNDER_PRICE_USD} in full — no questions asked.
           </p>
         </div>
       </div>
@@ -286,7 +286,7 @@ const faqs = [
     <section class="py-16 sm:py-24">
       <div class="mx-auto max-w-2xl px-6 text-center" data-reveal>
         <h2 class="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-          {FOUNDER_SPOTS} spots, CHF {FOUNDER_PRICE_CHF} once — gone for good after that.
+          {FOUNDER_SPOTS} spots, ${FOUNDER_PRICE_USD} once — gone for good after that.
         </h2>
         <p class="mt-3 text-neutral-600">Refunded in full if we're not live by {ACCESS_DEADLINE}.</p>
         <a

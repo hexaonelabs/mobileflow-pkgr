@@ -1,5 +1,5 @@
 ---
-import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF } from '../config';
+import { FOUNDER_SPOTS, FOUNDER_PRICE_USD } from '../config';
 
 const steps = [
   { label: 'Fetching repository', detail: 'github.com/acme/store-app' },
@@ -64,7 +64,7 @@ const steps = [
           href="/early-access"
           class="group bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 relative overflow-hidden rounded-full px-7 py-3.5 text-center text-base font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-600/35 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-0"
         >
-          <span class="relative">Get lifetime access — CHF {FOUNDER_PRICE_CHF}</span>
+          <span class="relative">Get lifetime access — ${FOUNDER_PRICE_USD}</span>
         </a>
         <a
           href="#pipeline"

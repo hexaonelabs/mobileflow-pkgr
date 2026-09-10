@@ -1,10 +1,10 @@
 ---
-import { FOUNDER_SPOTS, FOUNDER_PRICE_CHF, ACCESS_DEADLINE } from '../config';
+import { FOUNDER_SPOTS, FOUNDER_PRICE_USD, ACCESS_DEADLINE } from '../config';
 
 const guarantees = [
   {
     title: 'One payment, never again',
-    body: `CHF ${FOUNDER_PRICE_CHF} once. Starter becomes subscription-only for everyone who arrives after these ${FOUNDER_SPOTS} spots.`,
+    body: `$${FOUNDER_PRICE_USD} once. Starter becomes subscription-only for everyone who arrives after these ${FOUNDER_SPOTS} spots.`,
     icon: '<path d="M12 2v20" /><path d="M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.8 5 3.3 5 1.4 5 3.4-2.2 3.3-5 3.3-5-1.2-5-3.1" />',
   },
   {
@@ -67,11 +67,11 @@ const guarantees = [
 
         <div class="mt-10 flex flex-col items-center">
           <div class="flex items-end justify-center gap-2.5">
-            <span class="mb-3 text-2xl font-semibold text-neutral-400">CHF</span>
+            <span class="mb-3 text-2xl font-semibold text-neutral-400">$</span>
             <span
               class="text-7xl leading-none font-extrabold tracking-tight text-white sm:text-8xl"
             >
-              {FOUNDER_PRICE_CHF}
+              {FOUNDER_PRICE_USD}
             </span>
             <span class="mb-3 text-lg font-medium text-neutral-400">once</span>
           </div>
