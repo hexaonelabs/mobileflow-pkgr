@@ -3,11 +3,12 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { sessionExpiredInterceptor } from './core/auth/session-expired.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, sessionExpiredInterceptor])),
   ],
 };

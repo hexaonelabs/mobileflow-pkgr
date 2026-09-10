@@ -15,6 +15,12 @@ import { Logo } from '../../../shared/ui/logo';
         <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Sign In</h1>
       </div>
 
+      @if (sessionExpired()) {
+        <p role="alert" class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Your session has expired. Please sign in again.
+        </p>
+      }
+
       <div class="rounded-2xl border border-neutral-200 bg-white p-6">
         <!-- <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="flex flex-col gap-1">
@@ -117,6 +123,9 @@ export class Login {
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly sessionExpired = signal(
+    this.route.snapshot.queryParamMap.get('sessionExpired') === 'true',
+  );
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
