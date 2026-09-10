@@ -13,7 +13,7 @@ const contactEmail = 'contact@pkgr.app';
 const trustPoints = [
   'No subscription, ever',
   `${FOUNDER_SPOTS} spots, no more sold at this price`,
-  'Refunded in full if we run late',
+  'Refunded in full if you never build with it',
 ];
 
 const included = [
@@ -55,12 +55,12 @@ const faqs = [
   {
     question: 'What happens right after I pay?',
     answer:
-      "You get an email confirmation immediately. Stripe charges you once — nothing is stored for future billing. When pkgr.app opens to your cohort, your Starter access is already waiting; there's no second checkout.",
+      "You get an email confirmation immediately. Stripe charges you once — nothing is stored for future billing. Your Starter access is active on your account right away, so you can connect a repo and trigger your first build the same day.",
   },
   {
-    question: `What if pkgr.app isn't live by ${ACCESS_DEADLINE}?`,
+    question: `What if I never actually use it?`,
     answer:
-      "You're refunded in full, automatically, no questions asked. Card payments go back through Stripe; crypto payments are returned to the wallet you paid from.",
+      `If you haven't triggered at least one build with your Starter access by ${ACCESS_DEADLINE}, you're refunded in full, automatically, no questions asked. Card payments go back through Stripe; crypto payments are returned to the wallet you paid from.`,
   },
   {
     question: 'I paid with crypto — how do I get confirmed?',
@@ -91,7 +91,7 @@ const faqs = [
         </h1>
 
         <p class="mx-auto mt-5 max-w-lg text-lg text-neutral-600">
-          ${FOUNDER_PRICE_USD} today locks in the Starter plan forever — before pkgr.app opens to
+          One payment today locks in the Starter plan forever — before pkgr.app opens to
           the public and Starter becomes a monthly subscription.
         </p>
 
@@ -185,7 +185,7 @@ const faqs = [
               href={founderCheckoutUrl}
               class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-6 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
-              Create account & pay ${FOUNDER_PRICE_USD}
+              Create account & pay now
             </a>
           </div>
 
@@ -242,9 +242,9 @@ const faqs = [
             />
           </svg>
           <p class="text-sm text-emerald-900">
-            <strong class="font-semibold">Zero-risk guarantee.</strong> pkgr.app is still under
-            development. If you don't have Starter access by <strong>{ACCESS_DEADLINE}</strong>,
-            we'll refund your ${FOUNDER_PRICE_USD} in full — no questions asked.
+            <strong class="font-semibold">Zero-risk guarantee.</strong> Trigger at least one build
+            with your Starter access by <strong>{ACCESS_DEADLINE}</strong>, or we'll refund you in
+            full — no questions asked.
           </p>
         </div>
       </div>
@@ -286,9 +286,9 @@ const faqs = [
     <section class="py-16 sm:py-24">
       <div class="mx-auto max-w-2xl px-6 text-center" data-reveal>
         <h2 class="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-          {FOUNDER_SPOTS} spots, ${FOUNDER_PRICE_USD} once — gone for good after that.
+          {FOUNDER_SPOTS} spots, then gone for good.
         </h2>
-        <p class="mt-3 text-neutral-600">Refunded in full if we're not live by {ACCESS_DEADLINE}.</p>
+        <p class="mt-3 text-neutral-600">Refunded in full if you never build with it by {ACCESS_DEADLINE}.</p>
         <a
           href="#pricing"
           class="bg-accent-600 hover:bg-accent-700 focus-visible:ring-accent-600 mt-8 inline-flex items-center justify-center rounded-full px-7 py-3.5 text-base font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:outline-none active:translate-y-0"
