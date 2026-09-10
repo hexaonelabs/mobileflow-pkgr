@@ -1,11 +1,28 @@
 {
-  "hosting": {
-    "target": "mobileflow-pkgr",
-    "public": "apps/marketing/dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }
+  "hosting": [
+    {
+      "target": "mobileflow-pkgr",
+      "public": "apps/marketing/dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ]
+    },
+    {
+      "target": "dashboard-pkgr",
+      "public": "apps/web/dist/MobileFlow/browser",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
 }

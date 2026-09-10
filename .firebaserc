@@ -7,8 +7,12 @@
       "hosting": {
         "mobileflow-pkgr": [
           "mobileflow-pkgr"
+        ],
+        "dashboard-pkgr": [
+          "dashboard-pkgr"
         ]
       }
     }
-  }
+  },
+  "etags": {}
 }
