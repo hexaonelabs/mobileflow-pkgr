@@ -12,15 +12,21 @@ interface StoredDoc {
   data: SecretDocument;
 }
 
+interface SecretsQueryMock {
+  where: (field: string, op: string, value: unknown) => SecretsQueryMock;
+  get: () => Promise<{
+    docs: Array<{ id: string; data: () => SecretDocument; ref: { delete: () => Promise<void> } }>;
+  }>;
+}
+
 function createFirestoreMock(initialDocs: StoredDoc[] = []) {
   const state = [...initialDocs];
   let nextId = state.length + 1;
 
-  function queryBuilder<Resp>(filters: Array<[string, unknown]>) {
+  function queryBuilder(filters: Array<[string, unknown]>): SecretsQueryMock {
     return {
-      where: jest.fn(
-        (field: string, _op: string, value: unknown) =>
-          queryBuilder([...filters, [field, value]]) as Resp,
+      where: jest.fn((field: string, _op: string, value: unknown) =>
+        queryBuilder([...filters, [field, value]]),
       ),
       get: jest.fn(async () => {
         const matching = state.filter((doc) =>
