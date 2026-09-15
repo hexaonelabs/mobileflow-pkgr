@@ -181,7 +181,13 @@ export class AnalyticsService {
     const { year, month } = this.getCurrentYearMonth();
     const stats = (await this.isCurrentMonthOnly(plan))
       ? await this.getMonthStats(userId, projectId, year, month)
-      : this.aggregateStats(userId, projectId, year, month, await this.fetchAllDocuments(userId, projectId));
+      : this.aggregateStats(
+          userId,
+          projectId,
+          year,
+          month,
+          await this.fetchAllDocuments(userId, projectId),
+        );
     return {
       platform: {
         ios: this.toRate(stats.byPlatform.ios),
@@ -221,7 +227,10 @@ export class AnalyticsService {
   ): AnalyticsStats {
     if (docs.length === 0) return this.emptyStats(userId, projectId, year, month);
 
-    const durationSum = docs.reduce((sum, doc) => sum + doc.avgDurationSeconds * doc.totalBuilds, 0);
+    const durationSum = docs.reduce(
+      (sum, doc) => sum + doc.avgDurationSeconds * doc.totalBuilds,
+      0,
+    );
     const totalBuilds = docs.reduce((sum, doc) => sum + doc.totalBuilds, 0);
     const totalSuccessful = docs.reduce((sum, doc) => sum + doc.totalSuccessful, 0);
 

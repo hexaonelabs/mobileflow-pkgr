@@ -114,9 +114,11 @@ export class BillingService {
       currentPeriodEnd: Timestamp.fromDate(new Date('2999-12-31')),
       lifetime: true,
     };
-    await this.users
-      .doc(userId)
-      .update({ plan: Plan.starter, billing: lifetimeBilling, updatedAt: FieldValue.serverTimestamp() });
+    await this.users.doc(userId).update({
+      plan: Plan.starter,
+      billing: lifetimeBilling,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   }
 
   async createPortalSession(userId: string): Promise<{ url: string }> {

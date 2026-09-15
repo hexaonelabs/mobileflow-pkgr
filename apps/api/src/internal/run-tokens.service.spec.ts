@@ -11,7 +11,7 @@ function createFirestoreMock() {
     collection: jest.fn(() => ({
       doc: jest.fn((token: string) => ({
         token,
-        set: jest.fn(async (doc: RunTokenDocument) => {
+        set: jest.fn((doc: RunTokenDocument) => {
           store.set(token, doc);
         }),
       })),
@@ -25,9 +25,10 @@ function createFirestoreMock() {
           delete: (ref: { token: string }) => void;
         }) => unknown,
       ) =>
-        fn({
+        await fn({
           get: async (ref) => {
             const data = store.get(ref.token);
+            await Promise.resolve();
             return { exists: !!data, data: () => data };
           },
           delete: (ref) => {

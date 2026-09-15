@@ -38,7 +38,11 @@ describe('QuotasService', () => {
       free: { projectsLimit: 2, artifactRetentionDays: 7, analyticsHistoryMonths: 1 },
       starter: { projectsLimit: 10, artifactRetentionDays: 30, analyticsHistoryMonths: null },
       pro: { projectsLimit: null, artifactRetentionDays: 90, analyticsHistoryMonths: null },
-      enterprise: { projectsLimit: null, artifactRetentionDays: null, analyticsHistoryMonths: null },
+      enterprise: {
+        projectsLimit: null,
+        artifactRetentionDays: null,
+        analyticsHistoryMonths: null,
+      },
     });
     const service = new QuotasService({ db });
 
@@ -53,7 +57,11 @@ describe('QuotasService', () => {
       free: { projectsLimit: 1, artifactRetentionDays: 7, analyticsHistoryMonths: 1 },
       starter: { projectsLimit: 5, artifactRetentionDays: 30, analyticsHistoryMonths: null },
       pro: { projectsLimit: null, artifactRetentionDays: 90, analyticsHistoryMonths: null },
-      enterprise: { projectsLimit: null, artifactRetentionDays: null, analyticsHistoryMonths: null },
+      enterprise: {
+        projectsLimit: null,
+        artifactRetentionDays: null,
+        analyticsHistoryMonths: null,
+      },
     });
     const service = new QuotasService({ db });
 
@@ -76,7 +84,11 @@ describe('QuotasService', () => {
       free: { projectsLimit: 1, artifactRetentionDays: 3, analyticsHistoryMonths: 1 },
       starter: { projectsLimit: 5, artifactRetentionDays: 30, analyticsHistoryMonths: null },
       pro: { projectsLimit: null, artifactRetentionDays: 90, analyticsHistoryMonths: null },
-      enterprise: { projectsLimit: null, artifactRetentionDays: null, analyticsHistoryMonths: null },
+      enterprise: {
+        projectsLimit: null,
+        artifactRetentionDays: null,
+        analyticsHistoryMonths: null,
+      },
     });
     const service = new QuotasService({ db });
 

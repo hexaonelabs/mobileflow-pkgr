@@ -13,6 +13,8 @@ export class ArtifactRetentionProcessor extends WorkerHost {
 
   async process(_job: Job): Promise<void> {
     const { purged } = await this.artifactRetentionService.purgeExpiredArtifacts();
-    this.logger.debug(`Sweep de rétention terminé : ${purged} artefact(s) purgé(s).`);
+    this.logger.debug(
+      `Sweep de rétention terminé : ${purged} artefact(s) purgé(s); Job: ${_job.id} `,
+    );
   }
 }

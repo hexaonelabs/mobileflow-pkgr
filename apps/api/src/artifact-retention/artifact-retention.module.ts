@@ -23,9 +23,7 @@ const DAILY_AT_3AM_CRON = '0 3 * * *';
   exports: [ArtifactRetentionService],
 })
 export class ArtifactRetentionModule implements OnModuleInit {
-  constructor(
-    @InjectQueue(ARTIFACT_RETENTION_QUEUE) private readonly queue: Queue,
-  ) {}
+  constructor(@InjectQueue(ARTIFACT_RETENTION_QUEUE) private readonly queue: Queue) {}
 
   // upsertJobScheduler est déduplié par jobSchedulerId côté Redis : si l'API tourne sur
   // plusieurs instances, chacune l'appelle au démarrage sans créer de planification en double

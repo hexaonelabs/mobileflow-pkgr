@@ -67,7 +67,9 @@ export class AppleCertificateService {
     }
 
     const body = (await response.json()) as {
-      data: { attributes: { certificateContent: string; serialNumber: string; expirationDate: string } };
+      data: {
+        attributes: { certificateContent: string; serialNumber: string; expirationDate: string };
+      };
     };
     return {
       certificateContentBase64: body.data.attributes.certificateContent,
@@ -113,7 +115,9 @@ export class AppleCertificateService {
       );
     }
     return new BadRequestException(
-      detail ? `Apple a rejeté la demande de certificat : ${detail}` : 'Apple a rejeté la demande de certificat.',
+      detail
+        ? `Apple a rejeté la demande de certificat : ${detail}`
+        : 'Apple a rejeté la demande de certificat.',
     );
   }
 }

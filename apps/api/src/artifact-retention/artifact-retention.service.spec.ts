@@ -49,13 +49,13 @@ interface FakeBuild {
 function buildDoc(overrides: Partial<BuildDocument> & { userId: string }): BuildDocument {
   return {
     projectId: 'proj1',
-    triggeredBy: 'manual' as never,
-    environment: 'staging' as never,
-    platform: 'ios' as never,
+    triggeredBy: 'manual',
+    environment: 'staging',
+    platform: 'ios',
     branch: 'main',
     commitSha: 'abc123',
     envVars: {},
-    status: 'success' as never,
+    status: 'success',
     githubRunId: 42,
     githubJobId: null,
     startedAt: null,

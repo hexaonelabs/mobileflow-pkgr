@@ -1,5 +1,10 @@
 import { generateKeyPairSync } from 'crypto';
-import { BadRequestException, ConflictException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { AppleCertificateService, type AppStoreConnectKey } from './apple-certificate.service';
 
@@ -9,11 +14,15 @@ function testKey(): AppStoreConnectKey {
     privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
     publicKeyEncoding: { type: 'spki', format: 'pem' },
   });
-  return { issuerId: 'issuer-123', keyId: 'key-abc', privateKeyPem: privateKey as unknown as string };
+  return {
+    issuerId: 'issuer-123',
+    keyId: 'key-abc',
+    privateKeyPem: privateKey,
+  };
 }
 
 function jsonResponse(status: number, body: unknown) {
-  return { ok: status >= 200 && status < 300, status, json: async () => body };
+  return { ok: status >= 200 && status < 300, status, json: async () => await body };
 }
 
 describe('AppleCertificateService.createDistributionCertificate', () => {
@@ -80,30 +89,36 @@ describe('AppleCertificateService.createDistributionCertificate', () => {
   });
 
   it('maps a 409 (certificate limit reached) to ConflictException', async () => {
-    (global as { fetch?: unknown }).fetch = jest.fn().mockResolvedValue(jsonResponse(409, { errors: [] }));
+    (global as { fetch?: unknown }).fetch = jest
+      .fn()
+      .mockResolvedValue(jsonResponse(409, { errors: [] }));
     const service = new AppleCertificateService();
 
-    await expect(service.createDistributionCertificate(testKey(), 'CSR_PEM')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(
+      service.createDistributionCertificate(testKey(), 'CSR_PEM'),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('maps 401/403 to UnauthorizedException', async () => {
-    (global as { fetch?: unknown }).fetch = jest.fn().mockResolvedValue(jsonResponse(403, { errors: [] }));
+    (global as { fetch?: unknown }).fetch = jest
+      .fn()
+      .mockResolvedValue(jsonResponse(403, { errors: [] }));
     const service = new AppleCertificateService();
 
-    await expect(service.createDistributionCertificate(testKey(), 'CSR_PEM')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
+    await expect(
+      service.createDistributionCertificate(testKey(), 'CSR_PEM'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('maps 5xx to ServiceUnavailableException', async () => {
-    (global as { fetch?: unknown }).fetch = jest.fn().mockResolvedValue(jsonResponse(502, { errors: [] }));
+    (global as { fetch?: unknown }).fetch = jest
+      .fn()
+      .mockResolvedValue(jsonResponse(502, { errors: [] }));
     const service = new AppleCertificateService();
 
-    await expect(service.createDistributionCertificate(testKey(), 'CSR_PEM')).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(
+      service.createDistributionCertificate(testKey(), 'CSR_PEM'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
   it('maps other 4xx statuses to BadRequestException with the Apple detail message', async () => {
@@ -121,8 +136,8 @@ describe('AppleCertificateService.createDistributionCertificate', () => {
     (global as { fetch?: unknown }).fetch = jest.fn().mockRejectedValue(new Error('network down'));
     const service = new AppleCertificateService();
 
-    await expect(service.createDistributionCertificate(testKey(), 'CSR_PEM')).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(
+      service.createDistributionCertificate(testKey(), 'CSR_PEM'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 });

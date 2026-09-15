@@ -58,7 +58,7 @@ function createFirestoreWithTransaction(initialData: BuildDocument) {
           current = { ...current, ...patch };
         }),
       };
-      return fn(tx);
+      return await fn(tx);
     });
     lock = run.catch(() => undefined);
     return run;

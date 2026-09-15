@@ -16,10 +16,11 @@ function createFirestoreMock(initialDocs: StoredDoc[] = []) {
   const state = [...initialDocs];
   let nextId = state.length + 1;
 
-  function queryBuilder(filters: Array<[string, unknown]>) {
+  function queryBuilder<Resp>(filters: Array<[string, unknown]>) {
     return {
-      where: jest.fn((field: string, _op: string, value: unknown) =>
-        queryBuilder([...filters, [field, value]]),
+      where: jest.fn(
+        (field: string, _op: string, value: unknown) =>
+          queryBuilder([...filters, [field, value]]) as Resp,
       ),
       get: jest.fn(async () => {
         const matching = state.filter((doc) =>
@@ -27,12 +28,14 @@ function createFirestoreMock(initialDocs: StoredDoc[] = []) {
             ([field, value]) => (doc.data as unknown as Record<string, unknown>)[field] === value,
           ),
         );
+        await Promise.resolve();
         return {
           docs: matching.map((doc) => ({
             id: doc.id,
             data: () => doc.data,
             ref: {
               delete: jest.fn(async () => {
+                await Promise.resolve();
                 const idx = state.findIndex((d) => d.id === doc.id);
                 if (idx !== -1) {
                   state.splice(idx, 1);
@@ -48,6 +51,7 @@ function createFirestoreMock(initialDocs: StoredDoc[] = []) {
   const secretsCollection = {
     ...queryBuilder([]),
     add: jest.fn(async (doc: SecretDocument) => {
+      await Promise.resolve();
       const id = `secret-${nextId++}`;
       state.push({ id, data: doc });
       return { id };
@@ -62,7 +66,7 @@ function createFirestoreMock(initialDocs: StoredDoc[] = []) {
         }
         return {
           doc: jest.fn(() => ({
-            get: jest.fn(async () => ({
+            get: jest.fn(() => ({
               exists: true,
               data: () => ({ userId: 'user1', githubRepoFullName: 'owner/repo' }),
             })),
@@ -108,7 +112,7 @@ function createEncryptionMock() {
 
 function createAppleCertificateServiceMock() {
   return {
-    createDistributionCertificate: jest.fn(async () => ({
+    createDistributionCertificate: jest.fn(() => ({
       certificateContentBase64: 'cert-b64',
       serialNumber: 'SERIAL',
       expirationDate: '2027-01-01T00:00:00.000Z',
@@ -137,14 +141,21 @@ describe('SecretsService.create - environment scoping', () => {
 
     expect(state.find((d) => d.id === 'secret-staging')).toBeDefined();
     expect(
-      state.some((d) => d.data.environment === Environment.production && d.data.fileName === 'production.mobileprovision'),
+      state.some(
+        (d) =>
+          d.data.environment === Environment.production &&
+          d.data.fileName === 'production.mobileprovision',
+      ),
     ).toBe(true);
     expect(state).toHaveLength(2);
   });
 
   it('uploading a new staging provisioning profile replaces the old staging one, leaving production untouched', async () => {
     const staging = secretDoc({ fileName: 'old-staging.mobileprovision' });
-    const production = secretDoc({ environment: Environment.production, fileName: 'prod.mobileprovision' });
+    const production = secretDoc({
+      environment: Environment.production,
+      fileName: 'prod.mobileprovision',
+    });
     const { firestore, state } = createFirestoreMock([
       { id: 'secret-staging', data: staging },
       { id: 'secret-production', data: production },
@@ -167,13 +178,21 @@ describe('SecretsService.create - environment scoping', () => {
     expect(state.find((d) => d.id === 'secret-staging')).toBeUndefined();
     expect(state.find((d) => d.id === 'secret-production')).toBeDefined();
     expect(
-      state.filter((d) => d.data.type === SecretType.ios_provisioning_profile && d.data.environment === Environment.staging),
+      state.filter(
+        (d) =>
+          d.data.type === SecretType.ios_provisioning_profile &&
+          d.data.environment === Environment.staging,
+      ),
     ).toHaveLength(1);
     expect(state.find((d) => d.data.fileName === 'new-staging.mobileprovision')).toBeDefined();
   });
 
   it('keeps ios_certificate as a single slot per project (environment stays null on both sides)', async () => {
-    const existing = secretDoc({ type: SecretType.ios_certificate, environment: null, fileName: 'old.p12' });
+    const existing = secretDoc({
+      type: SecretType.ios_certificate,
+      environment: null,
+      fileName: 'old.p12',
+    });
     const { firestore, state } = createFirestoreMock([{ id: 'secret-cert', data: existing }]);
     const service = new SecretsService(
       firestore,
@@ -199,16 +218,31 @@ describe('SecretsService.create - environment scoping', () => {
 describe('SecretsService.getDecryptedForPlatform - environment scoping', () => {
   it('returns the provisioning profile matching the requested environment, and the environment-agnostic certificate', async () => {
     const staging = secretDoc({
-      ciphertext: JSON.stringify({ fileBase64: 'staging-b64', password: null, alias: null, keyPassword: null }),
+      ciphertext: JSON.stringify({
+        fileBase64: 'staging-b64',
+        password: null,
+        alias: null,
+        keyPassword: null,
+      }),
     });
     const production = secretDoc({
       environment: Environment.production,
-      ciphertext: JSON.stringify({ fileBase64: 'production-b64', password: null, alias: null, keyPassword: null }),
+      ciphertext: JSON.stringify({
+        fileBase64: 'production-b64',
+        password: null,
+        alias: null,
+        keyPassword: null,
+      }),
     });
     const cert = secretDoc({
       type: SecretType.ios_certificate,
       environment: null,
-      ciphertext: JSON.stringify({ fileBase64: 'cert-b64', password: 'pw', alias: null, keyPassword: null }),
+      ciphertext: JSON.stringify({
+        fileBase64: 'cert-b64',
+        password: 'pw',
+        alias: null,
+        keyPassword: null,
+      }),
     });
     const { firestore } = createFirestoreMock([
       { id: 'secret-staging', data: staging },
@@ -221,7 +255,12 @@ describe('SecretsService.getDecryptedForPlatform - environment scoping', () => {
       createAppleCertificateServiceMock() as unknown as AppleCertificateService,
     );
 
-    const result = await service.getDecryptedForPlatform('user1', 'proj1', Platform.ios, Environment.production);
+    const result = await service.getDecryptedForPlatform(
+      'user1',
+      'proj1',
+      Platform.ios,
+      Environment.production,
+    );
 
     expect(result.iosProvisioningProfile?.fileBase64).toBe('production-b64');
     expect(result.iosCertificate?.fileBase64).toBe('cert-b64');
@@ -236,7 +275,12 @@ describe('SecretsService.getDecryptedForPlatform - environment scoping', () => {
       createAppleCertificateServiceMock() as unknown as AppleCertificateService,
     );
 
-    const result = await service.getDecryptedForPlatform('user1', 'proj1', Platform.ios, Environment.production);
+    const result = await service.getDecryptedForPlatform(
+      'user1',
+      'proj1',
+      Platform.ios,
+      Environment.production,
+    );
 
     expect(result.iosProvisioningProfile).toBeNull();
   });
@@ -248,9 +292,9 @@ describe('SecretsService.getAppStoreConnectKey', () => {
       type: SecretType.app_store_connect_key,
       environment: null,
       ciphertext: JSON.stringify({
-        fileBase64: Buffer.from('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----').toString(
-          'base64',
-        ),
+        fileBase64: Buffer.from(
+          '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+        ).toString('base64'),
         password: null,
         alias: null,
         keyPassword: null,

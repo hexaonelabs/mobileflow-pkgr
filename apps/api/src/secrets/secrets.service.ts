@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FieldValue } from 'firebase-admin/firestore';
-import { AppleCertificateService, type DistributionCertificate } from '../apple/apple-certificate.service';
+import {
+  AppleCertificateService,
+  type DistributionCertificate,
+} from '../apple/apple-certificate.service';
 import type { Environment } from '../builds/build.model';
 import { EncryptionService } from '../crypto/encryption.service';
 import { FirestoreService } from '../firestore/firestore.service';
@@ -140,7 +143,9 @@ export class SecretsService {
     // ios_provisioning_profile a un doc distinct par environment (cf. create()) ; les autres
     // types n'ont qu'un seul slot par projet (environment: null), donc environment-agnostiques.
     const findOne = (type: SecretType, scopedToEnvironment: boolean): SecretDocument | undefined =>
-      docs.find((doc) => doc.type === type && (!scopedToEnvironment || doc.environment === environment));
+      docs.find(
+        (doc) => doc.type === type && (!scopedToEnvironment || doc.environment === environment),
+      );
 
     const decrypt = (doc: SecretDocument | undefined): DecryptedSecretPayload | null => {
       if (!doc) {
@@ -210,7 +215,7 @@ export class SecretsService {
     await this.getOwnedProject(userId, projectId);
     const key = await this.getAppStoreConnectKey(userId, projectId);
     if (!key) {
-      throw new NotFoundException('Ajoutez d\'abord une clé App Store Connect API à ce projet.');
+      throw new NotFoundException("Ajoutez d'abord une clé App Store Connect API à ce projet.");
     }
     return this.appleCertificateService.createDistributionCertificate(key, csrPem);
   }
