@@ -16,10 +16,20 @@ jobs:
           node-version: 22
           cache: npm
       # create environment file
-      - name: Create env file
+      - name: Create test env file
         run: |
           mkdir -p apps/web/src/environments
           cat <<'EOF' > apps/web/src/environments/environment.ts
+          export const environment = {
+            production: false,
+            apiUrl: '',
+            sentryDsn: '',
+          };
+          EOF
+      - name: Create prod env file
+        run: |
+          mkdir -p apps/web/src/environments
+          cat <<'EOF' > apps/web/src/environments/environment.prod.ts
           export const environment = {
             production: true,
             apiUrl: '${{ secrets.API_URL }}',
