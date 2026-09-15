@@ -13,14 +13,27 @@ const TAB_ACTIVE_CLASS = 'bg-accent-50 text-accent-700 hover:bg-accent-50 hover:
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col bg-neutral-50 md:flex-row">
-      <aside class="w-full shrink-0 border-b border-neutral-200 bg-white md:w-64 md:border-r md:border-b-0">
+      <aside
+        class="w-full shrink-0 border-b border-neutral-200 bg-white md:w-64 md:border-r md:border-b-0"
+      >
         <div class="px-5 py-4">
           <a
             routerLink="/projects"
             class="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
           >
-            <svg aria-hidden="true" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+              />
             </svg>
             Projets
           </a>

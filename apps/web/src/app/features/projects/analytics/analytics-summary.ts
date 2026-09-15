@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { ProjectsService } from '../../../core/projects/projects.service';
-import type { AnalyticsSummary, Environment, Platform } from '../../../core/projects/project.models';
+import type {
+  AnalyticsSummary,
+  Environment,
+  Platform,
+} from '../../../core/projects/project.models';
 
 const PLATFORMS: Platform[] = ['ios', 'android'];
 const ENVIRONMENTS: Environment[] = ['staging', 'production'];
@@ -20,7 +24,10 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (errorMessage()) {
-      <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <p
+        role="alert"
+        class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+      >
         {{ errorMessage() }}
       </p>
     } @else if (summary(); as summary) {
@@ -63,7 +70,9 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
             @for (platform of platforms; track platform) {
               <li class="flex items-center justify-between px-5 py-3 text-sm">
                 <span class="text-neutral-700">{{ platformLabels[platform] }}</span>
-                <span class="text-neutral-900">{{ summary.byPlatform[platform].total }} builds</span>
+                <span class="text-neutral-900"
+                  >{{ summary.byPlatform[platform].total }} builds</span
+                >
               </li>
             }
           </ul>

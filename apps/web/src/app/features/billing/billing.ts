@@ -16,7 +16,11 @@ const PLAN_CARDS: PlanCard[] = [
     id: 'free',
     name: 'Free',
     price: '$0',
-    features: ['Unlimited builds', 'Analytics (current month)', 'Email notifications (failed builds)'],
+    features: [
+      'Unlimited builds',
+      'Analytics (current month)',
+      'Email notifications (failed builds)',
+    ],
   },
   {
     id: 'starter',
@@ -41,7 +45,10 @@ const PLAN_CARDS: PlanCard[] = [
       }
 
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       }
@@ -50,7 +57,9 @@ const PLAN_CARDS: PlanCard[] = [
         <p class="text-sm text-neutral-600">
           Current plan: <span class="font-semibold text-neutral-900">{{ sub.plan }}</span>
           @if (sub.status === 'past_due') {
-            <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+            <span
+              class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+            >
               Payment issue
             </span>
           }

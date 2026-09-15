@@ -71,9 +71,7 @@ export class ProjectsService {
   }
 
   getBuild(projectId: string, buildId: string): Promise<Build> {
-    return firstValueFrom(
-      this.http.get<Build>(`${this.baseUrl}/${projectId}/builds/${buildId}`),
-    );
+    return firstValueFrom(this.http.get<Build>(`${this.baseUrl}/${projectId}/builds/${buildId}`));
   }
 
   createBuild(projectId: string, payload: CreateBuildPayload): Promise<Build[]> {
@@ -88,9 +86,7 @@ export class ProjectsService {
 
   getBuildArtifactUrl(projectId: string, buildId: string): Promise<{ url: string }> {
     return firstValueFrom(
-      this.http.get<{ url: string }>(
-        `${this.baseUrl}/${projectId}/builds/${buildId}/artifact-url`,
-      ),
+      this.http.get<{ url: string }>(`${this.baseUrl}/${projectId}/builds/${buildId}/artifact-url`),
     );
   }
 
@@ -113,9 +109,7 @@ export class ProjectsService {
   }
 
   createSecret(projectId: string, payload: CreateSecretPayload): Promise<Secret> {
-    return firstValueFrom(
-      this.http.post<Secret>(`${this.baseUrl}/${projectId}/secrets`, payload),
-    );
+    return firstValueFrom(this.http.post<Secret>(`${this.baseUrl}/${projectId}/secrets`, payload));
   }
 
   removeSecret(projectId: string, secretId: string): Promise<void> {

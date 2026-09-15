@@ -48,12 +48,10 @@ describe('AuthService', () => {
 
   it('efface la session au logout', async () => {
     const loginPromise = service.login('a@b.com', 'password123');
-    httpMock
-      .expectOne(`${environment.apiUrl}/auth/login`)
-      .flush({
-        accessToken: 'jwt-token',
-        user: { id: '1', email: 'a@b.com', plan: 'free', githubInstallationId: null },
-      });
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({
+      accessToken: 'jwt-token',
+      user: { id: '1', email: 'a@b.com', plan: 'free', githubInstallationId: null },
+    });
     await loginPromise;
 
     service.logout();

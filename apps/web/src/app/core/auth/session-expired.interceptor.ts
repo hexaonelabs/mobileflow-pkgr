@@ -10,7 +10,11 @@ export const sessionExpiredInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401 && authService.isAuthenticated()) {
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 401 &&
+        authService.isAuthenticated()
+      ) {
         authService.logout();
         router.navigate(['/auth/login'], { queryParams: { sessionExpired: true } });
       }

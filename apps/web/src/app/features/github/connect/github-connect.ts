@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GithubService } from '../../../core/github/github.service';
@@ -95,8 +102,8 @@ import type { Project, ProjectsQuota } from '../../../core/projects/project.mode
       } @else {
         <div class="rounded-2xl border border-neutral-200 bg-white p-6">
           <p class="text-sm text-neutral-600">
-            pkgr.app needs to install a GitHub App on the repositories you want to build.
-            The following permissions will be requested during installation:
+            pkgr.app needs to install a GitHub App on the repositories you want to build. The
+            following permissions will be requested during installation:
           </p>
 
           @if (permissions(); as list) {
@@ -193,9 +200,7 @@ export class GithubConnect implements OnInit {
       this.projects.update((list) => [...list, project]);
       this.quota.update((q) => (q ? { ...q, used: q.used + 1 } : q));
     } catch (err) {
-      this.reposError.set(
-        this.extractErrorMessage(err, `Impossible d'activer ${repo.fullName}.`),
-      );
+      this.reposError.set(this.extractErrorMessage(err, `Impossible d'activer ${repo.fullName}.`));
     } finally {
       this.activating.set(null);
     }

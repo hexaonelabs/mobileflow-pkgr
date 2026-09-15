@@ -44,12 +44,16 @@ describe('sessionExpiredInterceptor', () => {
     expect(authService.isAuthenticated()).toBe(true);
 
     const request = firstValueFrom(http.get('/api/projects'));
-    httpMock.expectOne('/api/projects').flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    httpMock
+      .expectOne('/api/projects')
+      .flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
     await expect(request).rejects.toBeTruthy();
     expect(authService.isAuthenticated()).toBe(false);
     expect(authService.getToken()).toBeNull();
-    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login'], { queryParams: { sessionExpired: true } });
+    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { sessionExpired: true },
+    });
   });
 
   it('ne touche pas à la session pour les autres erreurs', async () => {
@@ -64,7 +68,9 @@ describe('sessionExpiredInterceptor', () => {
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const request = firstValueFrom(http.get('/api/projects'));
-    httpMock.expectOne('/api/projects').flush('Server error', { status: 500, statusText: 'Server Error' });
+    httpMock
+      .expectOne('/api/projects')
+      .flush('Server error', { status: 500, statusText: 'Server Error' });
 
     await expect(request).rejects.toBeTruthy();
     expect(authService.isAuthenticated()).toBe(true);

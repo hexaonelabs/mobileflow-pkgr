@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
@@ -22,7 +29,10 @@ const MENU_MAX_HEIGHT = 320;
   template: `
     <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       }
@@ -40,28 +50,47 @@ const MENU_MAX_HEIGHT = 320;
 
         @if (builds(); as list) {
           @if (list.length === 0) {
-            <div class="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center">
+            <div
+              class="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center"
+            >
               <p class="text-sm text-neutral-600">No builds yet.</p>
             </div>
           } @else {
             <div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
               <table class="w-full text-left text-sm">
-                <caption class="sr-only">Build history</caption>
+                <caption class="sr-only">
+                  Build history
+                </caption>
                 <thead class="border-b border-neutral-200 bg-neutral-50/70">
                   <tr>
-                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <th
+                      scope="col"
+                      class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase"
+                    >
                       Build
                     </th>
-                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <th
+                      scope="col"
+                      class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase"
+                    >
                       Status
                     </th>
-                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <th
+                      scope="col"
+                      class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase"
+                    >
                       Platform
                     </th>
-                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <th
+                      scope="col"
+                      class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase"
+                    >
                       Branch / commit
                     </th>
-                    <th scope="col" class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                    <th
+                      scope="col"
+                      class="px-5 py-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase"
+                    >
                       Duration
                     </th>
                     <th scope="col" class="px-5 py-3"><span class="sr-only">Actions</span></th>
@@ -69,9 +98,10 @@ const MENU_MAX_HEIGHT = 320;
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                   @for (build of list; track build.id; let i = $index) {
-                    <tr 
+                    <tr
                       class="cursor-pointer transition-colors hover:bg-neutral-50/80 "
-                      [routerLink]="['/projects', project.id, 'builds', build.id]">
+                      [routerLink]="['/projects', project.id, 'builds', build.id]"
+                    >
                       <td class="px-5 py-4 font-semibold text-neutral-900">
                         #{{ list.length - i }}
                       </td>
@@ -109,10 +139,19 @@ const MENU_MAX_HEIGHT = 320;
                           aria-haspopup="menu"
                           [attr.aria-expanded]="openBuild()?.id === build.id"
                           [attr.aria-label]="'Actions for build ' + (list.length - i)"
-                          (click)="$event.preventDefault(); $event.stopPropagation(); toggleMenu(build, $event)"
+                          (click)="
+                            $event.preventDefault();
+                            $event.stopPropagation();
+                            toggleMenu(build, $event)
+                          "
                           (keydown.escape)="closeMenu()"
                         >
-                          <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                          <svg
+                            aria-hidden="true"
+                            class="h-5 w-5"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
                             <circle cx="12" cy="5" r="1.6" />
                             <circle cx="12" cy="12" r="1.6" />
                             <circle cx="12" cy="19" r="1.6" />
@@ -359,7 +398,7 @@ export class ProjectBuilds implements OnInit, OnDestroy {
         (list ?? []).map((build) => (build.id === buildId ? updated : build)),
       );
     } catch {
-      this.errorMessage.set("Unable to prepare installation of this build.");
+      this.errorMessage.set('Unable to prepare installation of this build.');
     } finally {
       this.installingIds.update((ids) => {
         const next = new Set(ids);

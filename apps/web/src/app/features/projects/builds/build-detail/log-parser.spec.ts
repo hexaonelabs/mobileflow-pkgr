@@ -3,7 +3,7 @@ import { parseLogLine, parseLogText } from './log-parser';
 
 describe('parseLogLine', () => {
   it('extrait le timestamp ISO et le contenu restant', () => {
-    const line = parseLogLine('2026-09-15T20:01:50.3901170Z Current runner version: \'2.337.0\'');
+    const line = parseLogLine("2026-09-15T20:01:50.3901170Z Current runner version: '2.337.0'");
     expect(line.timestamp).toBe('2026-09-15T20:01:50.3901170Z');
     expect(line.segments.map((segment) => segment.text).join('')).toBe(
       "Current runner version: '2.337.0'",
@@ -22,7 +22,9 @@ describe('parseLogLine', () => {
   });
 
   it('convertit les séquences ANSI en segments colorés sans laisser de code brut', () => {
-    const line = parseLogLine('2026-09-15T20:01:51.3078650Z \x1b[36;1mLOG_FILE="$RUNNER_TEMP"\x1b[0m');
+    const line = parseLogLine(
+      '2026-09-15T20:01:51.3078650Z \x1b[36;1mLOG_FILE="$RUNNER_TEMP"\x1b[0m',
+    );
     const joined = line.segments.map((segment) => segment.text).join('');
     expect(joined).toBe('LOG_FILE="$RUNNER_TEMP"');
     expect(joined).not.toContain('\x1b');
@@ -48,7 +50,11 @@ describe('parseLogText', () => {
     const entries = parseLogText(raw);
 
     expect(entries).toHaveLength(2);
-    expect(entries[0]).toMatchObject({ type: 'group', title: 'Runner Image Provisioner', hasError: false });
+    expect(entries[0]).toMatchObject({
+      type: 'group',
+      title: 'Runner Image Provisioner',
+      hasError: false,
+    });
     if (entries[0].type === 'group') {
       expect(entries[0].lines).toHaveLength(1);
       expect(entries[0].isOpenByDefault).toBe(false);
@@ -68,7 +74,7 @@ describe('parseLogText', () => {
     expect(entry).toMatchObject({ type: 'group', hasError: true, isOpenByDefault: true });
   });
 
-  it("laisse déplié un groupe encore ouvert (pas de ##[endgroup], étape en cours)", () => {
+  it('laisse déplié un groupe encore ouvert (pas de ##[endgroup], étape en cours)', () => {
     const raw = [
       '2026-09-15T20:01:56.5019790Z ##[group]Run actions/checkout@v4',
       '2026-09-15T20:01:56.5020330Z with:',

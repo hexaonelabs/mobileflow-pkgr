@@ -16,7 +16,10 @@ import { Logo } from '../../../shared/ui/logo';
       </div>
 
       @if (sessionExpired()) {
-        <p role="alert" class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p
+          role="alert"
+          class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
           Your session has expired. Please sign in again.
         </p>
       }
@@ -81,9 +84,7 @@ import { Logo } from '../../../shared/ui/logo';
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
             <h2 class="text-sm font-semibold text-neutral-900">Sign in with GitHub</h2>
-            <p class="text-sm text-neutral-600">
-              Use your GitHub account to connect instantly.
-            </p>
+            <p class="text-sm text-neutral-600">Use your GitHub account to connect instantly.</p>
           </div>
           <!-- <button
             type="button"

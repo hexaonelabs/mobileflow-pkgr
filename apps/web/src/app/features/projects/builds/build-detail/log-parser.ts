@@ -144,7 +144,11 @@ export function parseLogText(raw: string): LogEntry[] {
 
     if (content.startsWith(GROUP_START_PREFIX)) {
       flushGroup(false);
-      currentGroup = { title: content.slice(GROUP_START_PREFIX.length), lines: [], hasError: false };
+      currentGroup = {
+        title: content.slice(GROUP_START_PREFIX.length),
+        lines: [],
+        hasError: false,
+      };
       continue;
     }
     if (content.startsWith(GROUP_END_PREFIX)) {

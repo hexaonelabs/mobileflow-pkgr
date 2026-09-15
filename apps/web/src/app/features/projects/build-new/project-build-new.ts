@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -27,7 +34,10 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
   template: `
     <div class="mx-auto flex max-w-xl flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       }
@@ -50,7 +60,9 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
           novalidate
         >
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-neutral-900" for="environment">Environment</label>
+            <label class="text-sm font-medium text-neutral-900" for="environment"
+              >Environment</label
+            >
             <select
               id="environment"
               formControlName="environment"
@@ -70,7 +82,8 @@ function atLeastOnePlatformValidator(control: AbstractControl): ValidationErrors
             }
             @if (quota()?.available) {
               <p class="mt-1 text-sm text-neutral-500">
-                GitHub Actions usage: {{ quota()!.totalMinutesUsed }} / {{ quota()!.includedMinutes }} minutes this period.
+                GitHub Actions usage: {{ quota()!.totalMinutesUsed }} /
+                {{ quota()!.includedMinutes }} minutes this period.
               </p>
             }
           </div>
@@ -288,7 +301,12 @@ export class ProjectBuildNew implements OnInit {
     );
 
     try {
-      await this.projectsService.createBuild(project.id, { environment, branch, platforms, envVars });
+      await this.projectsService.createBuild(project.id, {
+        environment,
+        branch,
+        platforms,
+        envVars,
+      });
       await this.router.navigate(['/projects', project.id, 'builds']);
     } catch (err) {
       this.submitError.set(this.extractErrorMessage(err, 'Unable to start this build.'));

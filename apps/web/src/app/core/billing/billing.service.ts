@@ -2,7 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import type { CheckoutSessionResult, PortalSessionResult, SubscriptionSummary } from './billing.models';
+import type {
+  CheckoutSessionResult,
+  PortalSessionResult,
+  SubscriptionSummary,
+} from './billing.models';
 
 @Injectable({ providedIn: 'root' })
 export class BillingService {

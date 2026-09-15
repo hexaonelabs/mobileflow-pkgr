@@ -1,10 +1,16 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  ErrorHandler,
+  inject,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideRouter, Router, withRouterConfig } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { sessionExpiredInterceptor } from './core/auth/session-expired.interceptor';
-import * as Sentry from "@sentry/angular";
+import * as Sentry from '@sentry/angular';
 
 export const appConfig: ApplicationConfig = {
   providers: [

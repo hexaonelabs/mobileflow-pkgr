@@ -19,7 +19,9 @@ interface SlackEventsFormValue {
   template: `
     <form class="flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-neutral-900" for="webhookUrl">Slack Webhook URL</label>
+        <label class="text-sm font-medium text-neutral-900" for="webhookUrl"
+          >Slack Webhook URL</label
+        >
         <input
           id="webhookUrl"
           type="url"
@@ -31,9 +33,14 @@ interface SlackEventsFormValue {
         />
         <p class="text-xs text-neutral-500">
           Get this from
-          <a class="underline hover:text-neutral-700" href="https://api.slack.com/apps" target="_blank" rel="noopener">
-            Slack API
-          </a>.
+          <a
+            class="underline hover:text-neutral-700"
+            href="https://api.slack.com/apps"
+            target="_blank"
+            rel="noopener"
+          >
+            Slack API </a
+          >.
         </p>
         @if (isWebhookInvalid()) {
           <p id="webhookUrl-error" class="text-sm text-red-600" role="alert">

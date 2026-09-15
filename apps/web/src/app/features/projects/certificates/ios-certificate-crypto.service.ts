@@ -19,7 +19,10 @@ export class IosCertificateCryptoService {
 
   // La CSR (PKCS#10) est construite via node-forge : Web Crypto API n'a aucune notion de ce
   // format ASN.1, seulement des primitives bas niveau.
-  async createCertificateSigningRequest(keyPair: CryptoKeyPair, commonName: string): Promise<string> {
+  async createCertificateSigningRequest(
+    keyPair: CryptoKeyPair,
+    commonName: string,
+  ): Promise<string> {
     const { privateKey, publicKey } = await this.toForgeKeyPair(keyPair);
     const csr = forge.pki.createCertificationRequest();
     csr.publicKey = publicKey;
@@ -40,7 +43,9 @@ export class IosCertificateCryptoService {
     const { privateKey } = await this.toForgeKeyPair(keyPair);
     const certAsn1 = forge.asn1.fromDer(forge.util.decode64(certificateContentBase64));
     const certificate = forge.pki.certificateFromAsn1(certAsn1);
-    const p12Asn1 = forge.pkcs12.toPkcs12Asn1(privateKey, certificate, password, { algorithm: '3des' });
+    const p12Asn1 = forge.pkcs12.toPkcs12Asn1(privateKey, certificate, password, {
+      algorithm: '3des',
+    });
     return forge.util.encode64(forge.asn1.toDer(p12Asn1).getBytes());
   }
 

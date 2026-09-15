@@ -67,10 +67,7 @@ export interface CreateBuildPayload {
 }
 
 export type SecretType =
-  | 'ios_certificate'
-  | 'ios_provisioning_profile'
-  | 'android_keystore'
-  | 'app_store_connect_key';
+  'ios_certificate' | 'ios_provisioning_profile' | 'android_keystore' | 'app_store_connect_key';
 
 export interface Secret {
   id: string;

@@ -14,7 +14,12 @@ import QRCode from 'qrcode';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ProjectsService } from '../../../../core/projects/projects.service';
-import type { Build, BuildStatus, Project, TriggeredBy } from '../../../../core/projects/project.models';
+import type {
+  Build,
+  BuildStatus,
+  Project,
+  TriggeredBy,
+} from '../../../../core/projects/project.models';
 import { BuildStatusBadge } from '../../../../shared/ui/build-status-badge';
 import { PlatformIcon } from '../../../../shared/ui/platform-icon';
 import { BuildLogsViewer } from './build-logs-viewer';
@@ -52,7 +57,10 @@ const ACTION_BUTTON_CLASS =
   template: `
     <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       }
@@ -64,8 +72,19 @@ const ACTION_BUTTON_CLASS =
               class="inline-flex w-fit items-center gap-1 text-sm font-medium text-neutral-500 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
               [routerLink]="['/projects', project.id, 'builds']"
             >
-              <svg aria-hidden="true" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                />
               </svg>
               Builds
             </a>
@@ -83,11 +102,21 @@ const ACTION_BUTTON_CLASS =
               </div>
 
               <div class="flex items-center gap-2">
-                <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="refreshing()" (click)="refresh()">
+                <button
+                  type="button"
+                  class="${ACTION_BUTTON_CLASS}"
+                  [disabled]="refreshing()"
+                  (click)="refresh()"
+                >
                   {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
                 </button>
                 @if (build.logsUrl) {
-                  <a class="${ACTION_BUTTON_CLASS}" [href]="build.logsUrl" target="_blank" rel="noopener noreferrer">
+                  <a
+                    class="${ACTION_BUTTON_CLASS}"
+                    [href]="build.logsUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     View on GitHub ↗
                   </a>
                 }
@@ -108,9 +137,12 @@ const ACTION_BUTTON_CLASS =
               </div>
 
               @if (logsExpired()) {
-                <div class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
+                <div
+                  class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center"
+                >
                   <p class="text-sm text-neutral-600">
-                    Build logs are no longer available. GitHub retains Actions logs for 90 days; this build is older than that window.
+                    Build logs are no longer available. GitHub retains Actions logs for 90 days;
+                    this build is older than that window.
                   </p>
                   @if (build.logsUrl) {
                     <a
@@ -159,7 +191,10 @@ const ACTION_BUTTON_CLASS =
                   class="mt-3 max-h-[32rem] overflow-auto rounded-xl border border-neutral-800 bg-neutral-900 p-4 font-mono text-xs text-neutral-100"
                 >
                   @if (logLines()) {
-                    <app-build-logs-viewer [text]="logLines()" [showTimestamps]="logsShowTimestamps()" />
+                    <app-build-logs-viewer
+                      [text]="logLines()"
+                      [showTimestamps]="logsShowTimestamps()"
+                    />
                   } @else {
                     <p class="text-neutral-400">Waiting for logs…</p>
                   }
@@ -214,25 +249,48 @@ const ACTION_BUTTON_CLASS =
                   <h3 class="${DT_CLASS}">Artifacts</h3>
                   <div class="mt-2 flex flex-col items-start gap-2">
                     @if (build.artifactUrl) {
-                      <a class="${ACTION_BUTTON_CLASS}" [href]="build.artifactUrl" target="_blank" rel="noopener noreferrer">
+                      <a
+                        class="${ACTION_BUTTON_CLASS}"
+                        [href]="build.artifactUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         View on GitHub ↗
                       </a>
                     }
                     @if (build.environment === 'staging' && build.status === 'success') {
                       @if (!build.artifactStoragePath) {
-                        <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="installing()" (click)="installBuild(build.id)">
+                        <button
+                          type="button"
+                          class="${ACTION_BUTTON_CLASS}"
+                          [disabled]="installing()"
+                          (click)="installBuild(build.id)"
+                        >
                           {{ installing() ? 'Preparing…' : 'Install' }}
                         </button>
                       } @else {
-                        <button type="button" class="${ACTION_BUTTON_CLASS}" [disabled]="downloading()" (click)="downloadArtifact(build.id)">
+                        <button
+                          type="button"
+                          class="${ACTION_BUTTON_CLASS}"
+                          [disabled]="downloading()"
+                          (click)="downloadArtifact(build.id)"
+                        >
                           {{ downloading() ? 'Preparing link…' : 'Download (hosted by pkgr.app)' }}
                         </button>
                         @if (artifactExpiresAt(build); as expiresAt) {
-                          <p class="text-xs text-neutral-500">Available until {{ formatDate(expiresAt) }}</p>
+                          <p class="text-xs text-neutral-500">
+                            Available until {{ formatDate(expiresAt) }}
+                          </p>
                         }
                         @if (build.platform === 'ios') {
-                          <a class="${ACTION_BUTTON_CLASS}" [href]="itmsServicesUrl(build.id)">Install on iPhone</a>
-                          <button type="button" class="${ACTION_BUTTON_CLASS}" (click)="toggleQr(build.id)">
+                          <a class="${ACTION_BUTTON_CLASS}" [href]="itmsServicesUrl(build.id)"
+                            >Install on iPhone</a
+                          >
+                          <button
+                            type="button"
+                            class="${ACTION_BUTTON_CLASS}"
+                            (click)="toggleQr(build.id)"
+                          >
                             {{ qrDataUrl() ? 'Hide QR code' : 'Show QR code' }}
                           </button>
                           @if (qrDataUrl(); as qrDataUrl) {
@@ -345,7 +403,7 @@ export class BuildDetail implements OnInit, OnDestroy {
     try {
       this.build.set(await this.projectsService.installBuild(this.projectId, buildId));
     } catch {
-      this.errorMessage.set("Unable to prepare installation of this build.");
+      this.errorMessage.set('Unable to prepare installation of this build.');
     } finally {
       this.installing.set(false);
     }
@@ -374,7 +432,9 @@ export class BuildDetail implements OnInit, OnDestroy {
       return;
     }
     try {
-      this.qrDataUrl.set(await QRCode.toDataURL(this.itmsServicesUrl(buildId), { margin: 1, width: 180 }));
+      this.qrDataUrl.set(
+        await QRCode.toDataURL(this.itmsServicesUrl(buildId), { margin: 1, width: 180 }),
+      );
     } catch {
       this.errorMessage.set('Unable to generate QR code.');
     }
@@ -389,11 +449,15 @@ export class BuildDetail implements OnInit, OnDestroy {
     if (retentionDays === null) {
       return null;
     }
-    return new Date(new Date(build.artifactUploadedAt).getTime() + retentionDays * MS_PER_DAY).toISOString();
+    return new Date(
+      new Date(build.artifactUploadedAt).getTime() + retentionDays * MS_PER_DAY,
+    ).toISOString();
   }
 
   protected showArtifacts(build: Build): boolean {
-    return build.artifactUrl !== null || (build.environment === 'staging' && build.status === 'success');
+    return (
+      build.artifactUrl !== null || (build.environment === 'staging' && build.status === 'success')
+    );
   }
 
   protected commitUrl(project: Project, build: Build): string {
@@ -480,7 +544,8 @@ export class BuildDetail implements OnInit, OnDestroy {
     if (!container) {
       return;
     }
-    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
     this.logsUserScrolledUp.set(distanceFromBottom > 40);
   }
 

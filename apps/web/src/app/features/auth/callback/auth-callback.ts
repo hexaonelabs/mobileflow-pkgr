@@ -8,7 +8,9 @@ import { Logo } from '../../../shared/ui/logo';
   imports: [Logo],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-4 px-4 text-center">
+    <main
+      class="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-4 px-4 text-center"
+    >
       <app-logo class="h-9 w-9" />
       <p role="status" class="text-sm text-neutral-600">
         {{ errorMessage() ?? 'Connexion en cours…' }}

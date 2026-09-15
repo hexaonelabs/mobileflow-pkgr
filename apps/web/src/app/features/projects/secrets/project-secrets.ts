@@ -31,7 +31,9 @@ function aliasRequiredForAndroidValidator(control: AbstractControl): ValidationE
 // A provisioning profile (.mobileprovision) is not password protected.
 function passwordRequiredValidator(control: AbstractControl): ValidationErrors | null {
   const { type, password } = control.value as { type: SecretType; password: string };
-  return type !== 'ios_provisioning_profile' && !password.trim() ? { passwordRequired: true } : null;
+  return type !== 'ios_provisioning_profile' && !password.trim()
+    ? { passwordRequired: true }
+    : null;
 }
 
 function environmentRequiredForProvisioningProfileValidator(
@@ -60,7 +62,10 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
   template: `
     <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       }
@@ -69,7 +74,8 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
         <div>
           <h2 class="text-lg font-bold tracking-tight text-neutral-900">Secret Vault</h2>
           <p class="mt-1 text-sm text-neutral-600">
-            iOS signing certificates and Android keystores. Content is encrypted at rest and never re-displayed after upload.
+            iOS signing certificates and Android keystores. Content is encrypted at rest and never
+            re-displayed after upload.
           </p>
         </div>
 
@@ -79,9 +85,7 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
           </h3>
           @if (secrets(); as list) {
             @if (list.length === 0) {
-              <p class="px-5 py-8 text-center text-sm text-neutral-600">
-                No secrets stored yet.
-              </p>
+              <p class="px-5 py-8 text-center text-sm text-neutral-600">No secrets stored yet.</p>
             } @else {
               <ul class="divide-y divide-neutral-100">
                 @for (secret of list; track secret.id) {
@@ -113,7 +117,12 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
 
         <section class="rounded-2xl border border-neutral-200 bg-white p-6">
           <h3 class="text-sm font-semibold text-neutral-900">Add a Secret</h3>
-          <form class="mt-4 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <form
+            class="mt-4 flex flex-col gap-4"
+            [formGroup]="form"
+            (ngSubmit)="submit()"
+            novalidate
+          >
             <div class="flex flex-col gap-1">
               <label class="text-sm font-medium text-neutral-900" for="type">Type</label>
               <select
@@ -122,13 +131,17 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
                 class="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-600"
               >
                 <option value="ios_certificate">Certificat iOS (.p12)</option>
-                <option value="ios_provisioning_profile">Provisioning profile iOS (.mobileprovision)</option>
+                <option value="ios_provisioning_profile">
+                  Provisioning profile iOS (.mobileprovision)
+                </option>
                 <option value="android_keystore">Keystore Android</option>
               </select>
             </div>
 
             @if (selectedType() === 'ios_certificate') {
-              <p class="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800">
+              <p
+                class="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800"
+              >
                 No .p12 yet? pkgr.app can generate and sign one for you automatically.
                 <a
                   [routerLink]="['/projects', project.id, 'secrets', 'ios-certificate-wizard']"
@@ -156,7 +169,9 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
 
             @if (selectedType() === 'ios_provisioning_profile') {
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium text-neutral-900" for="environment">Environment</label>
+                <label class="text-sm font-medium text-neutral-900" for="environment"
+                  >Environment</label
+                >
                 <select
                   id="environment"
                   formControlName="environment"
@@ -176,7 +191,11 @@ const ENVIRONMENT_LABELS: Record<Environment, string> = {
             @if (selectedType() !== 'ios_provisioning_profile') {
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-neutral-900" for="password">
-                  {{ selectedType() === 'android_keystore' ? 'Keystore password' : 'Certificate password' }}
+                  {{
+                    selectedType() === 'android_keystore'
+                      ? 'Keystore password'
+                      : 'Certificate password'
+                  }}
                 </label>
                 <input
                   id="password"
@@ -376,7 +395,8 @@ export class ProjectSecrets implements OnInit {
         created,
         ...(list ?? []).filter(
           (s) =>
-            s.type !== type || (type === 'ios_provisioning_profile' && s.environment !== created.environment),
+            s.type !== type ||
+            (type === 'ios_provisioning_profile' && s.environment !== created.environment),
         ),
       ]);
       this.form.reset({ type, environment: '', password: '', alias: '', keyPassword: '' });

@@ -14,7 +14,10 @@ import { SlackConfigFormComponent } from './slack-config-form';
       </div>
 
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       } @else if (projectId(); as id) {

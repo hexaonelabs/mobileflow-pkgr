@@ -50,9 +50,7 @@ export const routes: Routes = [
       {
         path: 'builds/new',
         loadComponent: () =>
-          import('./features/projects/build-new/project-build-new').then(
-            (m) => m.ProjectBuildNew,
-          ),
+          import('./features/projects/build-new/project-build-new').then((m) => m.ProjectBuildNew),
       },
       {
         path: 'builds',
@@ -62,9 +60,7 @@ export const routes: Routes = [
       {
         path: 'builds/:buildId',
         loadComponent: () =>
-          import('./features/projects/builds/build-detail/build-detail').then(
-            (m) => m.BuildDetail,
-          ),
+          import('./features/projects/builds/build-detail/build-detail').then((m) => m.BuildDetail),
       },
       {
         path: 'secrets',

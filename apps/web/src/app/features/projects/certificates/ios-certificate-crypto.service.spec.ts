@@ -99,7 +99,11 @@ describe('IosCertificateCryptoService', () => {
   it('rejects decoding the .p12 with the wrong password', async () => {
     const keyPair = await service.generateKeyPair();
     const certificateContentBase64 = await fakeAppleCertificateFor(keyPair);
-    const p12Base64 = await service.buildPkcs12(keyPair, certificateContentBase64, 'correct-password');
+    const p12Base64 = await service.buildPkcs12(
+      keyPair,
+      certificateContentBase64,
+      'correct-password',
+    );
 
     const p12Asn1 = forge.asn1.fromDer(forge.util.decode64(p12Base64));
     expect(() => forge.pkcs12.pkcs12FromAsn1(p12Asn1, 'wrong-password')).toThrow();

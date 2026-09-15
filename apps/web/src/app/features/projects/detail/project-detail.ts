@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
@@ -21,11 +28,17 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
   template: `
     <div class="flex flex-col gap-6">
       @if (errorMessage()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ errorMessage() }}
         </p>
       } @else if (project(); as project) {
-        <section aria-label="Project details" class="rounded-2xl border border-neutral-200 bg-white p-6">
+        <section
+          aria-label="Project details"
+          class="rounded-2xl border border-neutral-200 bg-white p-6"
+        >
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 class="text-lg font-bold tracking-tight text-neutral-900">{{ project.name }}</h2>
@@ -35,7 +48,12 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <svg aria-hidden="true" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -43,8 +61,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   />
                 </svg>
                 {{ project.githubRepoFullName }}
-                <svg aria-hidden="true" class="h-3.5 w-3.5 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M6 10.5V18h7.5" />
+                <svg
+                  aria-hidden="true"
+                  class="h-3.5 w-3.5 text-neutral-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M6 10.5V18h7.5"
+                  />
                 </svg>
               </a>
             </div>
@@ -75,11 +104,29 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   (click)="copyProjectId(project.id)"
                 >
                   @if (copied()) {
-                    <svg class="h-3.5 w-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    <svg
+                      class="h-3.5 w-3.5 text-green-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M4.5 12.75l6 6 9-13.5"
+                      />
                     </svg>
                   } @else {
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <svg
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -117,8 +164,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                       class="shrink-0 rounded-sm p-1 text-accent-600 transition-colors hover:text-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 disabled:opacity-50"
                       [disabled]="autoTriggerSaving()"
                     >
-                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      <svg
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M4.5 12.75l6 6 9-13.5"
+                        />
                       </svg>
                     </button>
                     <button
@@ -127,25 +185,47 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                       class="shrink-0 rounded-sm p-1 text-neutral-400 transition-colors hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                       (click)="cancelEditAutoTrigger()"
                     >
-                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </form>
-                  <p class="mt-1 text-xs text-neutral-500">Starts a staging build on push. Empty disables it.</p>
+                  <p class="mt-1 text-xs text-neutral-500">
+                    Starts a staging build on push. Empty disables it.
+                  </p>
                   @if (autoTriggerError()) {
                     <p role="alert" class="mt-1 text-xs text-red-600">{{ autoTriggerError() }}</p>
                   }
                 } @else {
                   <div class="flex items-center gap-1">
-                    <span class="text-sm text-neutral-900">{{ project.autoTriggerBranch || 'Disabled' }}</span>
+                    <span class="text-sm text-neutral-900">{{
+                      project.autoTriggerBranch || 'Disabled'
+                    }}</span>
                     <button
                       type="button"
                       aria-label="Edit auto-trigger branch"
                       class="shrink-0 rounded-sm p-0.5 text-neutral-400 transition-colors hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                       (click)="startEditAutoTrigger()"
                     >
-                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                      <svg
+                        class="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        aria-hidden="true"
+                      >
                         <path
                           stroke-linecap="round"
                           stroke-linejoin="round"
@@ -169,7 +249,10 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
           </dl>
         </section>
 
-        <section aria-label="Project setup checklist" class="rounded-2xl border border-neutral-200 bg-white p-6">
+        <section
+          aria-label="Project setup checklist"
+          class="rounded-2xl border border-neutral-200 bg-white p-6"
+        >
           @if (checklistExpanded()) {
             <div class="flex items-center justify-between gap-4">
               <h3 class="text-sm font-semibold text-neutral-900">Get your project ready</h3>
@@ -191,7 +274,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               <li class="flex items-start gap-3">
                 <span
                   class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  [class]="isFullyReady() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  [class]="
+                    isFullyReady() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                  "
                   aria-hidden="true"
                 >
                   {{ isFullyReady() ? '✓' : '1' }}
@@ -219,7 +304,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               <li class="flex items-start gap-3">
                 <span
                   class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  [class]="hasSecrets() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  [class]="
+                    hasSecrets() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                  "
                   aria-hidden="true"
                 >
                   {{ hasSecrets() ? '✓' : '2' }}
@@ -230,7 +317,8 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                     @if (hasSecrets()) {
                       {{ secretsCount() }} secret{{ secretsCount() > 1 ? 's' : '' }} stored.
                     } @else {
-                      iOS certificates and Android keystores are required to produce installable builds.
+                      iOS certificates and Android keystores are required to produce installable
+                      builds.
                     }
                   </p>
                 </div>
@@ -247,7 +335,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               <li class="flex items-start gap-3">
                 <span
                   class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  [class]="hasBuilds() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                  [class]="
+                    hasBuilds() ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+                  "
                   aria-hidden="true"
                 >
                   {{ hasBuilds() ? '✓' : '3' }}
@@ -275,7 +365,11 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               <li class="flex items-start gap-3">
                 <span
                   class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  [class]="notificationsEnabled() ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'"
+                  [class]="
+                    notificationsEnabled()
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-neutral-100 text-neutral-400'
+                  "
                   aria-hidden="true"
                 >
                   {{ notificationsEnabled() ? '✓' : '·' }}
@@ -331,7 +425,13 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               class="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700"
               aria-hidden="true"
             >
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -350,8 +450,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               [routerLink]="['/projects', project.id, 'builds', 'new']"
             >
               Start a build
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
               </svg>
             </a>
           </div>
@@ -361,7 +472,13 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               class="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700"
               aria-hidden="true"
             >
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -385,8 +502,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               [routerLink]="['/projects', project.id, 'secrets']"
             >
               {{ hasSecrets() ? 'Manage secrets' : 'Add a secret' }}
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
               </svg>
             </a>
           </div>
@@ -397,7 +525,13 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                 class="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-neutral-700"
                 aria-hidden="true"
               >
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <svg
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
@@ -431,8 +565,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               [routerLink]="['/projects', project.id, 'analytics']"
             >
               View analytics
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
               </svg>
             </a>
           </div>
@@ -451,13 +596,19 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
               stroke-width="1.5"
               aria-hidden="true"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+              />
             </svg>
           </summary>
 
           <div class="flex flex-col gap-6 border-t border-red-100 px-6 py-6">
             <section aria-labelledby="workflow-heading">
-              <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">Build workflow</h3>
+              <h3 id="workflow-heading" class="text-sm font-semibold text-neutral-900">
+                Build workflow
+              </h3>
               <p class="mt-1 text-sm text-neutral-600">
                 pkgr.app installs the workflow ({{ '.github/workflows/mobileflow.yml' }}) only once.
                 You can then customize it freely — it will never be overwritten automatically.
@@ -475,8 +626,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                 } @else {
                   <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
                     <p class="text-red-900">
-                      This will <strong>overwrite</strong> the current workflow file on the default branch
-                      of {{ project.githubRepoFullName }}, including any customizations you've made.
+                      This will <strong>overwrite</strong> the current workflow file on the default
+                      branch of {{ project.githubRepoFullName }}, including any customizations
+                      you've made.
                     </p>
                     <div class="mt-3 flex gap-2">
                       <button
@@ -510,7 +662,8 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
             <section aria-label="Delete project">
               <h3 class="text-sm font-semibold text-neutral-900">Delete project</h3>
               <p class="mt-1 text-sm text-neutral-600">
-                Permanently remove this project from pkgr.app, including its build history and stored secrets.
+                Permanently remove this project from pkgr.app, including its build history and
+                stored secrets.
               </p>
               <button
                 type="button"
@@ -539,7 +692,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
             class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-12 sm:pt-20"
             (keydown.escape)="closeRepositorySetupModal()"
           >
-            <div class="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
+            <div
+              class="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
+            >
               <div class="flex items-center justify-between gap-4">
                 <h3 id="repo-setup-modal-heading" class="text-sm font-semibold text-neutral-900">
                   Repository setup
@@ -550,7 +705,14 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   class="rounded-sm p-1 text-neutral-400 transition-colors hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
                   (click)="closeRepositorySetupModal()"
                 >
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <svg
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    aria-hidden="true"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -561,7 +723,11 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   <li class="flex items-center gap-2 text-sm">
                     <span
                       class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      [class]="readiness.capacitorInstalled ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                      [class]="
+                        readiness.capacitorInstalled
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-amber-50 text-amber-700'
+                      "
                       aria-hidden="true"
                     >
                       {{ readiness.capacitorInstalled ? '✓' : '!' }}
@@ -573,7 +739,11 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   <li class="flex items-center gap-2 text-sm">
                     <span
                       class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      [class]="readiness.androidPlatformAdded ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                      [class]="
+                        readiness.androidPlatformAdded
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-amber-50 text-amber-700'
+                      "
                       aria-hidden="true"
                     >
                       {{ readiness.androidPlatformAdded ? '✓' : '!' }}
@@ -583,7 +753,11 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                   <li class="flex items-center gap-2 text-sm">
                     <span
                       class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      [class]="readiness.iosPlatformAdded ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'"
+                      [class]="
+                        readiness.iosPlatformAdded
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-amber-50 text-amber-700'
+                      "
                       aria-hidden="true"
                     >
                       {{ readiness.iosPlatformAdded ? '✓' : '!' }}
@@ -594,7 +768,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
 
                 @if (hasMissingReadinessSteps()) {
                   <div class="mt-4 rounded-xl border border-accent-100 bg-accent-50 p-4">
-                    <p class="text-sm font-medium text-accent-900">Let pkgr.app configure it for you</p>
+                    <p class="text-sm font-medium text-accent-900">
+                      Let pkgr.app configure it for you
+                    </p>
                     <p class="mt-1 text-sm text-accent-800">
                       We'll install Capacitor and add the missing platforms with a single commit to
                       {{ project.githubRepoFullName }}. This is the fastest way to get building.
@@ -612,8 +788,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                       } @else {
                         <div class="rounded-xl border border-white bg-white p-4 text-sm">
                           <p class="text-neutral-700">
-                            This will push a commit to your GitHub repository ({{ project.githubRepoFullName }})
-                            to install Capacitor and/or add missing platforms.
+                            This will push a commit to your GitHub repository ({{
+                              project.githubRepoFullName
+                            }}) to install Capacitor and/or add missing platforms.
                           </p>
                           <div class="mt-3 flex flex-col gap-1">
                             <label class="text-sm font-medium text-neutral-900" for="web-dir">
@@ -627,8 +804,9 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                               (input)="webDir.set($any($event.target).value)"
                             />
                             <p class="text-xs text-neutral-600">
-                              Directory where your build command (e.g. <code>npm run build</code>) generates static files.
-                              Default is "www", but depends on your framework (e.g. Angular: dist/&lt;project-name&gt;/browser).
+                              Directory where your build command (e.g. <code>npm run build</code>)
+                              generates static files. Default is "www", but depends on your
+                              framework (e.g. Angular: dist/&lt;project-name&gt;/browser).
                             </p>
                           </div>
                           <div class="mt-3 flex gap-2">
@@ -699,13 +877,21 @@ import { PlatformIcon } from '../../../shared/ui/platform-icon';
                       stroke-width="2"
                       aria-hidden="true"
                     >
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                      />
                     </svg>
                   </button>
 
                   @if (manualStepsExpanded()) {
-                    <pre class="mt-2 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">{{ hasMissingReadinessSteps() ? setupCommand() : fullSetupCommand() }}</pre>
-                    <p class="mt-2 text-xs text-neutral-500">then commit and push the generated files.</p>
+                    <pre
+                      class="mt-2 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100"
+                      >{{ hasMissingReadinessSteps() ? setupCommand() : fullSetupCommand() }}</pre>
+                    <p class="mt-2 text-xs text-neutral-500">
+                      then commit and push the generated files.
+                    </p>
                   }
                 </div>
               } @else if (!readinessError()) {
@@ -760,7 +946,10 @@ export class ProjectDetail implements OnInit {
 
   protected readonly isFullyReady = computed(() => {
     const readiness = this.readiness();
-    return !!readiness?.capacitorInstalled && (readiness.androidPlatformAdded || readiness.iosPlatformAdded);
+    return (
+      !!readiness?.capacitorInstalled &&
+      (readiness.androidPlatformAdded || readiness.iosPlatformAdded)
+    );
   });
 
   protected readonly hasMissingReadinessSteps = computed(() => {
@@ -768,7 +957,11 @@ export class ProjectDetail implements OnInit {
     if (!readiness) {
       return false;
     }
-    return !readiness.capacitorInstalled || !readiness.androidPlatformAdded || !readiness.iosPlatformAdded;
+    return (
+      !readiness.capacitorInstalled ||
+      !readiness.androidPlatformAdded ||
+      !readiness.iosPlatformAdded
+    );
   });
 
   protected readonly setupCommand = computed(() => {
@@ -804,7 +997,9 @@ export class ProjectDetail implements OnInit {
   protected readonly buildsCount = computed(() => this.builds()?.length ?? 0);
   protected readonly hasBuilds = computed(() => this.buildsCount() > 0);
   protected readonly latestBuild = computed(() => this.builds()?.[0] ?? null);
-  protected readonly notificationsEnabled = computed(() => !!this.notificationConfig()?.slack?.enabled);
+  protected readonly notificationsEnabled = computed(
+    () => !!this.notificationConfig()?.slack?.enabled,
+  );
 
   protected readonly requiredStepsDone = computed(
     () => this.isFullyReady() && this.hasSecrets() && this.hasBuilds(),

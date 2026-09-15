@@ -64,8 +64,20 @@ const STATUS_BADGE_CLASSES: Record<BuildStatus, string> = {
         }
         @case ('running') {
           <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <circle class="opacity-25" cx="10" cy="10" r="7" stroke="currentColor" stroke-width="3" />
-            <path d="M17 10a7 7 0 00-7-7" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            <circle
+              class="opacity-25"
+              cx="10"
+              cy="10"
+              r="7"
+              stroke="currentColor"
+              stroke-width="3"
+            />
+            <path
+              d="M17 10a7 7 0 00-7-7"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
           </svg>
         }
       }

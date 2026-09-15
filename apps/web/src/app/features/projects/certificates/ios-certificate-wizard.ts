@@ -14,7 +14,11 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProjectsService } from '../../../core/projects/projects.service';
-import type { GeneratedIosCertificate, Project, Secret } from '../../../core/projects/project.models';
+import type {
+  GeneratedIosCertificate,
+  Project,
+  Secret,
+} from '../../../core/projects/project.models';
 import { IosCertificateCryptoService } from './ios-certificate-crypto.service';
 
 type WizardStep =
@@ -86,7 +90,10 @@ function progressIndexFor(step: WizardStep): number {
         </div>
 
         @if (step() !== 'error') {
-          <ol class="flex items-center gap-2 text-xs font-medium text-neutral-500" aria-label="Progress">
+          <ol
+            class="flex items-center gap-2 text-xs font-medium text-neutral-500"
+            aria-label="Progress"
+          >
             @for (progressStep of progressSteps; track progressStep.key; let i = $index) {
               <li
                 class="flex items-center gap-2"
@@ -134,10 +141,11 @@ function progressIndexFor(step: WizardStep): number {
                   class="font-medium text-accent-700 underline hover:text-accent-800"
                   >appstoreconnect.apple.com</a
                 >
-                → Users and Access → Integrations → App Store Connect API → Generate API Key (any role
-                with certificate management, e.g. "Developer" or "Admin"). Download the resulting
-                <code class="rounded bg-neutral-100 px-1 py-0.5 text-xs">.p8</code> file — Apple only lets
-                you download it once.
+                → Users and Access → Integrations → App Store Connect API → Generate API Key (any
+                role with certificate management, e.g. "Developer" or "Admin"). Download the
+                resulting
+                <code class="rounded bg-neutral-100 px-1 py-0.5 text-xs">.p8</code> file — Apple
+                only lets you download it once.
               </p>
 
               <form
@@ -147,7 +155,9 @@ function progressIndexFor(step: WizardStep): number {
                 novalidate
               >
                 <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-neutral-900" for="issuerId">Issuer ID</label>
+                  <label class="text-sm font-medium text-neutral-900" for="issuerId"
+                    >Issuer ID</label
+                  >
                   <input
                     id="issuerId"
                     type="text"
@@ -175,7 +185,9 @@ function progressIndexFor(step: WizardStep): number {
                 </div>
 
                 <div class="flex flex-col gap-1">
-                  <label class="text-sm font-medium text-neutral-900" for="p8File">API key file (.p8)</label>
+                  <label class="text-sm font-medium text-neutral-900" for="p8File"
+                    >API key file (.p8)</label
+                  >
                   <input
                     id="p8File"
                     #p8FileInput
@@ -208,8 +220,8 @@ function progressIndexFor(step: WizardStep): number {
                 Step 2 of 2 — Name your certificate
               </h3>
               <p class="mt-2 text-sm text-neutral-600">
-                pkgr.app will generate a signing key, request a certificate from Apple, and install it
-                on this project automatically.
+                pkgr.app will generate a signing key, request a certificate from Apple, and install
+                it on this project automatically.
               </p>
 
               <form
@@ -243,7 +255,9 @@ function progressIndexFor(step: WizardStep): number {
               <h3 #stepHeading tabindex="-1" class="text-sm font-semibold text-neutral-900">
                 {{ stepLabel() }}
               </h3>
-              <p role="status" class="mt-2 text-sm text-neutral-600">Generating your signing key…</p>
+              <p role="status" class="mt-2 text-sm text-neutral-600">
+                Generating your signing key…
+              </p>
             }
 
             @case ('signing') {
@@ -316,7 +330,10 @@ function progressIndexFor(step: WizardStep): number {
           }
         </section>
       } @else if (loadError()) {
-        <p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p
+          role="alert"
+          class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {{ loadError() }}
         </p>
       } @else {
@@ -461,7 +478,9 @@ export class IosCertificateWizard implements OnInit, OnDestroy {
 
       this.step.set('signing');
       this.focusStepHeading();
-      const certificate = await this.projectsService.generateIosCertificate(this.projectId, { csrPem });
+      const certificate = await this.projectsService.generateIosCertificate(this.projectId, {
+        csrPem,
+      });
       this.generatedCertificate.set(certificate);
 
       this.step.set('building-p12');
