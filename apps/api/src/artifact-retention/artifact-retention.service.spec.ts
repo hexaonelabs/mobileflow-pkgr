@@ -57,6 +57,7 @@ function buildDoc(overrides: Partial<BuildDocument> & { userId: string }): Build
     envVars: {},
     status: 'success' as never,
     githubRunId: 42,
+    githubJobId: null,
     startedAt: null,
     finishedAt: null,
     durationSeconds: null,

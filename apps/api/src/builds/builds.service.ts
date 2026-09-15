@@ -12,6 +12,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { GithubService } from '../github/github.service';
 import { MOBILEFLOW_WORKFLOW_FILENAME } from '../github/workflow-template';
 import { FirestoreService } from '../firestore/firestore.service';
+import { LogsTokensService } from '../internal/logs-tokens.service';
 import { RunTokensService } from '../internal/run-tokens.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Platform, PROJECTS_COLLECTION, type ProjectDocument } from '../projects/project.model';
@@ -29,6 +30,19 @@ import type { CreateBuildDto } from './dto/create-build.dto';
 import { BuildStatusChangedEvent } from './events/build-status-changed.event';
 
 const ARTIFACT_DOWNLOAD_URL_TTL_MS = 15 * 60 * 1000;
+// Un build terminé n'a plus de nouvelles lignes : le texte GitHub ne change plus, donc un cache
+// évite de re-télécharger l'intégralité des logs à chaque ouverture de page dans la même minute.
+// Pendant la phase active, getBuildLogs() ne fait plus aucun appel GitHub (cf. liveLogsBuffer).
+const LOGS_CACHE_TTL_FINISHED_MS = 60 * 1000;
+// Buffer de logs "live" poussé par le shipper du workflow pendant qu'un job tourne (cf.
+// BuildLogsIngestionController) — couvre la fenêtre où GitHub Actions n'a encore rien à
+// donner (job in_progress). Volontairement en mémoire process, jamais persisté : son seul rôle
+// est ce pont temporaire, le texte GitHub officiel fait autorité une fois le build terminé.
+const LIVE_LOGS_MAX_CHARS = 5 * 1024 * 1024;
+const LIVE_LOGS_GRACE_MS = 5 * 60 * 1000;
+// Filet de sécurité si un build ne passe jamais par finalizeBuildStatus (run GitHub orphelin,
+// etc.) : borne la durée de vie du buffer même sans transition de statut observée.
+const LIVE_LOGS_ACTIVE_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
 export class BuildsService {
@@ -36,11 +50,22 @@ export class BuildsService {
     private readonly firestore: FirestoreService,
     private readonly githubService: GithubService,
     private readonly runTokensService: RunTokensService,
+    private readonly logsTokensService: LogsTokensService,
     private readonly storageService: StorageService,
     private readonly config: ConfigService,
     private readonly analyticsService: AnalyticsService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // Cache process local (pas Redis) : le volume d'appels de ce endpoint reste faible et
+  // mono-instance suffit largement à absorber le cas visé (plusieurs onglets ouverts sur le
+  // même build) — introduire une dépendance Redis pour quelques secondes de cache serait une
+  // abstraction prématurée. À revoir si l'API tourne un jour en plusieurs instances.
+  private readonly logsCache = new Map<
+    string,
+    { text: string; expired: boolean; expiresAt: number }
+  >();
+  private readonly liveLogsBuffer = new Map<string, { text: string; expiresAt: number }>();
 
   private get builds() {
     return this.firestore.db.collection(BUILDS_COLLECTION);
@@ -100,6 +125,7 @@ export class BuildsService {
       envVars: dto.envVars ?? {},
       status: BuildStatus.queued,
       githubRunId: null,
+      githubJobId: null,
       startedAt: null,
       finishedAt: null,
       durationSeconds: null,
@@ -117,6 +143,10 @@ export class BuildsService {
       build_id: ref.id,
       environment: dto.environment,
       platform,
+      // Toujours fournis : le shipper de logs du workflow (cf. workflow-template.ts) en a
+      // besoin pour tout build, pas seulement ceux qui signent.
+      api_url: this.config.getOrThrow<string>('API_URL'),
+      logs_token: await this.logsTokensService.issueToken({ buildId: ref.id, projectId, userId }),
     };
     // Les secrets de signature (certificat/provisioning profile iOS, keystore Android) ne sont
     // jamais committés dans le repo : le run les récupère à l'exécution via un token de run à
@@ -135,7 +165,6 @@ export class BuildsService {
         environment: dto.environment,
       });
       inputs.secrets_token = secretsToken;
-      inputs.api_url = this.config.getOrThrow<string>('API_URL');
     }
 
     await this.githubService.dispatchWorkflowWithRetry(
@@ -308,6 +337,117 @@ export class BuildsService {
     return build;
   }
 
+  // Lit les logs GitHub Actions du job correspondant à ce build, à la demande (pas d'archivage :
+  // chaque appel peut retélécharger le texte depuis GitHub, atténué par logsCache). `offset`
+  // permet au polling client de ne recevoir que le delta depuis son dernier appel : GitHub ne
+  // renvoie jamais qu'un texte complet, le découpage est fait ici via `.slice(offset)`.
+  // Alimenté par BuildLogsIngestionController, appelé par le shipper de logs du workflow
+  // pendant qu'un job tourne. Volontairement permissif (pas de validation du contenu) : le
+  // contrôleur a déjà vérifié le logs_token et la taille du chunk.
+  appendLiveLog(buildId: string, chunk: string): void {
+    const now = Date.now();
+    for (const [key, entry] of this.liveLogsBuffer) {
+      if (entry.expiresAt < now) {
+        this.liveLogsBuffer.delete(key);
+      }
+    }
+    const existingText = this.liveLogsBuffer.get(buildId)?.text ?? '';
+    if (existingText.length >= LIVE_LOGS_MAX_CHARS) {
+      return;
+    }
+    this.liveLogsBuffer.set(buildId, {
+      text: (existingText + chunk).slice(0, LIVE_LOGS_MAX_CHARS),
+      expiresAt: now + LIVE_LOGS_ACTIVE_TTL_MS,
+    });
+  }
+
+  async getBuildLogs(
+    userId: string,
+    projectId: string,
+    buildId: string,
+    offset: number,
+  ): Promise<{ text: string; nextOffset: number; isComplete: boolean; expired: boolean }> {
+    const project = await this.getOwnedProject(userId, projectId);
+    const ref = this.builds.doc(buildId);
+    const doc = await ref.get();
+    const data = doc.data() as BuildDocument | undefined;
+    if (!doc.exists || !data || data.projectId !== projectId) {
+      throw new NotFoundException('Build introuvable.');
+    }
+
+    const isFinished =
+      data.status === BuildStatus.success ||
+      data.status === BuildStatus.failed ||
+      data.status === BuildStatus.cancelled;
+
+    if (!isFinished) {
+      // Phase active : uniquement le buffer poussé par le shipper du workflow — aucun appel
+      // GitHub, qui de toute façon renvoie 404 tant que le job n'est pas completed (confirmé
+      // empiriquement, il n'existe pas d'API publique de streaming pendant l'exécution). Un
+      // repo dont le workflow n'a pas été resynchronisé (politique "install once") n'aura
+      // jamais rien dans ce buffer : comportement identique à avant cette fonctionnalité.
+      const live = this.liveLogsBuffer.get(buildId);
+      const text = live?.text ?? '';
+      return {
+        text: offset < text.length ? text.slice(offset) : '',
+        nextOffset: text.length,
+        isComplete: false,
+        expired: false,
+      };
+    }
+
+    if (data.githubRunId === null) {
+      return { text: '', nextOffset: offset, isComplete: true, expired: false };
+    }
+
+    let jobId = data.githubJobId;
+    if (jobId === null) {
+      jobId = await this.githubService.findRelevantJobId(
+        userId,
+        project.githubRepoFullName,
+        data.githubRunId,
+      );
+      if (jobId !== null) {
+        await ref.update({ githubJobId: jobId });
+      }
+    }
+    if (jobId === null) {
+      return { text: '', nextOffset: offset, isComplete: true, expired: false };
+    }
+
+    const { text: fullText, expired } = await this.getJobLogsCached(
+      userId,
+      project.githubRepoFullName,
+      jobId,
+    );
+    if (expired) {
+      return { text: '', nextOffset: offset, isComplete: true, expired: true };
+    }
+
+    // Le texte GitHub (masqué, horodaté par ligne) n'a pas le même format que le texte brut
+    // accumulé dans le buffer live pendant la phase active : pas de continuité d'offset
+    // possible entre les deux sources. On renvoie systématiquement le texte complet ; le front
+    // remplace sa vue au lieu de l'accumuler dès que isComplete === true (cf. build-detail.ts).
+    return { text: fullText, nextOffset: fullText.length, isComplete: true, expired: false };
+  }
+
+  private async getJobLogsCached(
+    userId: string,
+    repoFullName: string,
+    jobId: number,
+  ): Promise<{ text: string; expired: boolean }> {
+    const cacheKey = `${repoFullName}:${jobId}`;
+    const cached = this.logsCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && cached.expiresAt > now) {
+      return { text: cached.text, expired: cached.expired };
+    }
+
+    const result = await this.githubService.downloadJobLogsText(userId, repoFullName, jobId);
+    this.logsCache.set(cacheKey, { ...result, expiresAt: now + LOGS_CACHE_TTL_FINISHED_MS });
+    return result;
+  }
+
   // Extrait de refreshStatus() : point de finalisation unique, appelable aussi bien depuis le
   // polling client (refreshStatus) que depuis le webhook GitHub (GithubWebhookService) — c'est
   // ici, et nulle part ailleurs, que doit se brancher tout ce qui doit se déclencher exactement
@@ -369,6 +509,15 @@ export class BuildsService {
       });
 
       if (didFinalize) {
+        // Ferme la fenêtre d'ingestion du shipper de logs dès que le job est terminé, et laisse
+        // une courte grâce au buffer live (au lieu d'une suppression immédiate) le temps qu'un
+        // onglet déjà ouvert termine proprement son dernier cycle de polling.
+        await this.logsTokensService.revokeToken(buildId);
+        const bufferEntry = this.liveLogsBuffer.get(buildId);
+        if (bufferEntry) {
+          bufferEntry.expiresAt = Date.now() + LIVE_LOGS_GRACE_MS;
+        }
+
         await this.analyticsService.recordBuild(userId, projectId, {
           platform: data.platform,
           environment: data.environment,

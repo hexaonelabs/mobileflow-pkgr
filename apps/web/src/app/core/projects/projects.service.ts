@@ -7,6 +7,7 @@ import type {
   AnalyticsSummary,
   AnalyticsTrends,
   Build,
+  BuildLogsChunk,
   CreateBuildPayload,
   CreateProjectPayload,
   CreateSecretPayload,
@@ -90,6 +91,14 @@ export class ProjectsService {
       this.http.get<{ url: string }>(
         `${this.baseUrl}/${projectId}/builds/${buildId}/artifact-url`,
       ),
+    );
+  }
+
+  getBuildLogs(projectId: string, buildId: string, offset: number): Promise<BuildLogsChunk> {
+    return firstValueFrom(
+      this.http.get<BuildLogsChunk>(`${this.baseUrl}/${projectId}/builds/${buildId}/logs`, {
+        params: { offset: offset.toString() },
+      }),
     );
   }
 

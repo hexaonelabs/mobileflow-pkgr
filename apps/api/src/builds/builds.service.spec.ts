@@ -6,6 +6,7 @@ import { Plan } from '../users/user.model';
 import type { AnalyticsService } from '../analytics/analytics.service';
 import type { FirestoreService } from '../firestore/firestore.service';
 import type { GithubService } from '../github/github.service';
+import type { LogsTokensService } from '../internal/logs-tokens.service';
 import type { NotificationsService } from '../notifications/notifications.service';
 
 function buildDocument(overrides: Partial<BuildDocument> = {}): BuildDocument {
@@ -20,6 +21,7 @@ function buildDocument(overrides: Partial<BuildDocument> = {}): BuildDocument {
     envVars: {},
     status: BuildStatus.running,
     githubRunId: 42,
+    githubJobId: null,
     startedAt: null,
     finishedAt: null,
     durationSeconds: null,
@@ -81,12 +83,14 @@ describe('BuildsService.finalizeBuildStatus', () => {
   let githubService: { findArtifactUrl: jest.Mock };
   let analyticsService: { recordBuild: jest.Mock };
   let notificationsService: { onBuildStatusChanged: jest.Mock };
+  let logsTokensService: { revokeToken: jest.Mock };
 
   function createService(freshFirestoreState: BuildDocument): BuildsService {
     return new BuildsService(
       createFirestoreWithTransaction(freshFirestoreState),
       githubService as unknown as GithubService,
       undefined as never,
+      logsTokensService as unknown as LogsTokensService,
       undefined as never,
       undefined as never,
       analyticsService as unknown as AnalyticsService,
@@ -100,6 +104,7 @@ describe('BuildsService.finalizeBuildStatus', () => {
     };
     analyticsService = { recordBuild: jest.fn().mockResolvedValue(undefined) };
     notificationsService = { onBuildStatusChanged: jest.fn().mockResolvedValue(undefined) };
+    logsTokensService = { revokeToken: jest.fn().mockResolvedValue(undefined) };
   });
 
   it('finalizes a successful run: sets finishedAt/duration and resolves the artifact URL', async () => {
@@ -125,7 +130,9 @@ describe('BuildsService.finalizeBuildStatus', () => {
     expect(result.isFinished).toBe(true);
     // finishedAt/durationSeconds are now committed atomically inside the Firestore
     // transaction (see createFirestoreWithTransaction), not via the outer ref.update().
-    expect(ref.update).toHaveBeenCalledWith(expect.objectContaining({ status: BuildStatus.success }));
+    expect(ref.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: BuildStatus.success }),
+    );
     expect(ref.update.mock.calls[0][0].durationSeconds).toBeUndefined();
     expect(githubService.findArtifactUrl).toHaveBeenCalledWith(
       'user1',
@@ -249,6 +256,247 @@ describe('BuildsService.finalizeBuildStatus', () => {
     expect([first.isFinished, second.isFinished].filter(Boolean)).toHaveLength(1);
     expect(analyticsService.recordBuild).toHaveBeenCalledTimes(1);
     expect(notificationsService.onBuildStatusChanged).toHaveBeenCalledTimes(1);
+    expect(logsTokensService.revokeToken).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('BuildsService.getBuildLogs', () => {
+  function createFirestoreForBuild(
+    buildData: BuildDocument,
+    updateSpy: jest.Mock,
+  ): FirestoreService {
+    return {
+      db: {
+        collection: jest.fn((name: string) => {
+          if (name === 'projects') {
+            return {
+              doc: jest.fn().mockReturnValue({
+                get: jest.fn().mockResolvedValue({
+                  exists: true,
+                  data: () => ({ userId: 'user1', githubRepoFullName: 'owner/repo' }),
+                }),
+              }),
+            };
+          }
+          return {
+            doc: jest.fn().mockReturnValue({
+              get: jest.fn().mockResolvedValue({ exists: true, data: () => buildData }),
+              update: updateSpy,
+            }),
+          };
+        }),
+      },
+    } as unknown as FirestoreService;
+  }
+
+  function createService(
+    buildData: BuildDocument,
+    githubService: {
+      findRelevantJobId: jest.Mock;
+      downloadJobLogsText: jest.Mock;
+    },
+  ): { service: BuildsService; updateSpy: jest.Mock } {
+    const updateSpy = jest
+      .fn<Promise<void>, [Partial<BuildDocument>]>()
+      .mockResolvedValue(undefined);
+    const service = new BuildsService(
+      createFirestoreForBuild(buildData, updateSpy),
+      githubService as unknown as GithubService,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+    );
+    return { service, updateSpy };
+  }
+
+  describe('active build (buffer live poussé par le shipper du workflow)', () => {
+    it('never calls GitHub while the build is active, even with a known githubJobId', async () => {
+      const data = buildDocument({ status: BuildStatus.running, githubRunId: 42, githubJobId: 99 });
+      const githubService = {
+        findRelevantJobId: jest.fn(),
+        downloadJobLogsText: jest.fn(),
+      };
+      const { service } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(result).toEqual({ text: '', nextOffset: 0, isComplete: false, expired: false });
+      expect(githubService.findRelevantJobId).not.toHaveBeenCalled();
+      expect(githubService.downloadJobLogsText).not.toHaveBeenCalled();
+    });
+
+    it('serves whatever the shipper has pushed to the live buffer so far', async () => {
+      const data = buildDocument({ status: BuildStatus.running, githubRunId: 42, githubJobId: 99 });
+      const githubService = { findRelevantJobId: jest.fn(), downloadJobLogsText: jest.fn() };
+      const { service } = createService(data, githubService);
+
+      service.appendLiveLog('build1', 'npm ci\n');
+      service.appendLiveLog('build1', 'npm run build\n');
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(result).toEqual({
+        text: 'npm ci\nnpm run build\n',
+        nextOffset: 21,
+        isComplete: false,
+        expired: false,
+      });
+      expect(githubService.downloadJobLogsText).not.toHaveBeenCalled();
+    });
+
+    it('slices the live buffer by offset like a normal delta poll', async () => {
+      const data = buildDocument({ status: BuildStatus.running, githubRunId: 42, githubJobId: 99 });
+      const githubService = { findRelevantJobId: jest.fn(), downloadJobLogsText: jest.fn() };
+      const { service } = createService(data, githubService);
+
+      service.appendLiveLog('build1', 'line 1\n');
+      service.appendLiveLog('build1', 'line 2\n');
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 7);
+
+      expect(result).toEqual({
+        text: 'line 2\n',
+        nextOffset: 14,
+        isComplete: false,
+        expired: false,
+      });
+    });
+  });
+
+  describe('finished build (texte GitHub officiel, complet, offset ignoré)', () => {
+    it('resolves and persists githubJobId lazily when not yet known', async () => {
+      const data = buildDocument({
+        status: BuildStatus.success,
+        githubRunId: 42,
+        githubJobId: null,
+      });
+      const githubService = {
+        findRelevantJobId: jest.fn().mockResolvedValue(99),
+        downloadJobLogsText: jest.fn().mockResolvedValue({ text: 'line 1\n', expired: false }),
+      };
+      const { service, updateSpy } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(githubService.findRelevantJobId).toHaveBeenCalledWith('user1', 'owner/repo', 42);
+      expect(updateSpy).toHaveBeenCalledWith({ githubJobId: 99 });
+      expect(githubService.downloadJobLogsText).toHaveBeenCalledWith('user1', 'owner/repo', 99);
+      expect(result).toEqual({ text: 'line 1\n', nextOffset: 7, isComplete: true, expired: false });
+    });
+
+    it('returns the full text ignoring the offset (live buffer and GitHub text are different formats)', async () => {
+      const data = buildDocument({ status: BuildStatus.success, githubRunId: 42, githubJobId: 99 });
+      const githubService = {
+        findRelevantJobId: jest.fn(),
+        downloadJobLogsText: jest
+          .fn()
+          .mockResolvedValue({ text: 'line 1\nline 2\n', expired: false }),
+      };
+      const { service } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 999);
+
+      expect(githubService.findRelevantJobId).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        text: 'line 1\nline 2\n',
+        nextOffset: 14,
+        isComplete: true,
+        expired: false,
+      });
+    });
+
+    it('reports isComplete without a job id when the build finished without a correlated run', async () => {
+      const data = buildDocument({
+        status: BuildStatus.cancelled,
+        githubRunId: null,
+        githubJobId: null,
+      });
+      const githubService = { findRelevantJobId: jest.fn(), downloadJobLogsText: jest.fn() };
+      const { service } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(result).toEqual({ text: '', nextOffset: 0, isComplete: true, expired: false });
+      expect(githubService.findRelevantJobId).not.toHaveBeenCalled();
+    });
+
+    it('reports expired logs (GitHub 404, past the 90-day retention window) without throwing', async () => {
+      const data = buildDocument({ status: BuildStatus.success, githubRunId: 42, githubJobId: 99 });
+      const githubService = {
+        findRelevantJobId: jest.fn(),
+        downloadJobLogsText: jest.fn().mockResolvedValue({ text: '', expired: true }),
+      };
+      const { service } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(result).toEqual({ text: '', nextOffset: 0, isComplete: true, expired: true });
+    });
+
+    it('marks isComplete once the build reached a terminal status', async () => {
+      const data = buildDocument({ status: BuildStatus.failed, githubRunId: 42, githubJobId: 99 });
+      const githubService = {
+        findRelevantJobId: jest.fn(),
+        downloadJobLogsText: jest.fn().mockResolvedValue({ text: 'boom\n', expired: false }),
+      };
+      const { service } = createService(data, githubService);
+
+      const result = await service.getBuildLogs('user1', 'proj1', 'build1', 0);
+
+      expect(result.isComplete).toBe(true);
+    });
+  });
+});
+
+describe('BuildsService.appendLiveLog', () => {
+  function createBareService(): BuildsService {
+    return new BuildsService(
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+      undefined as never,
+    );
+  }
+
+  function bufferOf(service: BuildsService) {
+    return (
+      service as unknown as { liveLogsBuffer: Map<string, { text: string; expiresAt: number }> }
+    ).liveLogsBuffer;
+  }
+
+  it('accumulates chunks for the same build across multiple calls', () => {
+    const service = createBareService();
+    service.appendLiveLog('build1', 'a');
+    service.appendLiveLog('build1', 'b');
+    service.appendLiveLog('build1', 'c');
+
+    expect(bufferOf(service).get('build1')?.text).toBe('abc');
+  });
+
+  it('keeps separate buffers per build', () => {
+    const service = createBareService();
+    service.appendLiveLog('build1', 'foo');
+    service.appendLiveLog('build2', 'bar');
+
+    expect(bufferOf(service).get('build1')?.text).toBe('foo');
+    expect(bufferOf(service).get('build2')?.text).toBe('bar');
+  });
+
+  it('stops accepting new chunks once the per-build size cap is reached', () => {
+    const service = createBareService();
+    service.appendLiveLog('build1', 'x'.repeat(5 * 1024 * 1024));
+    const sizeAtCap = bufferOf(service).get('build1')?.text.length;
+
+    service.appendLiveLog('build1', 'overflow');
+
+    expect(bufferOf(service).get('build1')?.text.length).toBe(sizeAtCap);
   });
 });
 
@@ -272,6 +520,7 @@ describe('BuildsService.create - production plan gating', () => {
     return new BuildsService(
       createFirestoreForOwnedProject(),
       githubService as unknown as GithubService,
+      undefined as never,
       undefined as never,
       undefined as never,
       undefined as never,

@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -113,6 +124,18 @@ export class ProjectsController {
     @Param('buildId') buildId: string,
   ) {
     return this.buildsService.getArtifactDownloadUrl(req.user.id, id, buildId);
+  }
+
+  @Get(':id/builds/:buildId/logs')
+  getBuildLogs(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Param('buildId') buildId: string,
+    @Query('offset') offset?: string,
+  ) {
+    const parsedOffset = offset ? Number.parseInt(offset, 10) : 0;
+    const safeOffset = Number.isFinite(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+    return this.buildsService.getBuildLogs(req.user.id, id, buildId, safeOffset);
   }
 
   @Post(':id/builds/:buildId/install')

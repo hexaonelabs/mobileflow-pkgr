@@ -40,6 +40,11 @@ export interface BuildDocument {
   durationSeconds: number | null;
   artifactUrl: string | null;
   logsUrl: string | null;
+  // Job GitHub Actions résolu paresseusement (pas à la création du build : le job n'existe pas
+  // encore tant que le run est `queued` sans job assigné) — persisté au premier appel de
+  // getBuildLogs() pour éviter de relister les jobs du run à chaque poll. Le workflow MobileFlow
+  // n'a qu'un seul job actif par run (build-android XOR build-ios, cf. workflow-template.ts).
+  githubJobId: number | null;
   // Chemin (pas l'URL) dans le bucket Firebase Storage où l'exécutable buildé (.ipa/.apk) a été
   // déposé par le run — une URL signée fraîche est mintée à la demande (cf. StorageService),
   // jamais stockée telle quelle car elle expire.

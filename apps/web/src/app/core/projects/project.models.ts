@@ -39,6 +39,7 @@ export interface Build {
   envVars: Record<string, string>;
   status: BuildStatus;
   githubRunId: number | null;
+  githubJobId: number | null;
   startedAt: string | null;
   finishedAt: string | null;
   durationSeconds: number | null;
@@ -49,6 +50,13 @@ export interface Build {
   bundleId: string | null;
   bundleVersion: string | null;
   createdAt: string | null;
+}
+
+export interface BuildLogsChunk {
+  text: string;
+  nextOffset: number;
+  isComplete: boolean;
+  expired: boolean;
 }
 
 export interface CreateBuildPayload {

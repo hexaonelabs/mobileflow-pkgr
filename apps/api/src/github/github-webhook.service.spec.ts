@@ -88,6 +88,7 @@ describe('GithubWebhookService', () => {
       envVars: {},
       status: BuildStatus.running,
       githubRunId: 1,
+      githubJobId: null,
       startedAt: null,
       finishedAt: null,
       durationSeconds: null,

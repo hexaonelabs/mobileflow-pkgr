@@ -384,6 +384,61 @@ export class GithubService {
     }
   }
 
+  // Le workflow MobileFlow n'a qu'un seul job actif par run (build-android XOR build-ios, cf.
+  // workflow-template.ts) — les autres jobs déclarés dans le YAML apparaissent quand même dans
+  // la liste, avec conclusion "skipped" une fois le run terminé (tant que le run tourne encore,
+  // conclusion vaut null pour tous les jobs pas encore résolus). On retient le premier job dont
+  // la conclusion n'est pas explicitement "skipped".
+  async findRelevantJobId(
+    userId: string,
+    repoFullName: string,
+    runId: number,
+  ): Promise<number | null> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const { data } = await octokit.rest.actions.listJobsForWorkflowRun({
+        owner,
+        repo,
+        run_id: runId,
+        per_page: 10,
+      });
+      const job = data.jobs.find((item) => item.conclusion !== 'skipped');
+      return job?.id ?? null;
+    } catch (error) {
+      throw this.toHttpException(error);
+    }
+  }
+
+  // GitHub redirige vers un fichier texte brut (302, expire après 1 minute) qu'Octokit suit
+  // automatiquement — pas de pagination/Range native ici, le découpage par offset pour le
+  // polling est fait côté MobileFlow (cf. BuildsService.getBuildLogs). Un 404 signifie soit un
+  // job introuvable, soit des logs purgés par GitHub (rétention 90 jours) : on le traduit en
+  // `expired: true` plutôt que de faire échouer l'appelant.
+  async downloadJobLogsText(
+    userId: string,
+    repoFullName: string,
+    jobId: number,
+  ): Promise<{ text: string; expired: boolean }> {
+    const { owner, repo } = this.splitRepo(repoFullName);
+    const octokit = await this.getInstallationOctokit(userId);
+    try {
+      const response = await octokit.rest.actions.downloadJobLogsForWorkflowRun({
+        owner,
+        repo,
+        job_id: jobId,
+      });
+      const raw: unknown = response.data;
+      const text = typeof raw === 'string' ? raw : Buffer.from(raw as ArrayBuffer).toString('utf8');
+      return { text, expired: false };
+    } catch (error) {
+      if ((error as { status?: number } | null)?.status === 404) {
+        return { text: '', expired: true };
+      }
+      throw this.toHttpException(error);
+    }
+  }
+
   // Le téléchargement direct de l'API GitHub (archive_download_url) redirige vers une URL
   // signée valable ~1 minute, donc inutilisable comme lien stocké en base. La page artefact
   // sur github.com est en revanche une URL stable (avec bouton "Download") tant que l'artefact

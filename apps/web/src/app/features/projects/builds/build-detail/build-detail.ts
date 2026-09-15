@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  afterRenderEffect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import QRCode from 'qrcode';
 import { environment } from '../../../../../environments/environment';
@@ -7,6 +17,7 @@ import { ProjectsService } from '../../../../core/projects/projects.service';
 import type { Build, BuildStatus, Project, TriggeredBy } from '../../../../core/projects/project.models';
 import { BuildStatusBadge } from '../../../../shared/ui/build-status-badge';
 import { PlatformIcon } from '../../../../shared/ui/platform-icon';
+import { BuildLogsViewer } from './build-logs-viewer';
 
 const ACTIVE_STATUSES: BuildStatus[] = ['queued', 'running'];
 const POLL_INTERVAL_MS = 4000;
@@ -36,7 +47,7 @@ const ACTION_BUTTON_CLASS =
 
 @Component({
   selector: 'app-build-detail',
-  imports: [RouterLink, PlatformIcon, BuildStatusBadge],
+  imports: [RouterLink, PlatformIcon, BuildStatusBadge, BuildLogsViewer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-6">
@@ -85,23 +96,75 @@ const ACTION_BUTTON_CLASS =
           </div>
 
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-            <section aria-labelledby="logs-heading" class="${CARD_CLASS}">
-              <h3 id="logs-heading" class="text-sm font-semibold text-neutral-900">Logs</h3>
-              <div class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
-                <p class="text-sm text-neutral-600">
-                  Detailed build logs are not yet displayed directly in pkgr.app — this is planned for a future version.
-                </p>
-                @if (build.logsUrl) {
-                  <a
-                    class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
-                    [href]="build.logsUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View logs on GitHub Actions ↗
-                  </a>
+            <section aria-labelledby="logs-heading" class="${CARD_CLASS} min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <h3 id="logs-heading" class="text-sm font-semibold text-neutral-900">Logs</h3>
+                @if (!logsExpired() && !logsComplete()) {
+                  <span class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+                    <span aria-hidden="true" class="h-2 w-2 rounded-full bg-green-500"></span>
+                    Live
+                  </span>
                 }
               </div>
+
+              @if (logsExpired()) {
+                <div class="mt-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
+                  <p class="text-sm text-neutral-600">
+                    Build logs are no longer available. GitHub retains Actions logs for 90 days; this build is older than that window.
+                  </p>
+                  @if (build.logsUrl) {
+                    <a
+                      class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600"
+                      [href]="build.logsUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub Actions ↗
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="mt-4 flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="${ACTION_BUTTON_CLASS}"
+                    [attr.aria-pressed]="logsPaused()"
+                    (click)="toggleLogsPaused()"
+                  >
+                    {{ logsPaused() ? 'Resume' : 'Pause' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="${ACTION_BUTTON_CLASS}"
+                    [attr.aria-pressed]="logsShowTimestamps()"
+                    (click)="toggleLogsTimestamps()"
+                  >
+                    {{ logsShowTimestamps() ? 'Hide timestamps' : 'Show timestamps' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="${ACTION_BUTTON_CLASS}"
+                    [disabled]="!logLines()"
+                    (click)="downloadLogs(build.id)"
+                  >
+                    Download{{ logsComplete() ? '' : ' (partial)' }}
+                  </button>
+                </div>
+                <div
+                  #logsContainer
+                  role="log"
+                  aria-live="polite"
+                  aria-relevant="additions"
+                  (scroll)="onLogsScroll()"
+                  class="mt-3 max-h-[32rem] overflow-auto rounded-xl border border-neutral-800 bg-neutral-900 p-4 font-mono text-xs text-neutral-100"
+                >
+                  @if (logLines()) {
+                    <app-build-logs-viewer [text]="logLines()" [showTimestamps]="logsShowTimestamps()" />
+                  } @else {
+                    <p class="text-neutral-400">Waiting for logs…</p>
+                  }
+                </div>
+              }
             </section>
 
             <aside class="flex flex-col gap-4">
@@ -212,9 +275,30 @@ export class BuildDetail implements OnInit, OnDestroy {
   protected readonly downloading = signal(false);
   protected readonly qrDataUrl = signal<string | null>(null);
 
+  protected readonly logLines = signal('');
+  protected readonly logsOffset = signal(0);
+  protected readonly logsFetching = signal(false);
+  protected readonly logsComplete = signal(false);
+  protected readonly logsExpired = signal(false);
+  protected readonly logsPaused = signal(false);
+  protected readonly logsShowTimestamps = signal(false);
+  private readonly logsUserScrolledUp = signal(false);
+  private readonly logsContainer = viewChild<ElementRef<HTMLDivElement>>('logsContainer');
+
   private projectId = '';
   private buildId = '';
   private pollHandle: ReturnType<typeof setInterval> | null = null;
+
+  // Auto-scroll vers le bas à chaque nouvelle ligne de logs, sauf si l'utilisateur a scrollé
+  // manuellement vers le haut pour relire un passage — pattern standard de viewer de logs.
+  private readonly autoScrollLogs = afterRenderEffect(() => {
+    const container = this.logsContainer()?.nativeElement;
+    this.logLines();
+    if (!container || this.logsUserScrolledUp()) {
+      return;
+    }
+    container.scrollTop = container.scrollHeight;
+  });
 
   async ngOnInit(): Promise<void> {
     const projectId = this.route.snapshot.paramMap.get('id');
@@ -232,6 +316,7 @@ export class BuildDetail implements OnInit, OnDestroy {
       ]);
       this.project.set(project);
       this.build.set(build);
+      void this.fetchLogs();
       this.schedulePolling();
     } catch {
       this.errorMessage.set('Impossible de charger ce build.');
@@ -336,9 +421,76 @@ export class BuildDetail implements OnInit, OnDestroy {
   private schedulePolling(): void {
     this.pollHandle = setInterval(() => {
       const current = this.build();
-      if (current && ACTIVE_STATUSES.includes(current.status) && !this.refreshing()) {
+      if (!current) {
+        return;
+      }
+      if (ACTIVE_STATUSES.includes(current.status) && !this.refreshing()) {
         void this.refresh();
       }
+      if (!this.logsComplete() && !this.logsFetching()) {
+        void this.fetchLogs();
+      }
     }, POLL_INTERVAL_MS);
+  }
+
+  protected async fetchLogs(): Promise<void> {
+    if (this.logsPaused()) {
+      return;
+    }
+    this.logsFetching.set(true);
+    try {
+      const chunk = await this.projectsService.getBuildLogs(
+        this.projectId,
+        this.buildId,
+        this.logsOffset(),
+      );
+      if (chunk.expired) {
+        this.logsExpired.set(true);
+        this.logsComplete.set(true);
+        return;
+      }
+      if (chunk.isComplete) {
+        // Le texte "terminé" vient de GitHub (masqué, horodaté par ligne) et n'est pas la
+        // continuation du texte brut accumulé pendant la phase active (buffer live poussé par
+        // le shipper du workflow) : on remplace la vue au lieu de l'accumuler.
+        this.logLines.set(chunk.text);
+      } else if (chunk.text.length > 0) {
+        this.logLines.update((current) => current + chunk.text);
+      }
+      this.logsOffset.set(chunk.nextOffset);
+      this.logsComplete.set(chunk.isComplete);
+    } catch {
+      // Best-effort : un échec isolé de récupération des logs ne doit pas affecter le reste de
+      // la page (statut, artefacts…), on retentera au prochain tick de polling.
+    } finally {
+      this.logsFetching.set(false);
+    }
+  }
+
+  protected toggleLogsPaused(): void {
+    this.logsPaused.update((current) => !current);
+  }
+
+  protected toggleLogsTimestamps(): void {
+    this.logsShowTimestamps.update((current) => !current);
+  }
+
+  protected onLogsScroll(): void {
+    const container = this.logsContainer()?.nativeElement;
+    if (!container) {
+      return;
+    }
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    this.logsUserScrolledUp.set(distanceFromBottom > 40);
+  }
+
+  protected downloadLogs(buildId: string): void {
+    const blob = new Blob([this.logLines()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${buildId}-logs.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 }
